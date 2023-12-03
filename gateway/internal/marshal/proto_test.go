@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/examplepb"
 	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
