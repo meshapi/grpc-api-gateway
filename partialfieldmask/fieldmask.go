@@ -21,8 +21,8 @@ func getFieldByName(fields protoreflect.FieldDescriptors, name string) protorefl
 	return fields.ByJSONName(name)
 }
 
-// FieldMaskFromRequestBody creates a FieldMask printing all complete paths from the JSON body.
-func FieldMaskFromRequestBody(r io.Reader, msg proto.Message) (*field_mask.FieldMask, error) {
+// FieldMaskFromRequestBodyJSON creates a FieldMask printing all complete paths from the JSON body.
+func FieldMaskFromRequestBodyJSON(r io.Reader, msg proto.Message) (*field_mask.FieldMask, error) {
 	fm := &field_mask.FieldMask{}
 	var root interface{}
 

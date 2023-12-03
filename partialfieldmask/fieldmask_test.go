@@ -180,7 +180,7 @@ func TestFieldMaskFromRequestBody(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := partialfieldmask.FieldMaskFromRequestBody(bytes.NewReader([]byte(tc.input)), tc.msg)
+			actual, err := partialfieldmask.FieldMaskFromRequestBodyJSON(bytes.NewReader([]byte(tc.input)), tc.msg)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -246,7 +246,7 @@ func TestFieldMaskRepeatedFieldsLast(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := partialfieldmask.FieldMaskFromRequestBody(bytes.NewReader([]byte(tc.input)), &examplepb.ABitOfEverything{})
+			actual, err := partialfieldmask.FieldMaskFromRequestBodyJSON(bytes.NewReader([]byte(tc.input)), &examplepb.ABitOfEverything{})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -270,7 +270,7 @@ func TestFieldMaskErrors(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := partialfieldmask.FieldMaskFromRequestBody(bytes.NewReader([]byte(tc.input)), &examplepb.ABitOfEverything{})
+			_, err := partialfieldmask.FieldMaskFromRequestBodyJSON(bytes.NewReader([]byte(tc.input)), &examplepb.ABitOfEverything{})
 			if err.Error() != tc.expectedErr.Error() {
 				t.Fatalf("errors did not match: got %q, wanted %q", err, tc.expectedErr)
 			}
@@ -334,7 +334,7 @@ func BenchmarkABEFieldMaskFromRequestBody(b *testing.B) {
 	var r *field_mask.FieldMask
 	var err error
 	for i := 0; i < b.N; i++ {
-		r, err = partialfieldmask.FieldMaskFromRequestBody(bytes.NewReader([]byte(input)), nil)
+		r, err = partialfieldmask.FieldMaskFromRequestBodyJSON(bytes.NewReader([]byte(input)), nil)
 	}
 	if err != nil {
 		b.Error(err)
@@ -353,7 +353,7 @@ func BenchmarkNonStandardFieldMaskFromRequestBody(b *testing.B) {
 	var r *field_mask.FieldMask
 	var err error
 	for i := 0; i < b.N; i++ {
-		r, err = partialfieldmask.FieldMaskFromRequestBody(bytes.NewReader([]byte(input)), nil)
+		r, err = partialfieldmask.FieldMaskFromRequestBodyJSON(bytes.NewReader([]byte(input)), nil)
 	}
 	if err != nil {
 		b.Error(err)
