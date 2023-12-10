@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/meshapi/grpc-rest-gateway/gateway"
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/examplepb"
+	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
 	"github.com/meshapi/grpc-rest-gateway/utilities"
 )
 
