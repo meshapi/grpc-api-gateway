@@ -116,7 +116,8 @@ func WithStreamErrorHandler(fn StreamErrorHandlerFunc) ServeMuxOption {
 	})
 }
 
-// WithRoutingErrorHandler returns a ServeMuxOption for configuring a custom error handler to  handle http routing errors.
+// WithRoutingErrorHandler returns a ServeMuxOption for configuring a custom error handler to handle http routing
+// errors.
 //
 // Method called for errors which can happen before gRPC route selected or executed.
 // The following error codes: StatusMethodNotAllowed StatusNotFound StatusBadRequest
@@ -130,6 +131,53 @@ func WithRoutingErrorHandler(fn RoutingErrorHandlerFunc) ServeMuxOption {
 func WithDisablePathLengthFallback() ServeMuxOption {
 	return optionFunc(func(s *ServeMux) {
 		s.disablePathLengthFallback = true
+	})
+}
+
+// WithMethodNotAllowedHandler sets a configurable http.Handler which is called when a request
+// cannot be routed and HandleMethodNotAllowed is true.
+// If it is not set, http.Error with http.StatusMethodNotAllowed is used.
+// The "Allow" header with allowed request methods is set before the handler
+// is called.
+func WithMethodNotAllowedHandler(handler http.Handler) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.router.MethodNotAllowed = handler
+	})
+}
+
+// WithNotFoundHandler sets a configurable http.Handler which is called when no matching route is
+// found. If it is not set, http.NotFound is used.
+func WithNotFoundHandler(handler http.Handler) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.router.NotFound = handler
+	})
+}
+
+// WithPanicHandler sets the function to handle panics recovered from http handlers.
+// It should be used to generate a error page and return the http error code
+// 500 (Internal Server Error).
+// The handler can be used to keep your server from crashing because of
+// unrecovered panics.
+func WithPanicHandler(handler PanicHandlerFunc) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.router.PanicHandler = handler
+	})
+}
+
+// WithoutHandlingOptions disabled automatically handling OPTIONS for available endpoints, which is by default enabled.
+func WithoutHandlingOptions() ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.router.HandleOPTIONS = false
+	})
+}
+
+// WithGlobalOptionsHandler sets an optional handler that is called on automatic OPTIONS requests.
+// The handler is only called if handling OPTIONS is enabled and no OPTIONS
+// handler for the specific path is set.
+// The "Allowed" header is set before calling the handler.
+func WithGlobalOptionsHandler(handler http.Handler) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.router.GlobalOPTIONS = handler
 	})
 }
 
