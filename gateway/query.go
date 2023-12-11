@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/protoconvert"
 	"github.com/meshapi/grpc-rest-gateway/utilities"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -238,7 +238,7 @@ func parseField(fieldDescriptor protoreflect.FieldDescriptor, value string) (pro
 	case protoreflect.StringKind:
 		return protoreflect.ValueOfString(value), nil
 	case protoreflect.BytesKind:
-		v, err := marshal.Bytes(value)
+		v, err := protoconvert.Bytes(value)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}
@@ -310,7 +310,7 @@ func parseMessage(msgDescriptor protoreflect.MessageDescriptor, value string) (p
 	case "google.protobuf.StringValue":
 		msg = wrapperspb.String(value)
 	case "google.protobuf.BytesValue":
-		v, err := marshal.Bytes(value)
+		v, err := protoconvert.Bytes(value)
 		if err != nil {
 			return protoreflect.Value{}, err
 		}

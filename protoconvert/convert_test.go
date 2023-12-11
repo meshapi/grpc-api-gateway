@@ -1,9 +1,9 @@
-package marshal_test
+package protoconvert_test
 
 import (
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/protoconvert"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -56,7 +56,7 @@ func TestConvertTimestamp(t *testing.T) {
 
 	for _, spec := range specs {
 		t.Run(spec.name, func(t *testing.T) {
-			ts, err := marshal.Timestamp(spec.input)
+			ts, err := protoconvert.Timestamp(spec.input)
 			switch {
 			case err != nil && !spec.wanterr:
 				t.Errorf("got unexpected error\n%#v", err)
@@ -121,7 +121,7 @@ func TestConvertDuration(t *testing.T) {
 
 	for _, spec := range specs {
 		t.Run(spec.name, func(t *testing.T) {
-			ts, err := marshal.Duration(spec.input)
+			ts, err := protoconvert.Duration(spec.input)
 			switch {
 			case err != nil && !spec.wanterr:
 				t.Errorf("got unexpected error\n%#v", err)
