@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package meshapi.gateway.codegen.plugin;
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin";
+
+// UnixSocketConnection is a mode of plugin connectivity using UNIX sockets.
+message UnixSocketConnection { // socket is the socket file. string socket = 1;
+	// socket is the socket file.
+	string socket = 1;
+}
+
+// TCPConnection is a mode of plugin connectivity via TCP.
+message TCPConnection {
+	// address is the TCP connection address to use to connect to the plugin.
+	string address = 1;
+}
+
+// Version describes a semver version.
+message Version {
+	// major is the version's major segment.
+	uint32 major = 1; 
+
+	// minor is the version's minor segment.
+	uint32 minor = 2;
+
+	// patch is the version's patch segment.
+	uint32 patch = 3;
+}
+
+enum Generator {
+	Generator_UNKNOWN = 0;
+	Generator_RestGateway = 1;
+	Generator_OpenAPI = 2;
+}
+
+// GeneratorInfo is the first message that is written in the plugin process's stdin
+// which dumps some details about the generator's versions and supported callbacks.
+message GeneratorInfo {
+	// version indicates the code generator's version.
+	Version version = 1;
+
+	// generator is the type of generator activating this plugin.
+	Generator generator = 2;
+
+	// supported_features are all available features in the code generator.
+	repeated string supported_features = 3;
+}
+
+// PluginInfo is the first message that is read from the process's output and must contain information about the
+// plugin.
+message PluginInfo {
+	// address is the gRPC server address to use for connecting to the plugin.
+	oneof connection {
+		// socket is the connection via UNIX sockets.
+		UnixSocketConnection unix_socket = 1;
+
+		// tcp is connection via TCP, useful in operating systems such as Windows where UNIX sockets are not available.
+		TCPConnection tcp = 2;
+	};
+
+	// registered_callbacks are all the callbacks the plug-in wishes to handle.
+	repeated string registered_callbacks = 3;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package meshapi.gateway.codegen.plugin;
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin";
+
+message PingRequest {
+	string text = 1;
+}
+
+message PingResponse {
+	string text = 1;
+}
+
+// RestGatewayPlugin is the plugin service provider for the rest gateway.
+service RestGatewayPlugin {
+	rpc Ping(PingRequest) returns (PingResponse);
+}
