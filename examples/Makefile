@@ -6,3 +6,6 @@ clean:
 
 generate:
 	@buf generate
+
+install:
+	@make -C .. install
