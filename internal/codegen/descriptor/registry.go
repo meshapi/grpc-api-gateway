@@ -34,6 +34,7 @@ func NewRegistry() *Registry {
 	return &Registry{
 		messages:   map[string]*Message{},
 		files:      map[string]*File{},
+		enums:      map[string]*Enum{},
 		pkgAliases: map[string]string{},
 	}
 }
@@ -91,7 +92,7 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 
 	r.files[filePath] = f
 	r.loadMessagesInFile(f, nil, protoFile.Proto.MessageType)
-	//r.registerEnum(f, nil, protoFile.Proto.EnumType)
+	r.loadEnumsInFile(f, nil, protoFile.Proto.EnumType)
 }
 
 func (r *Registry) loadServices(file *File) error {
@@ -120,7 +121,20 @@ func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages [
 		outers = append(outers, outerPath...)
 		outers = append(outers, message.GetName())
 		r.loadMessagesInFile(file, outers, message.GetNestedType())
-		//r.registerEnum(file, outers, m.GetEnumType())
+		r.loadEnumsInFile(file, outers, message.GetEnumType())
+	}
+}
+
+func (r *Registry) loadEnumsInFile(file *File, outerPath []string, enums []*descriptorpb.EnumDescriptorProto) {
+	for index, protoEnum := range enums {
+		enum := &Enum{
+			EnumDescriptorProto: protoEnum,
+			File:                file,
+			Outers:              outerPath,
+			Index:               index,
+		}
+		file.Enums = append(file.Enums, enum)
+		r.enums[enum.FQEN()] = enum
 	}
 }
 
@@ -135,10 +149,4 @@ func (r *Registry) ReserveGoPackageAlias(alias, pkgPath string) bool {
 
 	r.pkgAliases[alias] = pkgPath
 	return true
-}
-
-func (r *Registry) VisitMessages(cb func(*Message)) {
-	for _, message := range r.messages {
-		cb(message)
-	}
 }
