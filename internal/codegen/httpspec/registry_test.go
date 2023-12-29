@@ -86,11 +86,6 @@ func TestLoadYAML(t *testing.T) {
 		return
 	}
 
-	if err := r.LoadFromFile(filepath.Join(testDir, "config.json"), ""); err != nil {
-		t.Fatalf("unexpected failure in loading test data: %s", err)
-		return
-	}
-
 	_, ok := r.LookupBinding("meshapi.example.v1.Test")
 	if !ok {
 		t.Fatal("unexpected failure in looking up meshapi.example.v1.Test")

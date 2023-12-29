@@ -5,7 +5,7 @@
         "Config": {
             "properties": {
                 "gateway": {
-                    "$ref": "#/definitions/meshapi.gateway.http.GatewaySpec",
+                    "$ref": "#/definitions/meshapi.gateway.GatewaySpec",
                     "additionalProperties": false,
                     "description": "gateway holds gateway configs."
                 }
@@ -15,7 +15,7 @@
             "title": "Config",
             "description": "Config is the content of a configuration file."
         },
-        "meshapi.gateway.http.AdditionalEndpointBinding": {
+        "meshapi.gateway.AdditionalEndpointBinding": {
             "properties": {
                 "get": {
                     "type": "string"
@@ -33,7 +33,7 @@
                     "type": "string"
                 },
                 "custom": {
-                    "$ref": "#/definitions/meshapi.gateway.http.CustomPattern",
+                    "$ref": "#/definitions/meshapi.gateway.CustomPattern",
                     "additionalProperties": false,
                     "description": "custom can be used for custom HTTP methods."
                 },
@@ -43,7 +43,7 @@
                 },
                 "query_params": {
                     "items": {
-                        "$ref": "#/definitions/meshapi.gateway.http.QueryParameterBinding"
+                        "$ref": "#/definitions/meshapi.gateway.QueryParameterBinding"
                     },
                     "additionalProperties": false,
                     "type": "array",
@@ -90,7 +90,7 @@
             ],
             "title": "Additional Endpoint Binding"
         },
-        "meshapi.gateway.http.CustomPattern": {
+        "meshapi.gateway.CustomPattern": {
             "properties": {
                 "method": {
                     "type": "string",
@@ -106,7 +106,7 @@
             "title": "Custom Pattern",
             "description": "CustomPattern describes an HTTP pattern and custom method."
         },
-        "meshapi.gateway.http.EndpointBinding": {
+        "meshapi.gateway.EndpointBinding": {
             "properties": {
                 "selector": {
                     "type": "string",
@@ -128,7 +128,7 @@
                     "type": "string"
                 },
                 "custom": {
-                    "$ref": "#/definitions/meshapi.gateway.http.CustomPattern",
+                    "$ref": "#/definitions/meshapi.gateway.CustomPattern",
                     "additionalProperties": false,
                     "description": "custom can be used for custom HTTP methods."
                 },
@@ -138,7 +138,7 @@
                 },
                 "query_params": {
                     "items": {
-                        "$ref": "#/definitions/meshapi.gateway.http.QueryParameterBinding"
+                        "$ref": "#/definitions/meshapi.gateway.QueryParameterBinding"
                     },
                     "additionalProperties": false,
                     "type": "array",
@@ -146,7 +146,7 @@
                 },
                 "additional_bindings": {
                     "items": {
-                        "$ref": "#/definitions/meshapi.gateway.http.AdditionalEndpointBinding"
+                        "$ref": "#/definitions/meshapi.gateway.AdditionalEndpointBinding"
                     },
                     "additionalProperties": false,
                     "type": "array",
@@ -194,11 +194,11 @@
             "title": "Endpoint Binding",
             "description": "EndpointBinding is a gRPC method - HTTP endpoint binding specification."
         },
-        "meshapi.gateway.http.GatewaySpec": {
+        "meshapi.gateway.GatewaySpec": {
             "properties": {
                 "endpoints": {
                     "items": {
-                        "$ref": "#/definitions/meshapi.gateway.http.EndpointBinding"
+                        "$ref": "#/definitions/meshapi.gateway.EndpointBinding"
                     },
                     "additionalProperties": false,
                     "type": "array",
@@ -210,7 +210,7 @@
             "title": "Gateway Spec",
             "description": "GatewaySpec holds gRPC gateway configurations."
         },
-        "meshapi.gateway.http.QueryParameterBinding": {
+        "meshapi.gateway.QueryParameterBinding": {
             "properties": {
                 "selector": {
                     "type": "string",

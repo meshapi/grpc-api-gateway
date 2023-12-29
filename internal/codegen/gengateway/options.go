@@ -3,6 +3,8 @@ package gengateway
 import (
 	"fmt"
 	"strings"
+
+	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
 )
 
 type PathParameterSeparator uint8
@@ -75,6 +77,9 @@ type Options struct {
 
 	// GenerateUnboundMethods controls whether or not unannotated RPC methods should be created as part of the proxy.
 	GenerateUnboundMethods bool
+
+	// GatewayFileLoadOptions holds the gateway file loading options.
+	GatewayFileLoadOptions descriptor.GatewayFileLoadOptions
 }
 
 // DefaultOptions returns the default options.
@@ -89,5 +94,6 @@ func DefaultOptions() Options {
 		Standalone:                     false,
 		WarnOnUnboundMethods:           false,
 		GenerateUnboundMethods:         false,
+		GatewayFileLoadOptions:         descriptor.DefaultGatewayLoadOptions(),
 	}
 }

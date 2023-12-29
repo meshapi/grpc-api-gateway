@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package meshapi.gateway.http;
+package meshapi.gateway;
 
 option go_package = "github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec";
 

@@ -36,7 +36,10 @@ type Generator struct {
 }
 
 func New(options Options) *Generator {
-	return &Generator{Options: options, registry: descriptor.NewRegistry()}
+	descriptorRegistry := descriptor.NewRegistry()
+	descriptorRegistry.GatewayFileLoadOptions = options.GatewayFileLoadOptions
+
+	return &Generator{Options: options, registry: descriptorRegistry}
 }
 
 func (g *Generator) LoadFromPlugin(gen *protogen.Plugin) error {

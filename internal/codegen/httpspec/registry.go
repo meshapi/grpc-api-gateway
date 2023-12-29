@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,8 +30,6 @@ type EndpointSpec struct {
 
 type Registry struct {
 	endpoints map[string]EndpointSpec
-
-	AllowOverride bool
 }
 
 func NewRegistry() *Registry {
@@ -56,6 +56,10 @@ func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 	default:
 		return fmt.Errorf("unrecognized/unsupported file extension: %s", filePath)
 	}
+}
+
+func (r *Registry) LoadFromService(filePath, service *descriptorpb.ServiceDescriptorProto) error {
+	return nil
 }
 
 func (r *Registry) loadYAML(reader io.Reader, src SourceInfo) error {
@@ -97,11 +101,15 @@ func (r *Registry) processConfig(config *Config, src SourceInfo) error {
 	}
 
 	for _, endpoint := range config.Gateway.GetEndpoints() {
+		if strings.HasPrefix(endpoint.Selector, ".") {
+			endpoint.Selector = src.ProtoPackage + endpoint.Selector
+		}
+
 		if err := validateBinding(endpoint); err != nil {
 			return err
 		}
 
-		if existingBinding, ok := r.endpoints[endpoint.Selector]; ok && !r.AllowOverride {
+		if existingBinding, ok := r.endpoints[endpoint.Selector]; ok {
 			return fmt.Errorf(
 				"conflicting binding for %q: both %q and %q contain bindings for this selector",
 				endpoint.Selector, src.Filename, existingBinding.SourceInfo.Filename)
@@ -138,3 +146,19 @@ func validateBinding(endpoint *EndpointBinding) error {
 
 	return nil
 }
+
+// think about how we are going to load these files.
+// we could move the proto files here to a separate package.
+// we could read everything at once or separately but we'd have to use marshal and unmarshal
+// which is not super efficient but it is doable.
+
+// read the global file first
+// read every service file and load the gRPC gateway
+// if there is a conflict, have a config that states if we should override or error out
+// what if an unrelated file overrides something after the fact?
+// is that possible? if we first process all files and then look at the services it shouldn't be possible.
+// BUT because files can override each other, we most definitely need to set aside an order.
+
+// we should consider an option that controls IF arbitrary files can add arbitrary methods.
+// options can be true, global or same proto package, global or same file.
+// files are read alphabetically perhaps?

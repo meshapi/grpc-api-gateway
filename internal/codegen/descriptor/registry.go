@@ -2,8 +2,13 @@ package descriptor
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -27,15 +32,22 @@ type Registry struct {
 
 	// pkgAliases is a mapping from package aliases to package paths in go which are already taken.
 	pkgAliases map[string]string
+
+	// httpSpecRegistry is HTTP specification registry which holds all the endpoint mappings.
+	httpSpecRegistry *httpspec.Registry
+
+	// GatewayFileLoadOptions holds gateway config file loading options.
+	GatewayFileLoadOptions GatewayFileLoadOptions
 }
 
 // NewRegistry creates and initializes a new registry.
 func NewRegistry() *Registry {
 	return &Registry{
-		messages:   map[string]*Message{},
-		files:      map[string]*File{},
-		enums:      map[string]*Enum{},
-		pkgAliases: map[string]string{},
+		messages:         map[string]*Message{},
+		files:            map[string]*File{},
+		enums:            map[string]*Enum{},
+		pkgAliases:       map[string]string{},
+		httpSpecRegistry: httpspec.NewRegistry(),
 	}
 }
 
@@ -45,6 +57,12 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 }
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
+	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
+		if err := r.httpSpecRegistry.LoadFromFile(r.GatewayFileLoadOptions.GlobalGatewayConfigFile, ""); err != nil {
+			return fmt.Errorf("failed to load global gateway config file: %w", err)
+		}
+	}
+
 	filePaths := make([]string, 0, len(gen.FilesByPath))
 	for filePath := range gen.FilesByPath {
 		filePaths = append(filePaths, filePath)
@@ -53,6 +71,13 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 
 	for _, filePath := range filePaths {
 		r.loadIncludedFile(filePath, gen.FilesByPath[filePath])
+
+		// if the file is a target of code genertaion, look for service mapping files.
+		if gen.FilesByPath[filePath].Generate {
+			if err := r.loadEndpointsForFile(filePath, gen.FilesByPath[filePath]); err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, filePath := range filePaths {
@@ -63,6 +88,45 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		if err := r.loadServices(file); err != nil {
 			return err
 		}
+	}
+
+	writer := gen.NewGeneratedFile("output.txt", "")
+	fmt.Fprintf(writer, "data: %+v", r.httpSpecRegistry)
+
+	return nil
+}
+
+func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.File) error {
+	// only consider proto files that have service definitions.
+	if len(protoFile.Services) == 0 {
+		return nil
+	}
+
+	if r.GatewayFileLoadOptions.FilePattern == "" {
+		return nil
+	}
+
+	fileName := strings.TrimSuffix(filePath, filepath.Ext(filePath))
+	fileName = strings.ReplaceAll(r.GatewayFileLoadOptions.FilePattern, "{}", fileName)
+
+	for _, ext := range [...]string{"yaml", "yml", "json"} {
+		configFilePath := fileName + "." + ext
+
+		if _, err := os.Stat(configFilePath); err != nil {
+			if os.IsNotExist(err) {
+				grpclog.Infof("looked for file %s, it was not found", configFilePath)
+				continue
+			}
+
+			return fmt.Errorf("failed to stat file '%s': %w", configFilePath, err)
+		}
+
+		// file exists, try to load it.
+		if err := r.httpSpecRegistry.LoadFromFile(configFilePath, protoFile.Proto.GetPackage()); err != nil {
+			return fmt.Errorf("failed to load %s: %w", configFilePath, err)
+		}
+
+		return nil
 	}
 
 	return nil
@@ -96,6 +160,30 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 }
 
 func (r *Registry) loadServices(file *File) error {
+	for _, protoService := range file.GetService() {
+		service := &Service{
+			ServiceDescriptorProto: protoService,
+			File:                   file,
+			Methods:                []*Method{},
+		}
+		for _, protoMethod := range service.GetMethod() {
+			if err := r.loadMethod(service, protoMethod); err != nil {
+				return fmt.Errorf("failed to process method '%s': %w", protoMethod.GetName(), err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) loadMethod(service *Service, protoMethod *descriptorpb.MethodDescriptorProto) error {
+	service.Methods = append(service.Methods, &Method{
+		MethodDescriptorProto: &descriptorpb.MethodDescriptorProto{},
+		Service:               service,
+		RequestType:           &Message{},
+		ResponseType:          &Message{},
+	})
+
 	return nil
 }
 
