@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/api"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -25,7 +26,7 @@ type SourceInfo struct {
 }
 
 type EndpointSpec struct {
-	Binding    *EndpointBinding
+	Binding    *api.EndpointBinding
 	SourceInfo SourceInfo
 }
 
@@ -62,48 +63,47 @@ func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 }
 
 func (r *Registry) LoadFromService(filePath, protoPackage string, service *descriptorpb.ServiceDescriptorProto) error {
-	config := Config{
-		Gateway: &GatewaySpec{
-			Endpoints: []*EndpointBinding{},
+	config := api.Config{
+		Gateway: &api.GatewaySpec{
+			Endpoints: []*api.EndpointBinding{},
 		},
 	}
 
 	for _, method := range service.GetMethod() {
-		binding, ok := proto.GetExtension(method.Options, E_Http).(*ProtoEndpointBinding)
-		if !ok || binding == nil {
+		embeddedBinding, ok := proto.GetExtension(method.Options, api.E_Http).(*api.ProtoEndpointBinding)
+		if !ok || embeddedBinding == nil {
 			continue
 		}
 
-		config.Gateway.Endpoints = append(config.Gateway.Endpoints, &EndpointBinding{
+		endpointBinding := &api.EndpointBinding{
 			Selector:                   protoPackage + "." + service.GetName() + "." + method.GetName(),
-			Pattern:                    patternFromProtoDefinition(binding.Pattern),
-			Body:                       binding.GetBody(),
-			QueryParams:                binding.GetQueryParams(),
-			AdditionalBindings:         binding.GetAdditionalBindings(),
-			DisableQueryParamDiscovery: binding.DisableQueryParamDiscovery,
-		})
+			Body:                       embeddedBinding.GetBody(),
+			QueryParams:                embeddedBinding.GetQueryParams(),
+			AdditionalBindings:         embeddedBinding.GetAdditionalBindings(),
+			DisableQueryParamDiscovery: embeddedBinding.DisableQueryParamDiscovery,
+		}
+		setPatternFromProtoDefinition(embeddedBinding.Pattern, endpointBinding)
+		config.Gateway.Endpoints = append(config.Gateway.Endpoints, endpointBinding)
 	}
 
 	return r.processConfig(&config, SourceInfo{Filename: filePath, ProtoPackage: protoPackage})
 }
 
-func patternFromProtoDefinition(value isProtoEndpointBinding_Pattern) isEndpointBinding_Pattern {
+func setPatternFromProtoDefinition(value interface{}, binding *api.EndpointBinding) {
 	switch value := value.(type) {
-	case *ProtoEndpointBinding_Get:
-		return &EndpointBinding_Get{Get: value.Get}
-	case *ProtoEndpointBinding_Put:
-		return &EndpointBinding_Put{Put: value.Put}
-	case *ProtoEndpointBinding_Post:
-		return &EndpointBinding_Post{Post: value.Post}
-	case *ProtoEndpointBinding_Delete:
-		return &EndpointBinding_Delete{Delete: value.Delete}
-	case *ProtoEndpointBinding_Patch:
-		return &EndpointBinding_Patch{Patch: value.Patch}
-	case *ProtoEndpointBinding_Custom:
-		return &EndpointBinding_Custom{Custom: value.Custom}
+	case *api.ProtoEndpointBinding_Get:
+		binding.Pattern = &api.EndpointBinding_Get{Get: value.Get}
+	case *api.ProtoEndpointBinding_Put:
+		binding.Pattern = &api.EndpointBinding_Put{Put: value.Put}
+	case *api.ProtoEndpointBinding_Post:
+		binding.Pattern = &api.EndpointBinding_Post{Post: value.Post}
+	case *api.ProtoEndpointBinding_Delete:
+		binding.Pattern = &api.EndpointBinding_Delete{Delete: value.Delete}
+	case *api.ProtoEndpointBinding_Patch:
+		binding.Pattern = &api.EndpointBinding_Patch{Patch: value.Patch}
+	case *api.ProtoEndpointBinding_Custom:
+		binding.Pattern = &api.EndpointBinding_Custom{Custom: value.Custom}
 	}
-
-	return nil
 }
 
 func (r *Registry) loadYAML(reader io.Reader, src SourceInfo) error {
@@ -117,7 +117,7 @@ func (r *Registry) loadYAML(reader io.Reader, src SourceInfo) error {
 		return fmt.Errorf("failed to JSON marshal content: %w", err)
 	}
 
-	config := &Config{}
+	config := &api.Config{}
 	if err := protojson.Unmarshal(jsonContents, config); err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (r *Registry) loadJSON(reader io.Reader, src SourceInfo) error {
 		return fmt.Errorf("failed to read configuration: %w", err)
 	}
 
-	config := &Config{}
+	config := &api.Config{}
 	if err := protojson.Unmarshal(content, config); err != nil {
 		return fmt.Errorf("failed to unmarshal json file: %s", err)
 	}
@@ -139,7 +139,7 @@ func (r *Registry) loadJSON(reader io.Reader, src SourceInfo) error {
 	return r.processConfig(config, src)
 }
 
-func (r *Registry) processConfig(config *Config, src SourceInfo) error {
+func (r *Registry) processConfig(config *api.Config, src SourceInfo) error {
 	if config.Gateway == nil {
 		return nil
 	}
@@ -176,7 +176,7 @@ func (r *Registry) LookupBinding(selector string) (EndpointSpec, bool) {
 	return result, ok
 }
 
-func validateBinding(endpoint *EndpointBinding) error {
+func validateBinding(endpoint *api.EndpointBinding) error {
 	if !selectorPattern.MatchString(endpoint.Selector) {
 		return fmt.Errorf("invalid selector: %q", endpoint.Selector)
 	}
