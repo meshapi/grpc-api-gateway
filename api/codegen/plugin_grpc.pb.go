@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: rest_gateway.proto
+// source: meshapi/gateway/codegen/plugin.proto
 
-package plugin
+package codegen
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewRestGatewayPluginClient(cc grpc.ClientConnInterface) RestGatewayPluginCl
 
 func (c *restGatewayPluginClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
 	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/meshapi.gateway.codegen.plugin.RestGatewayPlugin/Ping", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/meshapi.gateway.codegen.RestGatewayPlugin/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _RestGatewayPlugin_Ping_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/meshapi.gateway.codegen.plugin.RestGatewayPlugin/Ping",
+		FullMethod: "/meshapi.gateway.codegen.RestGatewayPlugin/Ping",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RestGatewayPluginServer).Ping(ctx, req.(*PingRequest))
@@ -92,7 +92,7 @@ func _RestGatewayPlugin_Ping_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RestGatewayPlugin_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "meshapi.gateway.codegen.plugin.RestGatewayPlugin",
+	ServiceName: "meshapi.gateway.codegen.RestGatewayPlugin",
 	HandlerType: (*RestGatewayPluginServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -101,5 +101,5 @@ var RestGatewayPlugin_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "rest_gateway.proto",
+	Metadata: "meshapi/gateway/codegen/plugin.proto",
 }

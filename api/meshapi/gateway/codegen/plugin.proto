@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package meshapi.gateway.codegen.plugin;
+package meshapi.gateway.codegen;
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin";
+option go_package = "github.com/meshapi/grpc-rest-gateway/api/codegen";
 
 // UnixSocketConnection is a mode of plugin connectivity using UNIX sockets.
 message UnixSocketConnection { // socket is the socket file. string socket = 1;
@@ -61,4 +61,17 @@ message PluginInfo {
 
 	// registered_callbacks are all the callbacks the plug-in wishes to handle.
 	repeated string registered_callbacks = 3;
+}
+
+message PingRequest {
+	string text = 1;
+}
+
+message PingResponse {
+	string text = 1;
+}
+
+// RestGatewayPlugin is the plugin service provider for the rest gateway.
+service RestGatewayPlugin {
+	rpc Ping(PingRequest) returns (PingResponse);
 }

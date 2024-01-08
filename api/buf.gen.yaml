@@ -2,7 +2,9 @@ version: v1
 plugins:
   - out: .
     name: go
-    #opt: 'paths=source_relative'
+    opt: 'module=github.com/meshapi/grpc-rest-gateway/api'
+  - out: .
+    name: go-grpc
     opt: 'module=github.com/meshapi/grpc-rest-gateway/api'
   - out: .
     name: jsonschema

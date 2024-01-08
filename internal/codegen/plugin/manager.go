@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/meshapi/grpc-rest-gateway/api/codegen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
@@ -46,11 +47,11 @@ func WithTimeout(duration time.Duration) Option {
 	})
 }
 
-func getGeneratorType(generator Generator) string {
+func getGeneratorType(generator codegen.Generator) string {
 	switch generator {
-	case Generator_Generator_RestGateway:
+	case codegen.Generator_Generator_RestGateway:
 		return "REST_GATEWAY"
-	case Generator_Generator_OpenAPI:
+	case codegen.Generator_Generator_OpenAPI:
 		return "OPEN_API"
 	default:
 		panic("Using unknown generator is not acceptable")
@@ -59,7 +60,7 @@ func getGeneratorType(generator Generator) string {
 
 type Manager struct {
 	initConfig
-	info *GeneratorInfo
+	info *codegen.GeneratorInfo
 	path string
 
 	connection *grpc.ClientConn
@@ -67,7 +68,7 @@ type Manager struct {
 	lock       sync.Mutex
 }
 
-func NewManager(path string, info *GeneratorInfo, opts ...Option) *Manager {
+func NewManager(path string, info *codegen.GeneratorInfo, opts ...Option) *Manager {
 	config := initConfig{Timeout: DefaultTimeout}
 
 	for _, opt := range opts {
@@ -165,13 +166,13 @@ func (m *Manager) InitConnection(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) InitRestGateway(ctx context.Context) (RestGatewayPluginClient, error) {
+func (m *Manager) InitRestGateway(ctx context.Context) (codegen.RestGatewayPluginClient, error) {
 	err := m.InitConnection(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewRestGatewayPluginClient(m.connection), nil
+	return codegen.NewRestGatewayPluginClient(m.connection), nil
 }
 
 // Kill would attempt to kill the current plugin process if there is one available.
@@ -187,7 +188,7 @@ func tryKillingProcess(cmd *exec.Cmd) {
 	}
 }
 
-func dialPluginConnection(ctx context.Context, info *PluginInfo) (*grpc.ClientConn, error) {
+func dialPluginConnection(ctx context.Context, info *codegen.PluginInfo) (*grpc.ClientConn, error) {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
@@ -196,9 +197,9 @@ func dialPluginConnection(ctx context.Context, info *PluginInfo) (*grpc.ClientCo
 	target := ""
 
 	switch connectionInfo := info.Connection.(type) {
-	case *PluginInfo_Tcp:
+	case *codegen.PluginInfo_Tcp:
 		target = connectionInfo.Tcp.Address
-	case *PluginInfo_UnixSocket:
+	case *codegen.PluginInfo_UnixSocket:
 		target = connectionInfo.UnixSocket.Socket
 		if !strings.HasPrefix(target, "unix://") {
 			target = "unix://" + target
@@ -215,7 +216,7 @@ func dialPluginConnection(ctx context.Context, info *PluginInfo) (*grpc.ClientCo
 	return conn, nil
 }
 
-func readPluginInfo(reader io.Reader) (*PluginInfo, error) {
+func readPluginInfo(reader io.Reader) (*codegen.PluginInfo, error) {
 	var length uint64
 	if _, err := fmt.Fscanf(reader, "%d", &length); err != nil {
 		return nil, fmt.Errorf("failed to capture message length: %w", err)
@@ -230,7 +231,7 @@ func readPluginInfo(reader io.Reader) (*PluginInfo, error) {
 		return nil, fmt.Errorf("failed to read buffer: %w", err)
 	}
 
-	info := &PluginInfo{}
+	info := &codegen.PluginInfo{}
 	if err := proto.Unmarshal(buffer, info); err != nil {
 		return nil, fmt.Errorf("failed to marshal PluginInfo: %w", err)
 	}
@@ -238,7 +239,7 @@ func readPluginInfo(reader io.Reader) (*PluginInfo, error) {
 	return info, nil
 }
 
-func writeGeneratorInfoAndClose(writer io.WriteCloser, info *GeneratorInfo) error {
+func writeGeneratorInfoAndClose(writer io.WriteCloser, info *codegen.GeneratorInfo) error {
 	defer writer.Close()
 
 	generatorInfo, err := proto.Marshal(info)
