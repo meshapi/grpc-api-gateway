@@ -22,6 +22,7 @@ import (
 
 func main() {
 	showVersion := flag.Bool("version", false, "show version")
+	logFile := flag.String("log_file", "", "path to the output log file")
 	generatorOptions := prepareOptions()
 
 	if *showVersion {
@@ -34,14 +35,24 @@ func main() {
 	}
 
 	options.Run(func(gen *protogen.Plugin) error {
+		if *logFile != "" {
+			writer, err := os.Create(*logFile)
+			if err != nil {
+				grpclog.Errorf("failed to create log file: %s", err)
+				return err
+			}
+			defer writer.Close()
+
+			grpclog.SetLoggerV2(grpclog.NewLoggerV2(writer, writer, writer))
+		}
+
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 
-		generator := gengateway.New(generatorOptions)
+		generator := gengateway.New(*generatorOptions)
 		if err := generator.LoadFromPlugin(gen); err != nil {
 			grpclog.Fatalf("failed to prepare for generation: %s", err)
 		}
 
-		grpclog.Infof("received request for %s", gen.FilesByPath)
 		return nil
 	})
 }

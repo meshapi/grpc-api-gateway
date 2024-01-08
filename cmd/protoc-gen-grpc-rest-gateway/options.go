@@ -6,7 +6,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/gengateway"
 )
 
-func prepareOptions() gengateway.Options {
+func prepareOptions() *gengateway.Options {
 	generatorOptions := gengateway.DefaultOptions()
 
 	flag.StringVar(
@@ -45,7 +45,16 @@ func prepareOptions() gengateway.Options {
 		&generatorOptions.GenerateUnboundMethods, "generate_unbound_methods", generatorOptions.GenerateUnboundMethods,
 		"controls whether or not unannotated RPC methods should be created as part of the proxy.")
 
+	flag.StringVar(
+		&generatorOptions.SearchPath,
+		"config_search_path",
+		generatorOptions.SearchPath,
+		"gateway config search path is the directory (relative or absolute) from the current working directory that contains"+
+			" the gateway config files.")
+
+	generatorOptions.GatewayFileLoadOptions.AddFlags(flag.CommandLine)
+
 	flag.Parse()
 
-	return generatorOptions
+	return &generatorOptions
 }
