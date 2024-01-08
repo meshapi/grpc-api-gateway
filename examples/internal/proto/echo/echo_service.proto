@@ -9,6 +9,8 @@ package meshapi.gateway.examples;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 
+import "meshapi/gateway/annotations.proto";
+
 option go_package = "github.com/meshapi/grpc-rest-gateway/examples/api/proto/echo";
 
 // Embedded represents a message embedded in SimpleMessage.
@@ -55,29 +57,29 @@ service EchoService {
   // The message posted as the id parameter will also be
   // returned.
   rpc Echo(SimpleMessage) returns (SimpleMessage) {
-    //option (google.api.http) = {
-    //  post: "/v1/example/echo/{id}"
-    //  additional_bindings {get: "/v1/example/echo/{id}/{num}"}
-    //  additional_bindings {get: "/v1/example/echo/{id}/{num}/{lang}"}
-    //  additional_bindings {get: "/v1/example/echo1/{id}/{line_num}/{status.note}"}
-    //  additional_bindings {get: "/v1/example/echo2/{no.note}"}
-    //  additional_bindings {get: "/v1/example/echo/resource/{resource_id}"}
-    //};
+		//option (meshapi.gateway.http) = {
+		//  post: "/v1/example/echo/{id}"
+		//  additional_bindings {get: "/v1/example/echo/{id}/{num}"}
+		//  additional_bindings {get: "/v1/example/echo/{id}/{num}/{lang}"}
+		//  additional_bindings {get: "/v1/example/echo1/{id}/{line_num}/{status.note}"}
+		//  additional_bindings {get: "/v1/example/echo2/{no.note}"}
+		//  additional_bindings {get: "/v1/example/echo/resource/{resource_id}"}
+		//};
   }
   // EchoBody method receives a simple message and returns it.
   rpc EchoBody(SimpleMessage) returns (SimpleMessage) {
-    //option (google.api.http) = {
-    //  post: "/v1/example/echo_body"
-    //  body: "*"
-    //  additional_bindings {
-    //    put: "/v1/example/echo_body/{id}"
-    //    body: "no"
-    //  }
-    //  additional_bindings {
-    //    put: "/v1/example/echo_body2/{id}"
-    //    body: "resource_id"
-    //  }
-    //};
+		option (meshapi.gateway.http) = {
+			post: "/v1/example/echo_body"
+			body: "*"
+			additional_bindings {
+				put: "/v1/example/echo_body/{id}"
+				body: "no"
+			}
+			additional_bindings {
+				put: "/v1/example/echo_body2/{id}"
+				body: "resource_id"
+			}
+		};
   }
   // EchoDelete method receives a simple message and returns it.
   rpc EchoDelete(SimpleMessage) returns (SimpleMessage) {

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/meshapi/grpc-rest-gateway/examples/api/proto/echo"
+	"github.com/meshapi/grpc-rest-gateway/examples/api/echo"
 )
 
 type EchoService struct {

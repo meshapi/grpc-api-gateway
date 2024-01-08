@@ -1,0 +1,1 @@
+data: &{endpoints:map[meshapi.gateway.examples.EchoService.Echo:{Binding:0xc0004163f0 SourceInfo:{Filename:proto/echo/echo_service_gateway.yaml ProtoPackage:meshapi.gateway.examples}} meshapi.gateway.examples.EchoService.EchoBody:{Binding:0xc0004179e0 SourceInfo:{Filename:echo/echo_service.proto ProtoPackage:meshapi.gateway.examples}}]}

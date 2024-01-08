@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/meshapi/grpc-rest-gateway/examples/api/proto/echo"
+	"github.com/meshapi/grpc-rest-gateway/examples/api/echo"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
 	"github.com/meshapi/grpc-rest-gateway/protoconvert"
 	"github.com/meshapi/grpc-rest-gateway/utilities"

@@ -7,17 +7,17 @@ import (
 	"net"
 	"os"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin"
+	"github.com/meshapi/grpc-rest-gateway/api/codegen"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 type pingService struct {
-	plugin.UnimplementedRestGatewayPluginServer
+	codegen.UnimplementedRestGatewayPluginServer
 }
 
-func (p pingService) Ping(ctx context.Context, req *plugin.PingRequest) (*plugin.PingResponse, error) {
-	return &plugin.PingResponse{Text: req.Text}, nil
+func (p pingService) Ping(ctx context.Context, req *codegen.PingRequest) (*codegen.PingResponse, error) {
+	return &codegen.PingResponse{Text: req.Text}, nil
 }
 
 func main() {
@@ -28,9 +28,9 @@ func main() {
 	defer listener.Close()
 
 	go func() {
-		pluginInfo := &plugin.PluginInfo{
-			Connection: &plugin.PluginInfo_Tcp{
-				Tcp: &plugin.TCPConnection{Address: ":30000"}},
+		pluginInfo := &codegen.PluginInfo{
+			Connection: &codegen.PluginInfo_Tcp{
+				Tcp: &codegen.TCPConnection{Address: ":30000"}},
 			RegisteredCallbacks: []string{"feature-a", "feature-b"},
 		}
 		data, err := proto.Marshal(pluginInfo)
@@ -45,6 +45,6 @@ func main() {
 	}()
 
 	server := grpc.NewServer()
-	plugin.RegisterRestGatewayPluginServer(server, &pingService{})
-	server.Serve(listener)
+	codegen.RegisterRestGatewayPluginServer(server, &pingService{})
+	_ = server.Serve(listener)
 }

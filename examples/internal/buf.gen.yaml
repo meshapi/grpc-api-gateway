@@ -1,0 +1,14 @@
+version: v1
+plugins:
+  - out: proto
+    name: go
+    opt: 'paths=source_relative'
+  - out: proto
+    name: go-grpc
+    opt: 'paths=source_relative'
+  - out: proto
+    name: grpc-rest-gateway
+    opt:
+      - 'paths=source_relative'
+      - 'log_file=log.txt'
+      - 'config_search_path=proto'
