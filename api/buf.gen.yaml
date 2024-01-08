@@ -1,0 +1,9 @@
+version: v1
+plugins:
+  - out: .
+    name: go
+    #opt: 'paths=source_relative'
+    opt: 'module=github.com/meshapi/grpc-rest-gateway/api'
+  - out: .
+    name: jsonschema
+    opt: 'file_extension=schema.json,messages=[Config],disallow_additional_properties,enforce_oneof'

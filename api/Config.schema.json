@@ -1,0 +1,234 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Config",
+    "definitions": {
+        "Config": {
+            "properties": {
+                "gateway": {
+                    "$ref": "#/definitions/meshapi.gateway.GatewaySpec",
+                    "additionalProperties": false,
+                    "description": "gateway holds gateway configs."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Config",
+            "description": "Config is the content of a configuration file."
+        },
+        "meshapi.gateway.AdditionalEndpointBinding": {
+            "properties": {
+                "get": {
+                    "type": "string"
+                },
+                "put": {
+                    "type": "string"
+                },
+                "post": {
+                    "type": "string"
+                },
+                "delete": {
+                    "type": "string"
+                },
+                "patch": {
+                    "type": "string"
+                },
+                "custom": {
+                    "$ref": "#/definitions/meshapi.gateway.CustomPattern",
+                    "additionalProperties": false,
+                    "description": "custom can be used for custom HTTP methods."
+                },
+                "body": {
+                    "type": "string",
+                    "description": "body is a request message field selector that will be read via HTTP body. value of '*' indicates that the entire request message gets decoded from the body. default value of '' indicates that no part of the request gets decoded from the body. NOTE: Not all methods support HTTP body."
+                },
+                "query_params": {
+                    "items": {
+                        "$ref": "#/definitions/meshapi.gateway.QueryParameterBinding"
+                    },
+                    "additionalProperties": false,
+                    "type": "array",
+                    "description": "query_params are explicit query parameter bindings that can be used to rename or ignore query parameters."
+                },
+                "disable_query_param_discovery": {
+                    "type": "boolean",
+                    "description": "disable_query_param_discovery can be used to avoid auto binding query parameters."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "oneOf": [
+                {
+                    "required": [
+                        "get"
+                    ]
+                },
+                {
+                    "required": [
+                        "put"
+                    ]
+                },
+                {
+                    "required": [
+                        "post"
+                    ]
+                },
+                {
+                    "required": [
+                        "delete"
+                    ]
+                },
+                {
+                    "required": [
+                        "patch"
+                    ]
+                },
+                {
+                    "required": [
+                        "custom"
+                    ]
+                }
+            ],
+            "title": "Additional Endpoint Binding"
+        },
+        "meshapi.gateway.CustomPattern": {
+            "properties": {
+                "method": {
+                    "type": "string",
+                    "description": "method is the custom HTTP method."
+                },
+                "path": {
+                    "type": "string",
+                    "description": "path is the HTTP path pattern."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Custom Pattern",
+            "description": "CustomPattern describes an HTTP pattern and custom method."
+        },
+        "meshapi.gateway.EndpointBinding": {
+            "properties": {
+                "selector": {
+                    "type": "string",
+                    "description": "selector is dot separated gRPC service method selector. selector string can be configured to be relative if it begins with a '.' character but this is only supported when using the proto generators and only if a package can be deduced. if the selector does not begin with a '.' character, it will be treated as a fully qualified method name (FQMN)."
+                },
+                "get": {
+                    "type": "string"
+                },
+                "put": {
+                    "type": "string"
+                },
+                "post": {
+                    "type": "string"
+                },
+                "delete": {
+                    "type": "string"
+                },
+                "patch": {
+                    "type": "string"
+                },
+                "custom": {
+                    "$ref": "#/definitions/meshapi.gateway.CustomPattern",
+                    "additionalProperties": false,
+                    "description": "custom can be used for custom HTTP methods."
+                },
+                "body": {
+                    "type": "string",
+                    "description": "body is a request message field selector that will be read via HTTP body. value of '*' indicates that the entire request message gets decoded from the body. default value of '' indicates that no part of the request gets decoded from the body. NOTE: Not all methods support HTTP body."
+                },
+                "query_params": {
+                    "items": {
+                        "$ref": "#/definitions/meshapi.gateway.QueryParameterBinding"
+                    },
+                    "additionalProperties": false,
+                    "type": "array",
+                    "description": "query_params are explicit query parameter bindings that can be used to rename or ignore query parameters."
+                },
+                "additional_bindings": {
+                    "items": {
+                        "$ref": "#/definitions/meshapi.gateway.AdditionalEndpointBinding"
+                    },
+                    "additionalProperties": false,
+                    "type": "array",
+                    "description": "additional_bindings holds additional bindings for the same gRPC service method."
+                },
+                "disable_query_param_discovery": {
+                    "type": "boolean",
+                    "description": "disable_query_param_discovery can be used to avoid auto binding query parameters."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "oneOf": [
+                {
+                    "required": [
+                        "get"
+                    ]
+                },
+                {
+                    "required": [
+                        "put"
+                    ]
+                },
+                {
+                    "required": [
+                        "post"
+                    ]
+                },
+                {
+                    "required": [
+                        "delete"
+                    ]
+                },
+                {
+                    "required": [
+                        "patch"
+                    ]
+                },
+                {
+                    "required": [
+                        "custom"
+                    ]
+                }
+            ],
+            "title": "Endpoint Binding",
+            "description": "EndpointBinding is a gRPC method - HTTP endpoint binding specification."
+        },
+        "meshapi.gateway.GatewaySpec": {
+            "properties": {
+                "endpoints": {
+                    "items": {
+                        "$ref": "#/definitions/meshapi.gateway.EndpointBinding"
+                    },
+                    "additionalProperties": false,
+                    "type": "array",
+                    "description": "endpoints hold a series of endpoint binding specs."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Gateway Spec",
+            "description": "GatewaySpec holds gRPC gateway configurations."
+        },
+        "meshapi.gateway.QueryParameterBinding": {
+            "properties": {
+                "selector": {
+                    "type": "string",
+                    "description": "selector is a dot separated path to the request message's field."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "name is the name of the HTTP query parameter that will be used."
+                },
+                "ignore": {
+                    "type": "boolean",
+                    "description": "ignore avoids reading this query parameter altogether (default: false)."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Query Parameter Binding",
+            "description": "QueryParameterBinding describes a query parameter to request message binding."
+        }
+    }
+}

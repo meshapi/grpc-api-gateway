@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package meshapi.gateway;
+
+import "google/protobuf/descriptor.proto";
+import "meshapi/gateway/gateway.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/api";
+
+
+extend google.protobuf.MethodOptions {
+	// http holds HTTP endpoint binding configs.
+	//
+  // ID assigned by protobuf-global-extension-registry@google.com for gRPC-Gateway project.
+  ProtoEndpointBinding http = 1142;
+}
+
+message ProtoEndpointBinding {
+	oneof pattern {
+		string get = 2;
+		string put = 3;
+		string post = 4;
+		string delete = 5;
+		string patch = 6;
+
+		// custom can be used for custom HTTP methods.
+		CustomPattern custom = 7; 
+	}
+
+	string body = 8;
+	repeated QueryParameterBinding query_params = 9;
+	repeated AdditionalEndpointBinding additional_bindings = 10;
+	bool disable_query_param_discovery = 11;
+}
