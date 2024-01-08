@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"gopkg.in/yaml.v3"
 )
@@ -36,6 +37,8 @@ func NewRegistry() *Registry {
 	return &Registry{endpoints: map[string]EndpointSpec{}}
 }
 
+// LoadFromFile loads a gateway config file for a proto file at filePath. protoPackage is provided
+// will be used to convert relative selectors to absolute selectors.
 func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -58,7 +61,48 @@ func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 	}
 }
 
-func (r *Registry) LoadFromService(filePath, service *descriptorpb.ServiceDescriptorProto) error {
+func (r *Registry) LoadFromService(filePath, protoPackage string, service *descriptorpb.ServiceDescriptorProto) error {
+	config := Config{
+		Gateway: &GatewaySpec{
+			Endpoints: []*EndpointBinding{},
+		},
+	}
+
+	for _, method := range service.GetMethod() {
+		binding, ok := proto.GetExtension(method.Options, E_Http).(*ProtoEndpointBinding)
+		if !ok || binding == nil {
+			continue
+		}
+
+		config.Gateway.Endpoints = append(config.Gateway.Endpoints, &EndpointBinding{
+			Selector:                   protoPackage + "." + service.GetName() + "." + method.GetName(),
+			Pattern:                    patternFromProtoDefinition(binding.Pattern),
+			Body:                       binding.GetBody(),
+			QueryParams:                binding.GetQueryParams(),
+			AdditionalBindings:         binding.GetAdditionalBindings(),
+			DisableQueryParamDiscovery: binding.DisableQueryParamDiscovery,
+		})
+	}
+
+	return r.processConfig(&config, SourceInfo{Filename: filePath, ProtoPackage: protoPackage})
+}
+
+func patternFromProtoDefinition(value isProtoEndpointBinding_Pattern) isEndpointBinding_Pattern {
+	switch value := value.(type) {
+	case *ProtoEndpointBinding_Get:
+		return &EndpointBinding_Get{Get: value.Get}
+	case *ProtoEndpointBinding_Put:
+		return &EndpointBinding_Put{Put: value.Put}
+	case *ProtoEndpointBinding_Post:
+		return &EndpointBinding_Post{Post: value.Post}
+	case *ProtoEndpointBinding_Delete:
+		return &EndpointBinding_Delete{Delete: value.Delete}
+	case *ProtoEndpointBinding_Patch:
+		return &EndpointBinding_Patch{Patch: value.Patch}
+	case *ProtoEndpointBinding_Custom:
+		return &EndpointBinding_Custom{Custom: value.Custom}
+	}
+
 	return nil
 }
 
@@ -102,6 +146,9 @@ func (r *Registry) processConfig(config *Config, src SourceInfo) error {
 
 	for _, endpoint := range config.Gateway.GetEndpoints() {
 		if strings.HasPrefix(endpoint.Selector, ".") {
+			if src.ProtoPackage == "" {
+				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", endpoint.Selector)
+			}
 			endpoint.Selector = src.ProtoPackage + endpoint.Selector
 		}
 

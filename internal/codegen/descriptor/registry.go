@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/internal/codegen/configpath"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -38,6 +38,11 @@ type Registry struct {
 
 	// GatewayFileLoadOptions holds gateway config file loading options.
 	GatewayFileLoadOptions GatewayFileLoadOptions
+
+	// SearchPath is the directory that is used to look for gateway configuration files.
+	//
+	// this search path can be relative or absolute, if relative, it will be from the current working directory.
+	SearchPath string
 }
 
 // NewRegistry creates and initializes a new registry.
@@ -73,9 +78,16 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		r.loadIncludedFile(filePath, gen.FilesByPath[filePath])
 
 		// if the file is a target of code genertaion, look for service mapping files.
-		if gen.FilesByPath[filePath].Generate {
+		if protoFile := gen.FilesByPath[filePath]; protoFile.Generate {
 			if err := r.loadEndpointsForFile(filePath, gen.FilesByPath[filePath]); err != nil {
 				return err
+			}
+
+			protoPackage := protoFile.Proto.GetPackage()
+			for _, protoService := range protoFile.Proto.GetService() {
+				if err := r.httpSpecRegistry.LoadFromService(filePath, protoPackage, protoService); err != nil {
+					return fmt.Errorf("failed to read embedded gateway configs from '%s': %w", filePath, err)
+				}
 			}
 		}
 	}
@@ -106,11 +118,13 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 		return nil
 	}
 
-	fileName := strings.TrimSuffix(filePath, filepath.Ext(filePath))
-	fileName = strings.ReplaceAll(r.GatewayFileLoadOptions.FilePattern, "{}", fileName)
+	configPath, err := configpath.Build(filePath, r.GatewayFileLoadOptions.FilePattern)
+	if err != nil {
+		return fmt.Errorf("failed to determine config file path: %w", err)
+	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
-		configFilePath := fileName + "." + ext
+		configFilePath := filepath.Join(r.SearchPath, configPath+"."+ext)
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {

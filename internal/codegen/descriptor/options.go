@@ -17,13 +17,13 @@ type GatewayFileLoadOptions struct {
 func (g *GatewayFileLoadOptions) AddFlags(flags *flag.FlagSet) {
 	flags.StringVar(
 		&g.GlobalGatewayConfigFile,
-		"gateway-config",
+		"gateway_config",
 		g.GlobalGatewayConfigFile,
 		"(optional) path to the gateway config file that gets loaded first.")
 
 	flags.StringVar(
 		&g.FilePattern,
-		"gateway-config-pattern",
+		"gateway_config_pattern",
 		g.FilePattern,
 		"gateway file pattern (without the extension segment) that gets used to try and load a gateway config file"+
 			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
@@ -33,6 +33,6 @@ func (g *GatewayFileLoadOptions) AddFlags(flags *flag.FlagSet) {
 func DefaultGatewayLoadOptions() GatewayFileLoadOptions {
 	return GatewayFileLoadOptions{
 		GlobalGatewayConfigFile: "",
-		FilePattern:             "{}_gateway",
+		FilePattern:             "{{ .Path }}_gateway",
 	}
 }

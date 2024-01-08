@@ -80,6 +80,10 @@ type Options struct {
 
 	// GatewayFileLoadOptions holds the gateway file loading options.
 	GatewayFileLoadOptions descriptor.GatewayFileLoadOptions
+
+	// SearchPath is the path that will be searched for gateway config files. Relative paths will be from the current
+	// working directory.
+	SearchPath string
 }
 
 // DefaultOptions returns the default options.
@@ -95,5 +99,6 @@ func DefaultOptions() Options {
 		WarnOnUnboundMethods:           false,
 		GenerateUnboundMethods:         false,
 		GatewayFileLoadOptions:         descriptor.DefaultGatewayLoadOptions(),
+		SearchPath:                     ".",
 	}
 }
