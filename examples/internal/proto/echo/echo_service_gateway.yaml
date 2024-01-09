@@ -1,11 +1,11 @@
-# yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-rest-gateway/internal/codegen/httpspec/Config.schema.json
+# yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-rest-gateway/api/Config.schema.json
 gateway:
   endpoints:
     - selector: '.EchoService.Echo'
-      custom:
-        path: '/v1/alpha'
-        method: 'REGISTER'
-      disable_query_param_discovery: true
-      query_params:
-        - selector: 'pagination.per_page'
-          name: 'per_page'
+      post: '/v1/example/echo/{id}'
+      additional_bindings:
+        - get: '/v1/example/echo/{id}/{num}'
+        - get: '/v1/example/echo/{id}/{num}/{lang}'
+        - get: '/v1/example/echo1/{id}/{line_num}/{status.note}'
+        - get: '/v1/example/echo2/{no.note}'
+        - get: '/v1/example/echo/resource/{resource_id}'

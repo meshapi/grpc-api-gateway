@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -12,12 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type pingService struct {
+type gatewayPlugin struct {
 	codegen.UnimplementedRestGatewayPluginServer
-}
-
-func (p pingService) Ping(ctx context.Context, req *codegen.PingRequest) (*codegen.PingResponse, error) {
-	return &codegen.PingResponse{Text: req.Text}, nil
 }
 
 func main() {
@@ -45,6 +40,6 @@ func main() {
 	}()
 
 	server := grpc.NewServer()
-	codegen.RegisterRestGatewayPluginServer(server, &pingService{})
+	codegen.RegisterRestGatewayPluginServer(server, &gatewayPlugin{})
 	_ = server.Serve(listener)
 }

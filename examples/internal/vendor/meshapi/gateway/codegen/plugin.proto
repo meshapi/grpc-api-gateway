@@ -62,16 +62,3 @@ message PluginInfo {
 	// registered_callbacks are all the callbacks the plug-in wishes to handle.
 	repeated string registered_callbacks = 3;
 }
-
-message PingRequest {
-	string text = 1;
-}
-
-message PingResponse {
-	string text = 1;
-}
-
-// RestGatewayPlugin is the plugin service provider for the rest gateway.
-service RestGatewayPlugin {
-	rpc Ping(PingRequest) returns (PingResponse);
-}
