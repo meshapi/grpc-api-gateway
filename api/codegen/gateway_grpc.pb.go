@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: meshapi/gateway/codegen/plugin.proto
+// source: meshapi/gateway/codegen/gateway.proto
 
 package codegen
 
@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RestGatewayPluginClient interface {
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
+	GetGatewayConfigFile(ctx context.Context, in *GetGatewayConfigFileRequest, opts ...grpc.CallOption) (*GetGatewayConfigFileResponse, error)
 }
 
 type restGatewayPluginClient struct {
@@ -33,9 +33,9 @@ func NewRestGatewayPluginClient(cc grpc.ClientConnInterface) RestGatewayPluginCl
 	return &restGatewayPluginClient{cc}
 }
 
-func (c *restGatewayPluginClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/meshapi.gateway.codegen.RestGatewayPlugin/Ping", in, out, opts...)
+func (c *restGatewayPluginClient) GetGatewayConfigFile(ctx context.Context, in *GetGatewayConfigFileRequest, opts ...grpc.CallOption) (*GetGatewayConfigFileResponse, error) {
+	out := new(GetGatewayConfigFileResponse)
+	err := c.cc.Invoke(ctx, "/meshapi.gateway.codegen.RestGatewayPlugin/GetGatewayConfigFile", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *restGatewayPluginClient) Ping(ctx context.Context, in *PingRequest, opt
 // All implementations must embed UnimplementedRestGatewayPluginServer
 // for forward compatibility
 type RestGatewayPluginServer interface {
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	GetGatewayConfigFile(context.Context, *GetGatewayConfigFileRequest) (*GetGatewayConfigFileResponse, error)
 	mustEmbedUnimplementedRestGatewayPluginServer()
 }
 
@@ -54,8 +54,8 @@ type RestGatewayPluginServer interface {
 type UnimplementedRestGatewayPluginServer struct {
 }
 
-func (UnimplementedRestGatewayPluginServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+func (UnimplementedRestGatewayPluginServer) GetGatewayConfigFile(context.Context, *GetGatewayConfigFileRequest) (*GetGatewayConfigFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGatewayConfigFile not implemented")
 }
 func (UnimplementedRestGatewayPluginServer) mustEmbedUnimplementedRestGatewayPluginServer() {}
 
@@ -70,20 +70,20 @@ func RegisterRestGatewayPluginServer(s grpc.ServiceRegistrar, srv RestGatewayPlu
 	s.RegisterService(&RestGatewayPlugin_ServiceDesc, srv)
 }
 
-func _RestGatewayPlugin_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
+func _RestGatewayPlugin_GetGatewayConfigFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGatewayConfigFileRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RestGatewayPluginServer).Ping(ctx, in)
+		return srv.(RestGatewayPluginServer).GetGatewayConfigFile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/meshapi.gateway.codegen.RestGatewayPlugin/Ping",
+		FullMethod: "/meshapi.gateway.codegen.RestGatewayPlugin/GetGatewayConfigFile",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RestGatewayPluginServer).Ping(ctx, req.(*PingRequest))
+		return srv.(RestGatewayPluginServer).GetGatewayConfigFile(ctx, req.(*GetGatewayConfigFileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,10 +96,10 @@ var RestGatewayPlugin_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RestGatewayPluginServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Ping",
-			Handler:    _RestGatewayPlugin_Ping_Handler,
+			MethodName: "GetGatewayConfigFile",
+			Handler:    _RestGatewayPlugin_GetGatewayConfigFile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "meshapi/gateway/codegen/plugin.proto",
+	Metadata: "meshapi/gateway/codegen/gateway.proto",
 }

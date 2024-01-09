@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package meshapi.gateway.codegen;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/api/codegen";
+
+message GetGatewayConfigFileRequest {
+	// proto_file is the proto file that is currently being processed.
+	google.protobuf.FileDescriptorProto proto_file = 1;
+}
+
+message GetGatewayConfigFileResponse {
+	// file_path is the path to the config file that contains the gateway endpoints.
+	//
+	// yaml, yml and json extension will be tried for this file and if the path is relative, it will be
+	// from the search path.
+	string file_path = 1;
+}
+
+// RestGatewayPlugin is the plugin service provider for the rest gateway.
+service RestGatewayPlugin {
+	rpc GetGatewayConfigFile(GetGatewayConfigFileRequest) returns (GetGatewayConfigFileResponse);
+}

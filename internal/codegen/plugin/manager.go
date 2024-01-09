@@ -58,12 +58,30 @@ func getGeneratorType(generator codegen.Generator) string {
 	}
 }
 
+type Callbacks []string
+
+func (c Callbacks) Has(callback string) bool {
+	for _, item := range c {
+		if item == callback {
+			return true
+		}
+	}
+
+	return false
+}
+
+type Client struct {
+	Gateway             codegen.RestGatewayPluginClient
+	RegisteredCallbacks Callbacks
+}
+
 type Manager struct {
 	initConfig
 	info *codegen.GeneratorInfo
 	path string
 
 	connection *grpc.ClientConn
+	pluginInfo *codegen.PluginInfo
 	cmd        *exec.Cmd
 	lock       sync.Mutex
 }
@@ -143,6 +161,7 @@ func (m *Manager) InitConnection(ctx context.Context) error {
 			return
 		}
 
+		m.pluginInfo = info
 		m.connection = conn
 		errChan <- nil
 	}()
@@ -166,13 +185,16 @@ func (m *Manager) InitConnection(ctx context.Context) error {
 	}
 }
 
-func (m *Manager) InitRestGateway(ctx context.Context) (codegen.RestGatewayPluginClient, error) {
+func (m *Manager) InitClient(ctx context.Context) (Client, error) {
 	err := m.InitConnection(ctx)
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
-	return codegen.NewRestGatewayPluginClient(m.connection), nil
+	return Client{
+		Gateway:             codegen.NewRestGatewayPluginClient(m.connection),
+		RegisteredCallbacks: m.pluginInfo.RegisteredCallbacks,
+	}, nil
 }
 
 // Kill would attempt to kill the current plugin process if there is one available.

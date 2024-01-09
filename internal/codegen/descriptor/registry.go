@@ -1,6 +1,7 @@
 package descriptor
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/configpath"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec"
+	"github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -35,6 +37,9 @@ type Registry struct {
 
 	// httpSpecRegistry is HTTP specification registry which holds all the endpoint mappings.
 	httpSpecRegistry *httpspec.Registry
+
+	// PluginClient will be used (if specified) to find gateway config files.
+	PluginClient *plugin.Client
 
 	// GatewayFileLoadOptions holds gateway config file loading options.
 	GatewayFileLoadOptions GatewayFileLoadOptions
@@ -114,13 +119,29 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 		return nil
 	}
 
-	if r.GatewayFileLoadOptions.FilePattern == "" {
-		return nil
+	var configPath string
+
+	// if plugin callback is available, use the plugin first.
+	if r.PluginClient != nil && r.PluginClient.RegisteredCallbacks.Has(plugin.CallbackGatewayConfigFile) {
+		path, err := r.PluginClient.GetGatewayConfigFile(context.Background(), protoFile.Proto)
+		if err != nil {
+			return fmt.Errorf("failed to get gateway config file from plugin: %w", err)
+		}
+
+		configPath = path
 	}
 
-	configPath, err := configpath.Build(filePath, r.GatewayFileLoadOptions.FilePattern)
-	if err != nil {
-		return fmt.Errorf("failed to determine config file path: %w", err)
+	if configPath == "" {
+		if r.GatewayFileLoadOptions.FilePattern == "" {
+			return nil
+		}
+
+		path, err := configpath.Build(filePath, r.GatewayFileLoadOptions.FilePattern)
+		if err != nil {
+			return fmt.Errorf("failed to determine config file path: %w", err)
+		}
+
+		configPath = path
 	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
