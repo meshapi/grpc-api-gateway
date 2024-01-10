@@ -206,6 +206,12 @@ func (r *Registry) loadServices(file *File) error {
 				return fmt.Errorf("failed to process method '%s': %w", protoMethod.GetName(), err)
 			}
 		}
+
+		if len(service.Methods) == 0 {
+			continue
+		}
+
+		file.Services = append(file.Services, service)
 	}
 
 	return nil
@@ -213,7 +219,7 @@ func (r *Registry) loadServices(file *File) error {
 
 func (r *Registry) loadMethod(service *Service, protoMethod *descriptorpb.MethodDescriptorProto) error {
 	service.Methods = append(service.Methods, &Method{
-		MethodDescriptorProto: &descriptorpb.MethodDescriptorProto{},
+		MethodDescriptorProto: protoMethod,
 		Service:               service,
 		RequestType:           &Message{},
 		ResponseType:          &Message{},

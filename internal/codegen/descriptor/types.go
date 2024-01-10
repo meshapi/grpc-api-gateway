@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/internal/casing"
+	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -181,6 +183,61 @@ func (s *Service) ClientConstructorName() string {
 	return fmt.Sprintf("%s.%s", s.File.Pkg(), constructor)
 }
 
+// Parameter is a parameter provided in http requests
+type Parameter struct {
+	// FieldPath is a path to a proto field which this parameter is mapped to.
+	FieldPath FieldPath
+	// Target is the proto field which this parameter is mapped to.
+	Target *Field
+	// Method is the method which this parameter is used for.
+	Method *Method
+}
+
+// Body describes a http (request|response) body to be sent to the (method|client).
+// This is used in body and response_body options in google.api.HttpRule
+type Body struct {
+	// FieldPath is a path to a proto field which this parameter is mapped to.
+	FieldPath FieldPath
+}
+
+// QueryParamAlias describes a query parameter alias, used to set/rename query params.
+type QueryParamAlias struct {
+	// Name is the name that will be read from the query parameters.
+	Name string
+	// FieldPath is a path to a proto field which this parameter is mapped to.
+	FieldPath FieldPath
+}
+
+// QueryParameterCustomization describes the way query parameters are to get parsed.
+type QueryParameterCustomization struct {
+	// IgnoredFields are the field paths that are ignored.
+	IgnoredFields []FieldPath
+	// Aliases are the query parameter aliases.
+	Aliases []QueryParamAlias
+	// DisableAutoDiscovery disables auto discovery of query parameters and only allows the explicit declerations.
+	DisableAutoDiscovery bool
+}
+
+// Binding describes how an HTTP endpoint is bound to a gRPC method.
+type Binding struct {
+	// Method is the method which the endpoint is bound to.
+	Method *Method
+	// Index is a zero-origin index of the binding in the target method
+	Index int
+	// PathTemplate is path template where this method is mapped to.
+	PathTemplate httprule.Template
+	// HTTPMethod is the HTTP method which this method is mapped to.
+	HTTPMethod string
+	// PathParameters is the list of parameters provided in HTTP request paths.
+	PathParameters []Parameter
+	// QueryParameterCustomization holds any customization for the way query parameters are handled.
+	QueryParameterCustomization QueryParameterCustomization
+	// Body describes parameters provided in HTTP request body.
+	Body *Body
+	// ResponseBody describes field in response struct to marshal in HTTP response body.
+	ResponseBody *Body
+}
+
 // Method wraps descriptorpb.MethodDescriptorProto for richer features.
 type Method struct {
 	*descriptorpb.MethodDescriptorProto
@@ -214,4 +271,136 @@ type Field struct {
 // FQFN returns a fully qualified field name of this field.
 func (f *Field) FQFN() string {
 	return strings.Join([]string{f.Message.FQMN(), f.GetName()}, ".")
+}
+
+// FieldPath is a path to a field from a request message.
+type FieldPath []FieldPathComponent
+
+// String returns a string representation of the field path.
+func (p FieldPath) String() string {
+	components := make([]string, 0, len(p))
+	for _, c := range p {
+		components = append(components, c.Name)
+	}
+	return strings.Join(components, ".")
+}
+
+// IsNestedProto3 indicates whether the FieldPath is a nested Proto3 path.
+func (p FieldPath) IsNestedProto3() bool {
+	if len(p) > 1 && !p[0].Target.Message.File.proto2() {
+		return true
+	}
+	return false
+}
+
+// IsOptionalProto3 indicates whether the FieldPath is a proto3 optional field.
+func (p FieldPath) IsOptionalProto3() bool {
+	if len(p) == 0 {
+		return false
+	}
+	return p[0].Target.GetProto3Optional()
+}
+
+// AssignableExpr is an assignable expression in Go to be used to assign a value to the target field.
+// It starts with "msgExpr", which is the go expression of the method request object. Before using
+// such an expression the prep statements must be emitted first, in case the field path includes
+// a oneof. See FieldPath.AssignableExprPrep.
+func (p FieldPath) AssignableExpr(msgExpr string, currentPackage string) string {
+	l := len(p)
+	if l == 0 {
+		return msgExpr
+	}
+
+	components := msgExpr
+	for i, c := range p {
+		// We need to check if the target is not proto3_optional first.
+		// Under the hood, proto3_optional uses oneof to signal to old proto3 clients
+		// that presence is tracked for this field. This oneof is known as a "synthetic" oneof.
+		if !c.Target.GetProto3Optional() && c.Target.OneofIndex != nil {
+			index := c.Target.OneofIndex
+			msg := c.Target.Message
+			oneOfName := casing.Camel(msg.GetOneofDecl()[*index].GetName())
+			oneofFieldName := msg.GoType(currentPackage) + "_" + c.AssignableExpr()
+
+			if c.Target.ForcePrefixedName {
+				oneofFieldName = msg.File.Pkg() + "." + msg.GetName() + "_" + c.AssignableExpr()
+			}
+
+			components = components + "." + oneOfName + ".(*" + oneofFieldName + ")"
+		}
+
+		if i == l-1 {
+			components = components + "." + c.AssignableExpr()
+			continue
+		}
+		components = components + "." + c.ValueExpr()
+	}
+	return components
+}
+
+// AssignableExprPrep returns preparation statements for an assignable expression to assign a value
+// to the target field. The Go expression of the method request object is "msgExpr". This is only
+// needed for field paths that contain oneofs. Otherwise, an empty string is returned.
+func (p FieldPath) AssignableExprPrep(msgExpr string, currentPackage string) string {
+	l := len(p)
+	if l == 0 {
+		return ""
+	}
+
+	var preparations []string
+	components := msgExpr
+	for i, c := range p {
+		// We need to check if the target is not proto3_optional first.
+		// Under the hood, proto3_optional uses oneof to signal to old proto3 clients
+		// that presence is tracked for this field. This oneof is known as a "synthetic" oneof.
+		if !c.Target.GetProto3Optional() && c.Target.OneofIndex != nil {
+			index := c.Target.OneofIndex
+			msg := c.Target.Message
+			oneOfName := casing.Camel(msg.GetOneofDecl()[*index].GetName())
+			oneofFieldName := msg.GoType(currentPackage) + "_" + c.AssignableExpr()
+
+			if c.Target.ForcePrefixedName {
+				oneofFieldName = msg.File.Pkg() + "." + msg.GetName() + "_" + c.AssignableExpr()
+			}
+
+			components = components + "." + oneOfName
+			s := `if %s == nil {
+				%s =&%s{}
+			} else if _, ok := %s.(*%s); !ok {
+				return nil, metadata, status.Errorf(codes.InvalidArgument, "expect type: *%s, but: %%t\n",%s)
+			}`
+
+			preparations = append(preparations, fmt.Sprintf(s, components, components, oneofFieldName, components, oneofFieldName, oneofFieldName, components))
+			components = components + ".(*" + oneofFieldName + ")"
+		}
+
+		if i == l-1 {
+			components = components + "." + c.AssignableExpr()
+			continue
+		}
+		components = components + "." + c.ValueExpr()
+	}
+
+	return strings.Join(preparations, "\n")
+}
+
+// FieldPathComponent is a path component in FieldPath
+type FieldPathComponent struct {
+	// Name is a name of the proto field which this component corresponds to.
+	Name string
+	// Target is the proto field which this component corresponds to.
+	Target *Field
+}
+
+// AssignableExpr returns an assignable expression in go for this field.
+func (c FieldPathComponent) AssignableExpr() string {
+	return casing.Camel(c.Name)
+}
+
+// ValueExpr returns an expression in go for this field.
+func (c FieldPathComponent) ValueExpr() string {
+	if c.Target.Message.File.proto2() {
+		return fmt.Sprintf("Get%s()", casing.Camel(c.Name))
+	}
+	return casing.Camel(c.Name)
 }
