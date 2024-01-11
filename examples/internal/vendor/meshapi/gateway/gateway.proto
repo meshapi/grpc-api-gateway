@@ -46,16 +46,21 @@ message EndpointBinding {
 	//
 	// NOTE: Not all methods support HTTP body.
 	string body = 8;
+
+	// response_body is a response message field selector that will be written to HTTP response.
+	//
+	// default value of '*' or '' indicates that the entire response message gets encoded.
+	string response_body = 9;
 	
 	// query_params are explicit query parameter bindings that can be used to rename
 	// or ignore query parameters.
-	repeated QueryParameterBinding query_params = 9;
+	repeated QueryParameterBinding query_params = 10;
 
 	// additional_bindings holds additional bindings for the same gRPC service method.
-	repeated AdditionalEndpointBinding additional_bindings = 10;
+	repeated AdditionalEndpointBinding additional_bindings = 11;
 
 	// disable_query_param_discovery can be used to avoid auto binding query parameters.
-	bool disable_query_param_discovery = 11;
+	bool disable_query_param_discovery = 12;
 }
 
 message AdditionalEndpointBinding {
@@ -78,12 +83,17 @@ message AdditionalEndpointBinding {
 	// NOTE: Not all methods support HTTP body.
 	string body = 8;
 
+	// response_body is a response message field selector that will be written to HTTP response.
+	//
+	// default value of '*' or '' indicates that the entire response message gets encoded.
+	string response_body = 9;
+
 	// query_params are explicit query parameter bindings that can be used to rename
 	// or ignore query parameters.
-	repeated QueryParameterBinding query_params = 9;
+	repeated QueryParameterBinding query_params = 10;
 
 	// disable_query_param_discovery can be used to avoid auto binding query parameters.
-	bool disable_query_param_discovery = 10;
+	bool disable_query_param_discovery = 11;
 }
 
 // CustomPattern describes an HTTP pattern and custom method.
