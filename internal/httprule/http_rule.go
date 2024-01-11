@@ -9,7 +9,7 @@ import (
 var (
 	selectorPattern = regexp.MustCompile(`^\{(\w+(?:[.]\w+)*)\}$`)
 	catchAllPattern = regexp.MustCompile(`^\{(\w+(?:[.]\w+)*)=\*\}$`)
-	literalPattern  = regexp.MustCompile(`[a-zA-Z0-9-_.~!@$&'()*+,;=:]+`)
+	literalPattern  = regexp.MustCompile(`^[a-zA-Z0-9-_.~!@$&'()*+,;=:]+$`)
 )
 
 // SegmentType is the type of path segment in the HTTP rule.
@@ -40,24 +40,36 @@ type Template struct {
 func (t Template) String() string {
 	writer := &strings.Builder{}
 
-	_, _ = writer.WriteRune('/')
+	if len(t.Segments) == 0 {
+		return "/"
+	}
 
 	for _, segment := range t.Segments {
 		switch segment.Type {
 		case SegmentTypeLiteral:
-			_, _ = writer.WriteString(segment.Value)
+			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
 		case SegmentTypeSelector:
-			_, _ = fmt.Fprintf(writer, "['%s']", segment.Value)
+			_, _ = fmt.Fprintf(writer, "/['%s']", segment.Value)
 		case SegmentTypeWildcard:
-			_, _ = writer.WriteRune('*')
+			_, _ = fmt.Fprintf(writer, "/*")
 		case SegmentTypeCatchAllSelector:
-			_, _ = fmt.Fprintf(writer, "[*'%s']", segment.Value)
+			_, _ = fmt.Fprintf(writer, "/[*'%s']", segment.Value)
 		default:
-			_, _ = fmt.Fprintf(writer, "<!?:%s>", segment.Value)
+			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
 		}
 	}
 
 	return writer.String()
+}
+
+// HasVariables returns whether or not the current template contains any binding variables.
+func (t Template) HasVariables() bool {
+	for _, segment := range t.Segments {
+		if segment.Type == SegmentTypeCatchAllSelector || segment.Type == SegmentTypeSelector {
+			return true
+		}
+	}
+	return false
 }
 
 // Parse parses an HTTP rule syntax and builds out a template.
@@ -70,17 +82,11 @@ func Parse(path string) (Template, error) {
 
 	segments := strings.Split(path, "/")
 	for _, segment := range segments {
-		switch {
-		case strings.HasPrefix(segment, "{"):
-			matches := selectorPattern.FindStringSubmatch(segment)
-			if matches == nil {
-				return result, fmt.Errorf("invalid selector segment '%s' in HTTP rule: %s", segment, path)
-			}
+		if segment == "" {
+			continue
+		}
 
-			result.Segments = append(result.Segments, Segment{
-				Value: matches[1],
-				Type:  SegmentTypeSelector,
-			})
+		switch {
 		case strings.HasSuffix(segment, "=*}"):
 			matches := catchAllPattern.FindStringSubmatch(segment)
 			if matches == nil {
@@ -90,6 +96,16 @@ func Parse(path string) (Template, error) {
 			result.Segments = append(result.Segments, Segment{
 				Value: matches[1],
 				Type:  SegmentTypeCatchAllSelector,
+			})
+		case strings.HasPrefix(segment, "{"):
+			matches := selectorPattern.FindStringSubmatch(segment)
+			if matches == nil {
+				return result, fmt.Errorf("invalid selector segment '%s' in HTTP rule: %s", segment, path)
+			}
+
+			result.Segments = append(result.Segments, Segment{
+				Value: matches[1],
+				Type:  SegmentTypeSelector,
 			})
 		case segment == "*":
 			result.Segments = append(result.Segments, Segment{
@@ -107,5 +123,5 @@ func Parse(path string) (Template, error) {
 		}
 	}
 
-	return Template{}, nil
+	return result, nil
 }

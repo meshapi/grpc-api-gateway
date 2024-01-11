@@ -15,7 +15,7 @@ func TestParse(t *testing.T) {
 	}{
 		{
 			Path:              "",
-			ExpectedErrString: "invalid HTTP rule, missing leading /",
+			ExpectedErrString: "invalid HTTP rule, no leading /",
 		},
 		{
 			Path:           "/",
@@ -56,22 +56,24 @@ func TestParse(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tpl, err := httprule.Parse(tt.Path)
-		if err != nil {
-			if tt.ExpectedErrString == "" {
-				t.Fatalf("unexpected error: %s", err)
-			} else if strings.Contains(err.Error(), tt.ExpectedErrString) {
-				t.Fatalf("expected error containing '%s' but received: %s", tt.ExpectedErrString, err)
+		t.Run(tt.Path, func(t *testing.T) {
+			tpl, err := httprule.Parse(tt.Path)
+			if err != nil {
+				if tt.ExpectedErrString == "" {
+					t.Fatalf("unexpected error: %s", err)
+				} else if !strings.Contains(err.Error(), tt.ExpectedErrString) {
+					t.Fatalf("expected error containing '%s' but received: %s", tt.ExpectedErrString, err)
+				}
+				return
+			} else if tt.ExpectedErrString != "" {
+				t.Fatalf("expected error containing '%s' but received nil", tt.ExpectedErrString)
+				return
 			}
-			return
-		} else if tt.ExpectedErrString != "" {
-			t.Fatalf("expected error containing '%s' but received nil", tt.ExpectedErrString)
-			return
-		}
 
-		output := tpl.String()
-		if output != tt.ExpectedOutput {
-			t.Fatalf("expected '%s', received '%s'", tt.ExpectedOutput, output)
-		}
+			output := tpl.String()
+			if output != tt.ExpectedOutput {
+				t.Fatalf("expected '%s', received '%s'", tt.ExpectedOutput, output)
+			}
+		})
 	}
 }
