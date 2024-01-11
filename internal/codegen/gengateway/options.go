@@ -72,18 +72,8 @@ type Options struct {
 	// Standalone generates a standalone gateway package, which imports the target service package.
 	Standalone bool
 
-	// WarnOnUnboundMethods emits a warning message if an RPC method has no mapping.
-	WarnOnUnboundMethods bool
-
-	// GenerateUnboundMethods controls whether or not unannotated RPC methods should be created as part of the proxy.
-	GenerateUnboundMethods bool
-
-	// GatewayFileLoadOptions holds the gateway file loading options.
-	GatewayFileLoadOptions descriptor.GatewayFileLoadOptions
-
-	// SearchPath is the path that will be searched for gateway config files. Relative paths will be from the current
-	// working directory.
-	SearchPath string
+	// DescriptorRegistryOptions holds the descriptor registry options.
+	DescriptorRegistryOptions descriptor.RegistryOptions
 }
 
 // DefaultOptions returns the default options.
@@ -96,9 +86,6 @@ func DefaultOptions() Options {
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
 		Standalone:                     false,
-		WarnOnUnboundMethods:           false,
-		GenerateUnboundMethods:         false,
-		GatewayFileLoadOptions:         descriptor.DefaultGatewayLoadOptions(),
-		SearchPath:                     ".",
+		DescriptorRegistryOptions:      descriptor.DefaultRegistryOptions(),
 	}
 }

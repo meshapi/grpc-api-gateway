@@ -1,6 +1,30 @@
 package descriptor
 
-import "flag"
+import (
+	"flag"
+
+	"github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin"
+)
+
+// RegistryOptions holds all the options for the descriptor registry.
+type RegistryOptions struct {
+	// GatewayFileLoadOptions holds gateway config file loading options.
+	GatewayFileLoadOptions GatewayFileLoadOptions
+
+	// PluginClient will be used (if specified) to find gateway config files.
+	PluginClient *plugin.Client
+
+	// SearchPath is the directory that is used to look for gateway configuration files.
+	//
+	// this search path can be relative or absolute, if relative, it will be from the current working directory.
+	SearchPath string
+
+	// WarnOnUnboundMethods emits a warning message if an RPC method has no mapping.
+	WarnOnUnboundMethods bool
+
+	// GenerateUnboundMethods controls whether or not unannotated RPC methods should be created as part of the proxy.
+	GenerateUnboundMethods bool
+}
 
 // GatewayFileLoadOptions holds the gateway config file loading options.
 type GatewayFileLoadOptions struct {
@@ -13,8 +37,8 @@ type GatewayFileLoadOptions struct {
 	FilePattern string
 }
 
-// AddFlags adds command line flags to update this gateway loading options.
-func (g *GatewayFileLoadOptions) AddFlags(flags *flag.FlagSet) {
+// addFlags adds command line flags to update this gateway loading options.
+func (g *GatewayFileLoadOptions) addFlags(flags *flag.FlagSet) {
 	flags.StringVar(
 		&g.GlobalGatewayConfigFile,
 		"gateway_config",
@@ -29,10 +53,39 @@ func (g *GatewayFileLoadOptions) AddFlags(flags *flag.FlagSet) {
 			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
 }
 
-// DefaultGatewayLoadOptions holds the default gateway config loading options.
-func DefaultGatewayLoadOptions() GatewayFileLoadOptions {
+// defaultGatewayLoadOptions holds the default gateway config loading options.
+func defaultGatewayLoadOptions() GatewayFileLoadOptions {
 	return GatewayFileLoadOptions{
 		GlobalGatewayConfigFile: "",
 		FilePattern:             "{{ .Path }}_gateway",
 	}
+}
+
+func DefaultRegistryOptions() RegistryOptions {
+	return RegistryOptions{
+		GatewayFileLoadOptions: defaultGatewayLoadOptions(),
+		SearchPath:             ".",
+	}
+}
+
+// AddFlags adds command line flags to update this gateway loading options.
+//
+// NOTE: This function does not handle setting up the plugin client.
+func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
+	r.GatewayFileLoadOptions.addFlags(flags)
+
+	flags.StringVar(
+		&r.SearchPath,
+		"config_search_path",
+		r.SearchPath,
+		"gateway config search path is the directory (relative or absolute) from the current working directory that contains"+
+			" the gateway config files.")
+
+	flags.BoolVar(
+		&r.WarnOnUnboundMethods, "warn_on_unbound_methods", r.WarnOnUnboundMethods,
+		"emits a warning message if an RPC method has no mapping.")
+
+	flags.BoolVar(
+		&r.GenerateUnboundMethods, "generate_unbound_methods", r.GenerateUnboundMethods,
+		"controls whether or not unannotated RPC methods should be created as part of the proxy.")
 }

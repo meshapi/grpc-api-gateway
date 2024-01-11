@@ -3,13 +3,17 @@ package descriptor
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/configpath"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin"
+	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -27,10 +31,10 @@ type Registry struct {
 	files map[string]*File
 
 	// prefix is a prefix to be inserted to golang package paths generated from proto package names.
-	prefix string
+	//prefix string
 
 	// pkgMap is a user-specified mapping from file path to proto package.
-	pkgMap map[string]string
+	//pkgMap map[string]string
 
 	// pkgAliases is a mapping from package aliases to package paths in go which are already taken.
 	pkgAliases map[string]string
@@ -38,26 +42,18 @@ type Registry struct {
 	// httpSpecRegistry is HTTP specification registry which holds all the endpoint mappings.
 	httpSpecRegistry *httpspec.Registry
 
-	// PluginClient will be used (if specified) to find gateway config files.
-	PluginClient *plugin.Client
-
-	// GatewayFileLoadOptions holds gateway config file loading options.
-	GatewayFileLoadOptions GatewayFileLoadOptions
-
-	// SearchPath is the directory that is used to look for gateway configuration files.
-	//
-	// this search path can be relative or absolute, if relative, it will be from the current working directory.
-	SearchPath string
+	RegistryOptions
 }
 
 // NewRegistry creates and initializes a new registry.
-func NewRegistry() *Registry {
+func NewRegistry(options RegistryOptions) *Registry {
 	return &Registry{
 		messages:         map[string]*Message{},
 		files:            map[string]*File{},
 		enums:            map[string]*Enum{},
 		pkgAliases:       map[string]string{},
 		httpSpecRegistry: httpspec.NewRegistry(),
+		RegistryOptions:  options,
 	}
 }
 
@@ -97,6 +93,9 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
+	writer := gen.NewGeneratedFile("output.txt", "")
+	fmt.Fprintf(writer, "data: %+v", r.httpSpecRegistry)
+
 	for _, filePath := range filePaths {
 		if !gen.FilesByPath[filePath].Generate {
 			continue
@@ -106,9 +105,6 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 			return err
 		}
 	}
-
-	writer := gen.NewGeneratedFile("output.txt", "")
-	fmt.Fprintf(writer, "data: %+v", r.httpSpecRegistry)
 
 	return nil
 }
@@ -202,7 +198,30 @@ func (r *Registry) loadServices(file *File) error {
 			Methods:                []*Method{},
 		}
 		for _, protoMethod := range service.GetMethod() {
-			if err := r.loadMethod(service, protoMethod); err != nil {
+			fqmn := service.FQSN() + "." + protoMethod.GetName()
+			binding, ok := r.httpSpecRegistry.LookupBinding(fqmn)
+			if !ok {
+				if r.GenerateUnboundMethods {
+					// add default binding.
+					binding = httpspec.EndpointSpec{
+						Binding: &api.EndpointBinding{
+							Selector: "",
+							Pattern:  &api.EndpointBinding_Post{Post: fmt.Sprintf("/%s/%s", service.FQSN(), protoMethod.GetName())},
+							Body:     "*",
+						},
+						SourceInfo: httpspec.SourceInfo{
+							ProtoPackage: service.File.GetPackage(),
+						},
+					}
+				} else {
+					if r.WarnOnUnboundMethods {
+						grpclog.Warningf("No HTTP binding specification found for method: %s.%s", service.GetName(), protoMethod.GetName())
+					}
+					continue
+				}
+			}
+
+			if err := r.addMethodToService(service, protoMethod, binding); err != nil {
 				return fmt.Errorf("failed to process method '%s': %w", protoMethod.GetName(), err)
 			}
 		}
@@ -217,15 +236,217 @@ func (r *Registry) loadServices(file *File) error {
 	return nil
 }
 
-func (r *Registry) loadMethod(service *Service, protoMethod *descriptorpb.MethodDescriptorProto) error {
-	service.Methods = append(service.Methods, &Method{
+func (r *Registry) addMethodToService(
+	service *Service, protoMethod *descriptorpb.MethodDescriptorProto, binding httpspec.EndpointSpec) error {
+
+	requestType, err := r.LookupMessage(service.File.GetPackage(), protoMethod.GetInputType())
+	if err != nil {
+		return err
+	}
+
+	responseType, err := r.LookupMessage(service.File.GetPackage(), protoMethod.GetOutputType())
+	if err != nil {
+		return err
+	}
+
+	method := &Method{
 		MethodDescriptorProto: protoMethod,
 		Service:               service,
-		RequestType:           &Message{},
-		ResponseType:          &Message{},
-	})
+		RequestType:           requestType,
+		ResponseType:          responseType,
+	}
+
+	method.Bindings, err = r.mapBindings(method, binding)
+	if err != nil {
+		return err
+	}
+
+	service.Methods = append(service.Methods, method)
+	return nil
+}
+
+func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Binding, error) {
+	var bindings []Binding
+
+	method, path, err := parseEndpointPattern(spec.Binding)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process binding for '%s' (%s): %w", md.FQMN(), spec.SourceInfo.Filename, err)
+	}
+
+	tpl, err := httprule.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTTP rule %s: %w (%s)", path, err, spec.SourceInfo.Filename)
+	}
+
+	if md.GetClientStreaming() && tpl.HasVariables() {
+		return nil, fmt.Errorf("cannot use path parameters in client streaming: %s", md.FQMN())
+	}
+
+	binding := Binding{
+		Method:                      md,
+		Index:                       0,
+		PathTemplate:                tpl,
+		HTTPMethod:                  method,
+		QueryParameterCustomization: QueryParameterCustomization{},
+		Body:                        &Body{},
+		ResponseBody:                &Body{},
+	}
+
+	for _, segment := range tpl.Segments {
+		if segment.Type == httprule.SegmentTypeCatchAllSelector || segment.Type == httprule.SegmentTypeSelector {
+			param, err := r.mapParam(md, segment.Value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to map path parameter in %s: %w", path, err)
+			}
+
+			binding.PathParameters = append(binding.PathParameters, param)
+		}
+	}
+
+	requestBody, err := r.mapBody(md, spec.Binding.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse request body selector %q: %w", spec.Binding.Body, err)
+	}
+	binding.Body = requestBody
+
+	responseBody, err := r.mapResponseBody(md, spec.Binding.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response body selector %q: %w", spec.Binding.Body, err)
+	}
+	binding.ResponseBody = responseBody
+
+	bindings = append(bindings, binding)
+
+	return bindings, nil
+}
+
+func (r *Registry) mapBody(md *Method, path string) (*Body, error) {
+	switch path {
+	case "":
+		return nil, nil
+	case "*":
+		return &Body{FieldPath: nil}, nil
+	}
+
+	msg := md.RequestType
+	fields, err := r.resolveFieldPath(msg, path, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Body{FieldPath: FieldPath(fields)}, nil
+}
+
+func (r *Registry) mapResponseBody(md *Method, path string) (*Body, error) {
+	msg := md.ResponseType
+	switch path {
+	case "", "*":
+		return nil, nil
+	}
+	fields, err := r.resolveFieldPath(msg, path, false)
+	if err != nil {
+		return nil, err
+	}
+	return &Body{FieldPath: FieldPath(fields)}, nil
+}
+
+func (r *Registry) mapParam(md *Method, path string) (Parameter, error) {
+	msg := md.RequestType
+	fields, err := r.resolveFieldPath(msg, path, true)
+	if err != nil {
+		return Parameter{}, err
+	}
+	l := len(fields)
+	if l == 0 {
+		return Parameter{}, fmt.Errorf("invalid field access list for %s", path)
+	}
+	target := fields[l-1].Target
+	switch target.GetType() {
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		if !IsWellKnownType(*target.TypeName) {
+			return Parameter{}, fmt.Errorf(
+				"%s.%s: %s is a protobuf message type. Protobuf message types cannot be used as path parameters, use a scalar value type (such as string) instead", md.Service.GetName(), md.GetName(), path)
+		}
+	}
+	return Parameter{
+		FieldPath: FieldPath(fields),
+		Method:    md,
+		Target:    fields[l-1].Target,
+	}, nil
+}
+
+// lookupField looks up a field named "name" within "msg".
+// It returns nil if no such field found.
+func lookupField(msg *Message, name string) *Field {
+	for _, field := range msg.Fields {
+		if field.GetName() == name {
+			return field
+		}
+	}
 
 	return nil
+}
+
+// resolveFieldPath resolves "path" into a list of fieldDescriptor, starting from "msg".
+func (r *Registry) resolveFieldPath(msg *Message, path string, isPathParam bool) ([]FieldPathComponent, error) {
+	if path == "" {
+		return nil, nil
+	}
+
+	root := msg
+	var result []FieldPathComponent
+	for i, c := range strings.Split(path, ".") {
+		if i > 0 {
+			f := result[i-1].Target
+			switch f.GetType() {
+			case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+				var err error
+				msg, err = r.LookupMessage(msg.FQMN(), f.GetTypeName())
+				if err != nil {
+					return nil, err
+				}
+			default:
+				return nil, fmt.Errorf("not an aggregate type: %s in %s", f.GetName(), path)
+			}
+		}
+
+		field := lookupField(msg, c)
+		if field == nil {
+			return nil, fmt.Errorf("no field %q found in %s", path, root.GetName())
+		}
+
+		if isPathParam && field.GetProto3Optional() {
+			return nil, fmt.Errorf("optional field not allowed in field path: %s in %s", field.GetName(), path)
+		}
+
+		result = append(result, FieldPathComponent{Name: c, Target: field})
+	}
+
+	return result, nil
+}
+
+// parseEndpointPattern returns HTTP method and path.
+func parseEndpointPattern(spec *api.EndpointBinding) (string, string, error) {
+	if spec.Pattern == nil {
+		return "", "", fmt.Errorf("No pattern specified in HTTP rule")
+	}
+
+	switch pattern := spec.Pattern.(type) {
+	case *api.EndpointBinding_Custom:
+		return strings.ToUpper(pattern.Custom.Method), pattern.Custom.Path, nil
+	case *api.EndpointBinding_Get:
+		return http.MethodGet, pattern.Get, nil
+	case *api.EndpointBinding_Patch:
+		return http.MethodPatch, pattern.Patch, nil
+	case *api.EndpointBinding_Post:
+		return http.MethodPost, pattern.Post, nil
+	case *api.EndpointBinding_Put:
+		return http.MethodPut, pattern.Put, nil
+	case *api.EndpointBinding_Delete:
+		return http.MethodDelete, pattern.Delete, nil
+	default:
+		return "", "", fmt.Errorf("No pattern specified in HTTP rule")
+	}
 }
 
 func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages []*descriptorpb.DescriptorProto) {
@@ -278,4 +499,36 @@ func (r *Registry) ReserveGoPackageAlias(alias, pkgPath string) bool {
 
 	r.pkgAliases[alias] = pkgPath
 	return true
+}
+
+// LookupMessage looks up a message type by "name".
+// It tries to resolve "name" from "location" if "name" is a relative message name.
+//
+// location must be a dot separated proto package to build a FQMN.
+func (r *Registry) LookupMessage(location, name string) (*Message, error) {
+	// If a message starts with a dot, it indicates that it is an absolute name.
+	if strings.HasPrefix(name, ".") {
+		m, ok := r.messages[name]
+		if !ok {
+			return nil, fmt.Errorf("no message found: %s", name)
+		}
+
+		return m, nil
+	}
+
+	if !strings.HasPrefix(location, ".") {
+		location = "." + location
+	}
+
+	components := strings.Split(location, ".")
+	for len(components) > 0 {
+		fqmn := strings.Join(append(components, name), ".")
+		if m, ok := r.messages[fqmn]; ok {
+			return m, nil
+		}
+
+		components = components[:len(components)-1]
+	}
+
+	return nil, fmt.Errorf("no message found: %s", name)
 }

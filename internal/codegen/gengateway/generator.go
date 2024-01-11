@@ -36,9 +36,7 @@ type Generator struct {
 }
 
 func New(options Options) *Generator {
-	descriptorRegistry := descriptor.NewRegistry()
-	descriptorRegistry.GatewayFileLoadOptions = options.GatewayFileLoadOptions
-	descriptorRegistry.SearchPath = options.SearchPath
+	descriptorRegistry := descriptor.NewRegistry(options.DescriptorRegistryOptions)
 
 	return &Generator{Options: options, registry: descriptorRegistry}
 }

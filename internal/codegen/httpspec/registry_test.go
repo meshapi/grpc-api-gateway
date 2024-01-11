@@ -86,7 +86,7 @@ func TestLoadYAML(t *testing.T) {
 		return
 	}
 
-	_, ok := r.LookupBinding("meshapi.example.v1.Test")
+	_, ok := r.LookupBinding(".meshapi.example.v1.Test")
 	if !ok {
 		t.Fatal("unexpected failure in looking up meshapi.example.v1.Test")
 		return

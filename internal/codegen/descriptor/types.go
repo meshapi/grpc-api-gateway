@@ -247,6 +247,8 @@ type Method struct {
 	RequestType *Message
 	// ResponseType is the message type of responses from this method.
 	ResponseType *Message
+	// Bindings are the HTTP endpoint bindings.
+	Bindings []Binding
 }
 
 // FQMN returns a fully qualified rpc method name of this method.
@@ -404,3 +406,25 @@ func (c FieldPathComponent) ValueExpr() string {
 	}
 	return casing.Camel(c.Name)
 }
+
+// IsWellKnownType returns true if the provided fully qualified type name is considered 'well-known'.
+func IsWellKnownType(typeName string) bool {
+	_, ok := wellKnownTypeConv[typeName]
+	return ok
+}
+
+var (
+	wellKnownTypeConv = map[string]string{
+		".google.protobuf.Timestamp":   "gateway.Timestamp",
+		".google.protobuf.Duration":    "gateway.Duration",
+		".google.protobuf.StringValue": "gateway.StringValue",
+		".google.protobuf.FloatValue":  "gateway.FloatValue",
+		".google.protobuf.DoubleValue": "gateway.DoubleValue",
+		".google.protobuf.BoolValue":   "gateway.BoolValue",
+		".google.protobuf.BytesValue":  "gateway.BytesValue",
+		".google.protobuf.Int32Value":  "gateway.Int32Value",
+		".google.protobuf.UInt32Value": "gateway.UInt32Value",
+		".google.protobuf.Int64Value":  "gateway.Int64Value",
+		".google.protobuf.UInt64Value": "gateway.UInt64Value",
+	}
+)

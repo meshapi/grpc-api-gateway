@@ -37,22 +37,7 @@ func prepareOptions() *gengateway.Options {
 		&generatorOptions.Standalone, "standalone", generatorOptions.Standalone,
 		"generates a standalone gateway package, which imports the target service package")
 
-	flag.BoolVar(
-		&generatorOptions.WarnOnUnboundMethods, "warn_on_unbound_methods", generatorOptions.WarnOnUnboundMethods,
-		"emits a warning message if an RPC method has no mapping.")
-
-	flag.BoolVar(
-		&generatorOptions.GenerateUnboundMethods, "generate_unbound_methods", generatorOptions.GenerateUnboundMethods,
-		"controls whether or not unannotated RPC methods should be created as part of the proxy.")
-
-	flag.StringVar(
-		&generatorOptions.SearchPath,
-		"config_search_path",
-		generatorOptions.SearchPath,
-		"gateway config search path is the directory (relative or absolute) from the current working directory that contains"+
-			" the gateway config files.")
-
-	generatorOptions.GatewayFileLoadOptions.AddFlags(flag.CommandLine)
+	generatorOptions.DescriptorRegistryOptions.AddFlags(flag.CommandLine)
 
 	flag.Parse()
 
