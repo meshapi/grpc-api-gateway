@@ -22,7 +22,9 @@ go.work
 
 # Build Output
 out
-examples/internal/vendor/meshapi/*
+examples/internal/vendor/meshapi/
+examples/internal/vendor/meshapi/gateway/
+examples/internal/vendor/meshapi/gateway/codegen/
 
 # Logs
 log.txt
