@@ -41,6 +41,10 @@
                     "type": "string",
                     "description": "body is a request message field selector that will be read via HTTP body. value of '*' indicates that the entire request message gets decoded from the body. default value of '' indicates that no part of the request gets decoded from the body. NOTE: Not all methods support HTTP body."
                 },
+                "response_body": {
+                    "type": "string",
+                    "description": "response_body is a response message field selector that will be written to HTTP response. default value of '*' or '' indicates that the entire response message gets encoded."
+                },
                 "query_params": {
                     "items": {
                         "$ref": "#/definitions/meshapi.gateway.QueryParameterBinding"
@@ -135,6 +139,10 @@
                 "body": {
                     "type": "string",
                     "description": "body is a request message field selector that will be read via HTTP body. value of '*' indicates that the entire request message gets decoded from the body. default value of '' indicates that no part of the request gets decoded from the body. NOTE: Not all methods support HTTP body."
+                },
+                "response_body": {
+                    "type": "string",
+                    "description": "response_body is a response message field selector that will be written to HTTP response. default value of '*' or '' indicates that the entire response message gets encoded."
                 },
                 "query_params": {
                     "items": {
