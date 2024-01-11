@@ -288,8 +288,6 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Bindin
 		PathTemplate:                tpl,
 		HTTPMethod:                  method,
 		QueryParameterCustomization: QueryParameterCustomization{},
-		Body:                        &Body{},
-		ResponseBody:                &Body{},
 	}
 
 	for _, segment := range tpl.Segments {
@@ -303,17 +301,15 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Bindin
 		}
 	}
 
-	requestBody, err := r.mapBody(md, spec.Binding.Body)
+	binding.Body, err = r.mapBody(md, spec.Binding.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse request body selector %q: %w", spec.Binding.Body, err)
 	}
-	binding.Body = requestBody
 
-	responseBody, err := r.mapResponseBody(md, spec.Binding.Body)
+	binding.ResponseBody, err = r.mapResponseBody(md, spec.Binding.ResponseBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse response body selector %q: %w", spec.Binding.Body, err)
+		return nil, fmt.Errorf("failed to parse response body selector %q: %w", spec.Binding.ResponseBody, err)
 	}
-	binding.ResponseBody = responseBody
 
 	bindings = append(bindings, binding)
 
