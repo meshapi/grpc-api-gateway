@@ -2,6 +2,7 @@ package gengateway
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -44,6 +45,14 @@ func New(options Options) *Generator {
 func (g *Generator) LoadFromPlugin(gen *protogen.Plugin) error {
 	if err := g.registry.LoadFromPlugin(gen); err != nil {
 		return fmt.Errorf("failed to load proto files: %w", err)
+	}
+
+	if unboundSpecs := g.registry.UnboundExternalHTTPSpecs(); len(unboundSpecs) > 0 {
+		values := []string{}
+		for _, spec := range unboundSpecs {
+			values = append(values, fmt.Sprintf("%s (%s)", spec.Binding.Selector, spec.SourceInfo.Filename))
+		}
+		return fmt.Errorf("HTTP binding specifications without a matching selector: %s", strings.Join(values, ", "))
 	}
 
 	return nil

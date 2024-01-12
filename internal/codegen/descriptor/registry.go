@@ -100,6 +100,7 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		if !gen.FilesByPath[filePath].Generate {
 			continue
 		}
+
 		file := r.files[filePath]
 		if err := r.loadServices(file); err != nil {
 			return err
@@ -620,4 +621,28 @@ func (r *Registry) LookupMessage(location, name string) (*Message, error) {
 	}
 
 	return nil, fmt.Errorf("no message found: %s", name)
+}
+
+// UnboundExternalHTTPSpecs returns the list of external HTTP specs
+// which do not have a matching method in the registry.
+func (r *Registry) UnboundExternalHTTPSpecs() []httpspec.EndpointSpec {
+	allServiceMethods := map[string]struct{}{}
+	for _, file := range r.files {
+		for _, service := range file.Services {
+			fqsn := service.FQSN()
+			for _, method := range service.ServiceDescriptorProto.GetMethod() {
+				method := fqsn + "." + method.GetName()
+				allServiceMethods[method] = struct{}{}
+			}
+		}
+	}
+
+	var missingMethods []httpspec.EndpointSpec
+	r.httpSpecRegistry.Iterate(func(fqmn string, spec httpspec.EndpointSpec) {
+		if _, ok := allServiceMethods[fqmn]; !ok {
+			missingMethods = append(missingMethods, spec)
+		}
+	})
+
+	return missingMethods
 }

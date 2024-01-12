@@ -62,6 +62,13 @@ func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 	}
 }
 
+// Iterate iterates over all registered endpoint specifications.
+func (r *Registry) Iterate(cb func(fqmn string, spec EndpointSpec)) {
+	for key, spec := range r.endpoints {
+		cb(key, spec)
+	}
+}
+
 func (r *Registry) LoadFromService(filePath, protoPackage string, service *descriptorpb.ServiceDescriptorProto) error {
 	config := api.Config{
 		Gateway: &api.GatewaySpec{
@@ -199,19 +206,3 @@ func validateBinding(endpoint *api.EndpointBinding) error {
 
 	return nil
 }
-
-// think about how we are going to load these files.
-// we could move the proto files here to a separate package.
-// we could read everything at once or separately but we'd have to use marshal and unmarshal
-// which is not super efficient but it is doable.
-
-// read the global file first
-// read every service file and load the gRPC gateway
-// if there is a conflict, have a config that states if we should override or error out
-// what if an unrelated file overrides something after the fact?
-// is that possible? if we first process all files and then look at the services it shouldn't be possible.
-// BUT because files can override each other, we most definitely need to set aside an order.
-
-// we should consider an option that controls IF arbitrary files can add arbitrary methods.
-// options can be true, global or same proto package, global or same file.
-// files are read alphabetically perhaps?
