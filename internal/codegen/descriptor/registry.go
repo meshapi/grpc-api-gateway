@@ -268,50 +268,119 @@ func (r *Registry) addMethodToService(
 func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Binding, error) {
 	var bindings []Binding
 
+	type BindingInput struct {
+		Method                          string
+		Path                            string
+		Body                            string
+		ResponseBody                    string
+		Index                           int
+		DisableQueryParamsAutoDiscovery bool
+		QueryParams                     []*api.QueryParameterBinding
+	}
+
+	insertBinding := func(input BindingInput) error {
+		tpl, err := httprule.Parse(input.Path)
+		if err != nil {
+			return fmt.Errorf("failed to parse HTTP rule %s: %w (%s)", input.Path, err, spec.SourceInfo.Filename)
+		}
+
+		if md.GetClientStreaming() && tpl.HasVariables() {
+			return fmt.Errorf("cannot use path parameters in client streaming: %s", md.FQMN())
+		}
+
+		binding := Binding{
+			Method:       md,
+			Index:        input.Index,
+			PathTemplate: tpl,
+			HTTPMethod:   input.Method,
+		}
+
+		for _, segment := range tpl.Segments {
+			if segment.Type == httprule.SegmentTypeCatchAllSelector || segment.Type == httprule.SegmentTypeSelector {
+				param, err := r.mapParam(md, segment.Value)
+				if err != nil {
+					return fmt.Errorf("failed to map path parameter in %s: %w", input.Path, err)
+				}
+
+				binding.PathParameters = append(binding.PathParameters, param)
+			}
+		}
+
+		binding.Body, err = r.mapBody(md, input.Body)
+		if err != nil {
+			return fmt.Errorf("failed to parse request body selector %q: %w", input.Body, err)
+		}
+
+		binding.ResponseBody, err = r.mapResponseBody(md, input.ResponseBody)
+		if err != nil {
+			return fmt.Errorf("failed to parse response body selector %q: %w", input.ResponseBody, err)
+		}
+
+		binding.QueryParameterCustomization.DisableAutoDiscovery = input.DisableQueryParamsAutoDiscovery
+		for _, queryParam := range input.QueryParams {
+			fields, err := r.resolveFieldPath(md.RequestType, queryParam.GetSelector(), false)
+			if err != nil {
+				return fmt.Errorf("failed to resolve field at selector %q: %w", queryParam.GetSelector(), err)
+			}
+
+			if queryParam.Ignore {
+				binding.QueryParameterCustomization.IgnoredFields = append(
+					binding.QueryParameterCustomization.IgnoredFields,
+					FieldPath(fields))
+			} else {
+				name := queryParam.Name
+				if name == "" {
+					name = FieldPath(fields).String()
+				}
+
+				binding.QueryParameterCustomization.Aliases = append(
+					binding.QueryParameterCustomization.Aliases,
+					QueryParamAlias{Name: name, FieldPath: FieldPath(fields)})
+			}
+		}
+
+		return nil
+	}
+
 	method, path, err := parseEndpointPattern(spec.Binding)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process binding for '%s' (%s): %w", md.FQMN(), spec.SourceInfo.Filename, err)
 	}
 
-	tpl, err := httprule.Parse(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTTP rule %s: %w (%s)", path, err, spec.SourceInfo.Filename)
+	input := BindingInput{
+		Method:                          method,
+		Path:                            path,
+		Body:                            spec.Binding.Body,
+		ResponseBody:                    spec.Binding.ResponseBody,
+		Index:                           0,
+		DisableQueryParamsAutoDiscovery: spec.Binding.DisableQueryParamDiscovery,
+		QueryParams:                     spec.Binding.GetQueryParams(),
 	}
 
-	if md.GetClientStreaming() && tpl.HasVariables() {
-		return nil, fmt.Errorf("cannot use path parameters in client streaming: %s", md.FQMN())
+	if err := insertBinding(input); err != nil {
+		return nil, err
 	}
 
-	binding := Binding{
-		Method:                      md,
-		Index:                       0,
-		PathTemplate:                tpl,
-		HTTPMethod:                  method,
-		QueryParameterCustomization: QueryParameterCustomization{},
-	}
+	for index, additionalBinding := range spec.Binding.GetAdditionalBindings() {
+		method, path, err = parseAdditionalEndpointPattern(additionalBinding)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process binding for '%s' (%s): %w", md.FQMN(), spec.SourceInfo.Filename, err)
+		}
 
-	for _, segment := range tpl.Segments {
-		if segment.Type == httprule.SegmentTypeCatchAllSelector || segment.Type == httprule.SegmentTypeSelector {
-			param, err := r.mapParam(md, segment.Value)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map path parameter in %s: %w", path, err)
-			}
+		input = BindingInput{
+			Method:                          method,
+			Path:                            path,
+			Body:                            additionalBinding.Body,
+			ResponseBody:                    additionalBinding.ResponseBody,
+			Index:                           index + 1,
+			DisableQueryParamsAutoDiscovery: additionalBinding.DisableQueryParamDiscovery,
+			QueryParams:                     additionalBinding.GetQueryParams(),
+		}
 
-			binding.PathParameters = append(binding.PathParameters, param)
+		if err := insertBinding(input); err != nil {
+			return nil, err
 		}
 	}
-
-	binding.Body, err = r.mapBody(md, spec.Binding.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse request body selector %q: %w", spec.Binding.Body, err)
-	}
-
-	binding.ResponseBody, err = r.mapResponseBody(md, spec.Binding.ResponseBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse response body selector %q: %w", spec.Binding.ResponseBody, err)
-	}
-
-	bindings = append(bindings, binding)
 
 	return bindings, nil
 }
@@ -439,6 +508,30 @@ func parseEndpointPattern(spec *api.EndpointBinding) (string, string, error) {
 	case *api.EndpointBinding_Put:
 		return http.MethodPut, pattern.Put, nil
 	case *api.EndpointBinding_Delete:
+		return http.MethodDelete, pattern.Delete, nil
+	default:
+		return "", "", fmt.Errorf("No pattern specified in HTTP rule")
+	}
+}
+
+// parseAdditionalEndpointPattern returns HTTP method and path.
+func parseAdditionalEndpointPattern(spec *api.AdditionalEndpointBinding) (string, string, error) {
+	if spec.Pattern == nil {
+		return "", "", fmt.Errorf("No pattern specified in HTTP rule")
+	}
+
+	switch pattern := spec.Pattern.(type) {
+	case *api.AdditionalEndpointBinding_Custom:
+		return strings.ToUpper(pattern.Custom.Method), pattern.Custom.Path, nil
+	case *api.AdditionalEndpointBinding_Get:
+		return http.MethodGet, pattern.Get, nil
+	case *api.AdditionalEndpointBinding_Patch:
+		return http.MethodPatch, pattern.Patch, nil
+	case *api.AdditionalEndpointBinding_Post:
+		return http.MethodPost, pattern.Post, nil
+	case *api.AdditionalEndpointBinding_Put:
+		return http.MethodPut, pattern.Put, nil
+	case *api.AdditionalEndpointBinding_Delete:
 		return http.MethodDelete, pattern.Delete, nil
 	default:
 		return "", "", fmt.Errorf("No pattern specified in HTTP rule")
