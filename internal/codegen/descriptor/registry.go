@@ -266,8 +266,8 @@ func (r *Registry) addMethodToService(
 	return nil
 }
 
-func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Binding, error) {
-	var bindings []Binding
+func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Binding, error) {
+	var bindings []*Binding
 
 	type BindingInput struct {
 		Method                          string
@@ -340,6 +340,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]Bindin
 			}
 		}
 
+		bindings = append(bindings, &binding)
 		return nil
 	}
 
@@ -621,6 +622,44 @@ func (r *Registry) LookupMessage(location, name string) (*Message, error) {
 	}
 
 	return nil, fmt.Errorf("no message found: %s", name)
+}
+
+// LookupFile looks up a file by name.
+func (r *Registry) LookupFile(name string) (*File, error) {
+	file, ok := r.files[name]
+	if !ok {
+		return nil, fmt.Errorf("no such file given: %s", name)
+	}
+
+	return file, nil
+}
+
+// LookupEnum looks up a enum type by "name".
+// It tries to resolve "name" from "location" if "name" is a relative enum name.
+func (r *Registry) LookupEnum(location, name string) (*Enum, error) {
+	if strings.HasPrefix(name, ".") {
+		e, ok := r.enums[name]
+		if !ok {
+			return nil, fmt.Errorf("no enum found: %s", name)
+		}
+
+		return e, nil
+	}
+
+	if !strings.HasPrefix(location, ".") {
+		location = "." + location
+	}
+	components := strings.Split(location, ".")
+
+	for len(components) > 0 {
+		fqen := strings.Join(append(components, name), ".")
+		if e, ok := r.enums[fqen]; ok {
+			return e, nil
+		}
+		components = components[:len(components)-1]
+	}
+
+	return nil, fmt.Errorf("no enum found: %s", name)
 }
 
 // UnboundExternalHTTPSpecs returns the list of external HTTP specs

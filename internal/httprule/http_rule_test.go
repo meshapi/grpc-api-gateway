@@ -11,6 +11,7 @@ func TestParse(t *testing.T) {
 	tests := []struct {
 		Path              string
 		ExpectedOutput    string
+		ExpectedPattern   string
 		ExpectedErrString string
 	}{
 		{
@@ -18,36 +19,44 @@ func TestParse(t *testing.T) {
 			ExpectedErrString: "invalid HTTP rule, no leading /",
 		},
 		{
-			Path:           "/",
-			ExpectedOutput: "/",
+			Path:            "/",
+			ExpectedOutput:  "/",
+			ExpectedPattern: "/",
 		},
 		{
-			Path:           "/v1/echo/",
-			ExpectedOutput: "/v1/echo",
+			Path:            "/v1/echo/",
+			ExpectedOutput:  "/v1/echo",
+			ExpectedPattern: "/v1/echo",
 		},
 		{
-			Path:           "/v1/echo///",
-			ExpectedOutput: "/v1/echo",
+			Path:            "/v1/echo///",
+			ExpectedOutput:  "/v1/echo",
+			ExpectedPattern: "/v1/echo",
 		},
 		{
-			Path:           "/v1/echo/{data}",
-			ExpectedOutput: "/v1/echo/['data']",
+			Path:            "/v1/echo/{data}",
+			ExpectedOutput:  "/v1/echo/['data']",
+			ExpectedPattern: "/v1/echo/?",
 		},
 		{
-			Path:           "/v1/echo/{data}/{request.label}",
-			ExpectedOutput: "/v1/echo/['data']/['request.label']",
+			Path:            "/v1/echo/{data}/{request.label}",
+			ExpectedOutput:  "/v1/echo/['data']/['request.label']",
+			ExpectedPattern: "/v1/echo/?/?",
 		},
 		{
-			Path:           "/v1/echo/{data}/{request.label}/{rest=*}",
-			ExpectedOutput: "/v1/echo/['data']/['request.label']/[*'rest']",
+			Path:            "/v1/echo/{data}/{request.label}/{rest=*}",
+			ExpectedOutput:  "/v1/echo/['data']/['request.label']/[*'rest']",
+			ExpectedPattern: "/v1/echo/?/?/*",
 		},
 		{
-			Path:           "/v*/echo",
-			ExpectedOutput: "/v*/echo",
+			Path:            "/v*/echo",
+			ExpectedOutput:  "/v*/echo",
+			ExpectedPattern: "/v*/echo",
 		},
 		{
-			Path:           "/v1/*/something",
-			ExpectedOutput: "/v1/*/something",
+			Path:            "/v1/*/something",
+			ExpectedOutput:  "/v1/*/something",
+			ExpectedPattern: "/v1/?/something",
 		},
 		{
 			Path:              "/v|",
@@ -73,6 +82,11 @@ func TestParse(t *testing.T) {
 			output := tpl.String()
 			if output != tt.ExpectedOutput {
 				t.Fatalf("expected '%s', received '%s'", tt.ExpectedOutput, output)
+			}
+
+			output = tpl.Pattern()
+			if output != tt.ExpectedPattern {
+				t.Fatalf("expected '%s', received '%s'", tt.ExpectedPattern, output)
 			}
 		})
 	}

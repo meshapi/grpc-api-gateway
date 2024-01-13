@@ -1,0 +1,7 @@
+{{if and .Method.GetClientStreaming .Method.GetServerStreaming}}
+{{template "bidi-streaming-request-func" .}}
+{{else if .Method.GetClientStreaming}}
+{{template "client-streaming-request-func" .}}
+{{else}}
+{{template "client-rpc-request-func" .}}
+{{end}}

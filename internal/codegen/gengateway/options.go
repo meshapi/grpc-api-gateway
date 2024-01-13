@@ -3,8 +3,6 @@ package gengateway
 import (
 	"fmt"
 	"strings"
-
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
 )
 
 type PathParameterSeparator uint8
@@ -71,9 +69,6 @@ type Options struct {
 
 	// Standalone generates a standalone gateway package, which imports the target service package.
 	Standalone bool
-
-	// DescriptorRegistryOptions holds the descriptor registry options.
-	DescriptorRegistryOptions descriptor.RegistryOptions
 }
 
 // DefaultOptions returns the default options.
@@ -86,6 +81,5 @@ func DefaultOptions() Options {
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
 		Standalone:                     false,
-		DescriptorRegistryOptions:      descriptor.DefaultRegistryOptions(),
 	}
 }

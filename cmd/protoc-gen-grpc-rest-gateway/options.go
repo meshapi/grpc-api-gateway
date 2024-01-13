@@ -6,6 +6,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/gengateway"
 )
 
+// prepareOptions prepares a gen gateway options and adds necessary flags.
 func prepareOptions() *gengateway.Options {
 	generatorOptions := gengateway.DefaultOptions()
 
@@ -36,10 +37,6 @@ func prepareOptions() *gengateway.Options {
 	flag.BoolVar(
 		&generatorOptions.Standalone, "standalone", generatorOptions.Standalone,
 		"generates a standalone gateway package, which imports the target service package")
-
-	generatorOptions.DescriptorRegistryOptions.AddFlags(flag.CommandLine)
-
-	flag.Parse()
 
 	return &generatorOptions
 }

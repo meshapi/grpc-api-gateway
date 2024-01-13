@@ -62,6 +62,31 @@ func (t Template) String() string {
 	return writer.String()
 }
 
+// Pattern returns a string representation without variable names. Can be used to compare two templates.
+func (t Template) Pattern() string {
+	writer := &strings.Builder{}
+
+	if len(t.Segments) == 0 {
+		return "/"
+	}
+
+	for _, segment := range t.Segments {
+		switch segment.Type {
+		case SegmentTypeLiteral:
+			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
+		case SegmentTypeSelector, SegmentTypeWildcard:
+			_, _ = fmt.Fprint(writer, "/?")
+		case SegmentTypeCatchAllSelector:
+			_, _ = fmt.Fprint(writer, "/*")
+		default:
+			_, _ = fmt.Fprint(writer, "/<!?>")
+		}
+	}
+
+	return writer.String()
+
+}
+
 // HasVariables returns whether or not the current template contains any binding variables.
 func (t Template) HasVariables() bool {
 	for _, segment := range t.Segments {

@@ -7,6 +7,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 // GoPackage represents a golang package.
@@ -30,6 +31,13 @@ func (p GoPackage) String() string {
 		return fmt.Sprintf("%q", p.Path)
 	}
 	return fmt.Sprintf("%s %q", p.Alias, p.Path)
+}
+
+// ResponseFile wraps pluginpb.CodeGeneratorResponse_File.
+type ResponseFile struct {
+	*pluginpb.CodeGeneratorResponse_File
+	// GoPkg is the Go package of the generated file.
+	GoPkg GoPackage
 }
 
 // File wraps descriptorpb.FileDescriptorProto for richer features.
@@ -186,11 +194,50 @@ func (s *Service) ClientConstructorName() string {
 // Parameter is a parameter provided in http requests
 type Parameter struct {
 	// FieldPath is a path to a proto field which this parameter is mapped to.
-	FieldPath FieldPath
+	FieldPath
 	// Target is the proto field which this parameter is mapped to.
 	Target *Field
 	// Method is the method which this parameter is used for.
 	Method *Method
+}
+
+// ConvertFuncExpr returns a go expression of a converter function.
+// The converter function converts a string into a value for the parameter.
+func (p Parameter) ConvertFuncExpr() (string, error) {
+	tbl := proto3ConvertFuncs
+	if !p.IsProto2() && p.IsRepeated() {
+		tbl = proto3RepeatedConvertFuncs
+	} else if !p.IsProto2() && p.IsOptionalProto3() {
+		tbl = proto3OptionalConvertFuncs
+	} else if p.IsProto2() && !p.IsRepeated() {
+		tbl = proto2ConvertFuncs
+	} else if p.IsProto2() && p.IsRepeated() {
+		tbl = proto2RepeatedConvertFuncs
+	}
+	typ := p.Target.GetType()
+	conv, ok := tbl[typ]
+	if !ok {
+		conv, ok = wellKnownTypeConv[p.Target.GetTypeName()]
+	}
+	if !ok {
+		return "", fmt.Errorf("unsupported field type %s of parameter %s in %s.%s", typ, p.FieldPath, p.Method.Service.GetName(), p.Method.GetName())
+	}
+	return conv, nil
+}
+
+// IsEnum returns true if the field is an enum type, otherwise false is returned.
+func (p Parameter) IsEnum() bool {
+	return p.Target.GetType() == descriptorpb.FieldDescriptorProto_TYPE_ENUM
+}
+
+// IsRepeated returns true if the field is repeated, otherwise false is returned.
+func (p Parameter) IsRepeated() bool {
+	return p.Target.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+}
+
+// IsProto2 returns true if the field is proto2, otherwise false is returned.
+func (p Parameter) IsProto2() bool {
+	return p.Target.Message.File.proto2()
 }
 
 // Body describes a http (request|response) body to be sent to the (method|client).
@@ -248,7 +295,7 @@ type Method struct {
 	// ResponseType is the message type of responses from this method.
 	ResponseType *Message
 	// Bindings are the HTTP endpoint bindings.
-	Bindings []Binding
+	Bindings []*Binding
 }
 
 // FQMN returns a fully qualified rpc method name of this method.
@@ -414,6 +461,104 @@ func IsWellKnownType(typeName string) bool {
 }
 
 var (
+	proto3ConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.Bool",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.String",
+		// FieldDescriptorProto_TYPE_GROUP
+		// FieldDescriptorProto_TYPE_MESSAGE
+		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "gateway.Bytes",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.Enum",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64",
+	}
+
+	proto3OptionalConvertFuncs = func() map[descriptorpb.FieldDescriptorProto_Type]string {
+		result := make(map[descriptorpb.FieldDescriptorProto_Type]string)
+		for typ, converter := range proto3ConvertFuncs {
+			// TODO: this will use convert functions from proto2.
+			//       The converters returning pointers should be moved
+			//       to a more generic file.
+			result[typ] = converter + "P"
+		}
+		return result
+	}()
+
+	// TODO: replace it with a IIFE
+	proto3RepeatedConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringSlice",
+		// FieldDescriptorProto_TYPE_GROUP
+		// FieldDescriptorProto_TYPE_MESSAGE
+		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "gateway.BytesSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64Slice",
+	}
+
+	proto2ConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64P",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32P",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64P",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64P",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64P",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32P",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolP",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringP",
+		// FieldDescriptorProto_TYPE_GROUP
+		// FieldDescriptorProto_TYPE_MESSAGE
+		// FieldDescriptorProto_TYPE_BYTES
+		// TODO(yugui) Handle bytes
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32P",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumP",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64P",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64P",
+	}
+
+	proto2RepeatedConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringSlice",
+		// FieldDescriptorProto_TYPE_GROUP
+		// FieldDescriptorProto_TYPE_MESSAGE
+		// FieldDescriptorProto_TYPE_BYTES
+		// TODO(maros7) Handle bytes
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64Slice",
+	}
+
 	wellKnownTypeConv = map[string]string{
 		".google.protobuf.Timestamp":   "gateway.Timestamp",
 		".google.protobuf.Duration":    "gateway.Duration",

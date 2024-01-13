@@ -1,0 +1,6 @@
+{{if and .Method.GetClientStreaming .Method.GetServerStreaming}}
+{{else if .Method.GetClientStreaming}}
+{{else if .Method.GetServerStreaming}}
+{{else}}
+{{template "local-client-rpc-request-func" .}}
+{{end}}
