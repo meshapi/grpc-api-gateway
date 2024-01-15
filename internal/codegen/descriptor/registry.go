@@ -318,10 +318,22 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 		}
 
 		binding.QueryParameterCustomization.DisableAutoDiscovery = input.DisableQueryParamsAutoDiscovery
+
+		queryParamFilter := binding.QueryParameterFilter()
 		for _, queryParam := range input.QueryParams {
 			fields, err := r.resolveFieldPath(md.RequestType, queryParam.GetSelector(), false)
 			if err != nil {
 				return fmt.Errorf("failed to resolve field at selector %q: %w", queryParam.GetSelector(), err)
+			}
+
+			// if query param is already used by another target, error out.
+			alreadyBound := binding.Body == nil ||
+				len(binding.Body.FieldPath) == 0 ||
+				queryParamFilter.HasCommonPrefix(strings.Split(queryParam.Selector, "."))
+			if alreadyBound {
+				return fmt.Errorf(
+					"cannot use selector %q for query parameter %q because it is already read from the payload",
+					queryParam.Selector, queryParam.Name)
 			}
 
 			if queryParam.Ignore {

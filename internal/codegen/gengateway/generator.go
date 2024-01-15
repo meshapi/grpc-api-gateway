@@ -34,6 +34,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"io",
 		"net/http",
 		"github.com/meshapi/grpc-rest-gateway/gateway",
+		"github.com/meshapi/grpc-rest-gateway/protoconvert",
 		"github.com/meshapi/grpc-rest-gateway/utilities",
 		"google.golang.org/protobuf/proto",
 		"google.golang.org/grpc",
@@ -87,7 +88,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		files = append(files, &descriptor.ResponseFile{
 			GoPkg: file.GoPkg,
 			CodeGeneratorResponse_File: &pluginpb.CodeGeneratorResponse_File{
-				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.gw.go"),
+				Name:    proto.String(file.GeneratedFilenamePrefix + ".pb.rgw.go"),
 				Content: proto.String(string(formatted)),
 			},
 		})

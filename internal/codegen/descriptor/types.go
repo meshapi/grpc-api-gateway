@@ -6,6 +6,7 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
+	"github.com/meshapi/grpc-rest-gateway/utilities"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -283,6 +284,34 @@ type Binding struct {
 	Body *Body
 	// ResponseBody describes field in response struct to marshal in HTTP response body.
 	ResponseBody *Body
+}
+
+// QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query
+// parameter.
+func (b *Binding) QueryParameterFilter() *utilities.DoubleArray {
+	var seqs [][]string
+
+	if b.Body != nil {
+		seqs = append(seqs, strings.Split(b.Body.FieldPath.String(), "."))
+		for _, comp := range b.Body.FieldPath {
+			if comp.Target.JsonName != nil {
+				seqs = append(seqs, strings.Split(comp.Target.GetJsonName(), "."))
+			}
+		}
+	}
+
+	for _, p := range b.PathParameters {
+		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
+		if p.Target.JsonName != nil {
+			seqs = append(seqs, strings.Split(p.Target.GetJsonName(), "."))
+		}
+	}
+
+	for _, p := range b.QueryParameterCustomization.Aliases {
+		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
+	}
+
+	return utilities.NewDoubleArray(seqs)
 }
 
 // Method wraps descriptorpb.MethodDescriptorProto for richer features.

@@ -5,12 +5,13 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"strings"
+	"text/template"
 
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/utilities"
+	"google.golang.org/grpc/grpclog"
 )
 
 type param struct {
@@ -49,6 +50,9 @@ func (b binding) GetBodyFieldStructName() (string, error) {
 // It sometimes returns true even though actually the binding does not need.
 // But it is not serious because it just results in a small amount of extra codes generated.
 func (b binding) HasQueryParam() bool {
+	if b.QueryParameterCustomization.DisableAutoDiscovery && len(b.QueryParameterCustomization.Aliases) == 0 {
+		return false
+	}
 	if b.Body != nil && len(b.Body.FieldPath) == 0 {
 		return false
 	}
@@ -61,6 +65,9 @@ func (b binding) HasQueryParam() bool {
 	}
 	for _, p := range b.PathParameters {
 		delete(fields, p.FieldPath.String())
+	}
+	for _, p := range b.QueryParameterCustomization.IgnoredFields {
+		delete(fields, p.String())
 	}
 	return len(fields) > 0
 }
@@ -81,6 +88,7 @@ func (b binding) QueryParamFilter() queryParamFilter {
 			seqs = append(seqs, strings.Split(*p.Target.JsonName, "."))
 		}
 	}
+	grpclog.Infof("%q: %+v", b.Method.FQMN(), seqs)
 	return queryParamFilter{utilities.NewDoubleArray(seqs)}
 }
 
@@ -182,21 +190,25 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 				}
 
 				methodWithBindingsSeen = true
-				if err := handlerTemplate.Execute(w, binding{
-					Binding:           b,
-					Registry:          reg,
-					AllowPatchFeature: p.AllowPatchFeature,
-				}); err != nil {
-					return "", err
+				if true {
+					if err := handlerTemplate.Execute(w, binding{
+						Binding:           b,
+						Registry:          reg,
+						AllowPatchFeature: p.AllowPatchFeature,
+					}); err != nil {
+						return "", err
+					}
 				}
 
 				// Local
-				if err := localHandlerTemplate.Execute(w, binding{
-					Binding:           b,
-					Registry:          reg,
-					AllowPatchFeature: p.AllowPatchFeature,
-				}); err != nil {
-					return "", err
+				if false {
+					if err := localHandlerTemplate.Execute(w, binding{
+						Binding:           b,
+						Registry:          reg,
+						AllowPatchFeature: p.AllowPatchFeature,
+					}); err != nil {
+						return "", err
+					}
 				}
 			}
 		}
@@ -214,12 +226,16 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 		RegisterFuncSuffix: p.RegisterFuncSuffix,
 	}
 	// Local
-	if err := localTrailerTemplate.Execute(w, tp); err != nil {
-		return "", err
+	if false {
+		if err := localTrailerTemplate.Execute(w, tp); err != nil {
+			return "", err
+		}
 	}
 
-	if err := trailerTemplate.Execute(w, tp); err != nil {
-		return "", err
+	if false {
+		if err := trailerTemplate.Execute(w, tp); err != nil {
+			return "", err
+		}
 	}
 	return w.String(), nil
 }

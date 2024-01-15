@@ -37,7 +37,7 @@ var (
 	}
 	{{end}}
 {{end}}
-{{if .PathParams}}
+{{if .PathParameters}}
 	var (
 		val string
 {{- if .HasEnumPathParam}}
@@ -51,7 +51,7 @@ var (
 		_ = err
 	)
 	{{$binding := .}}
-	{{range $param := .PathParams}}
+	{{range $param := .PathParameters}}
 	{{$enum := $binding.LookupEnum $param}}
 	val, ok = pathParams[{{$param | printf "%q"}}]
 	if !ok {
