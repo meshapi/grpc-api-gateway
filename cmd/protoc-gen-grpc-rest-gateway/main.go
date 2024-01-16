@@ -58,7 +58,7 @@ func main() {
 		descriptorRegistry := descriptor.NewRegistry(registryOptions)
 
 		if err := descriptorRegistry.LoadFromPlugin(gen); err != nil {
-			grpclog.Fatalf("failed to prepare for generation: %s", err)
+			return fmt.Errorf("failed to prepare for generation: %w", err)
 		}
 
 		if unboundSpecs := descriptorRegistry.UnboundExternalHTTPSpecs(); len(unboundSpecs) > 0 {
