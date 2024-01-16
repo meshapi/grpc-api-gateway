@@ -336,6 +336,13 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 					queryParam.Selector, queryParam.Name)
 			}
 
+			if !fields[len(fields)-1].Target.IsScalarType() {
+				return fmt.Errorf(
+					"cannot use selector %q for query parameter %q because it points to a"+
+						" Protobuf message type, only scalar types can be used",
+					queryParam.Selector, queryParam.Name)
+			}
+
 			if queryParam.Ignore {
 				binding.QueryParameterCustomization.IgnoredFields = append(
 					binding.QueryParameterCustomization.IgnoredFields,
@@ -350,6 +357,11 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 					binding.QueryParameterCustomization.Aliases,
 					QueryParamAlias{Name: name, FieldPath: FieldPath(fields)})
 			}
+		}
+
+		binding.QueryParameters, err = buildQueryParameters(&binding, r)
+		if err != nil {
+			return err
 		}
 
 		bindings = append(bindings, &binding)
@@ -399,6 +411,71 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 	return bindings, nil
 }
 
+// buildQueryParameters builds a list of all bound query parameters.
+func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, error) {
+	queryFilter := b.QueryParameterFilter()
+
+	// if body is not defined or it is '*' (everything), there are no query parameters.
+	if b.Body == nil || len(b.Body.FieldPath) == 0 {
+		return nil, nil
+	}
+
+	var queryParams []QueryParameter
+
+	for _, alias := range b.QueryParameterCustomization.Aliases {
+		queryParams = append(queryParams, QueryParameter{
+			Name:      alias.Name,
+			FieldPath: alias.FieldPath,
+		})
+	}
+
+	if b.QueryParameterCustomization.DisableAutoDiscovery {
+		return queryParams, nil
+	}
+
+	// Item is the queue item for processing messages that have query parameters.
+	type Item struct {
+		Message   *Message
+		Parts     []string
+		FieldPath FieldPath
+	}
+
+	queue := []Item{
+		{Message: b.Method.RequestType},
+	}
+
+	for index := 0; index < len(queue); index++ {
+		item := queue[index]
+		for _, field := range item.Message.Fields {
+			if queryFilter.HasCommonPrefix(append(item.Parts, field.GetName())) {
+				continue
+			}
+
+			if !field.IsScalarType() {
+				// go deep inside.
+				message, err := registry.LookupMessage(item.Message.FQMN(), field.GetTypeName())
+				if err != nil {
+					return nil, fmt.Errorf("failed to look up nested message type %q: %s", field.GetTypeName(), err)
+				}
+
+				queue = append(queue, Item{
+					Message:   message,
+					Parts:     append(item.Parts, field.GetName()),
+					FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+				})
+				continue
+			}
+
+			queryParams = append(queryParams, QueryParameter{
+				Name:      strings.Join(append(item.Parts, field.GetName()), "."),
+				FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+			})
+		}
+	}
+
+	return queryParams, nil
+}
+
 func (r *Registry) mapBody(md *Method, path string) (*Body, error) {
 	switch path {
 	case "":
@@ -440,13 +517,13 @@ func (r *Registry) mapParam(md *Method, path string) (Parameter, error) {
 		return Parameter{}, fmt.Errorf("invalid field access list for %s", path)
 	}
 	target := fields[l-1].Target
-	switch target.GetType() {
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		if !IsWellKnownType(*target.TypeName) {
-			return Parameter{}, fmt.Errorf(
-				"%s.%s: %s is a protobuf message type. Protobuf message types cannot be used as path parameters, use a scalar value type (such as string) instead", md.Service.GetName(), md.GetName(), path)
-		}
+	if !target.IsScalarType() {
+		return Parameter{}, fmt.Errorf(
+			"%s.%s: %s is a protobuf message type. Protobuf message types cannot be used as path parameters,"+
+				" use a scalar value type (such as string) instead",
+			md.Service.GetName(), md.GetName(), path)
 	}
+
 	return Parameter{
 		FieldPath: FieldPath(fields),
 		Method:    md,

@@ -284,6 +284,9 @@ type Binding struct {
 	Body *Body
 	// ResponseBody describes field in response struct to marshal in HTTP response body.
 	ResponseBody *Body
+
+	// QueryParameters is the full list of query parameters.
+	QueryParameters []QueryParameter
 }
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query
@@ -311,7 +314,29 @@ func (b *Binding) QueryParameterFilter() *utilities.DoubleArray {
 		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
 	}
 
+	for _, p := range b.QueryParameterCustomization.IgnoredFields {
+		seqs = append(seqs, strings.Split(p.String(), "."))
+	}
+
 	return utilities.NewDoubleArray(seqs)
+}
+
+// QueryParameter describes a query paramter.
+type QueryParameter struct {
+	// FieldPath is a path to a proto field which this parameter is mapped to.
+	FieldPath
+
+	// Name is the name of the query parameter.
+	Name string
+}
+
+func (q QueryParameter) String() string {
+	return q.Name
+}
+
+// HasQueryParameters indicates whether or not this binding reads any query parameters.
+func (b *Binding) HasQueryParameters() bool {
+	return len(b.QueryParameters) > 0
 }
 
 // Method wraps descriptorpb.MethodDescriptorProto for richer features.
@@ -340,8 +365,6 @@ type Field struct {
 	*descriptorpb.FieldDescriptorProto
 	// Message is the message type which this field belongs to.
 	Message *Message
-	// FieldMessage is the message type of the field.
-	FieldMessage *Message
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
 }
@@ -349,6 +372,16 @@ type Field struct {
 // FQFN returns a fully qualified field name of this field.
 func (f *Field) FQFN() string {
 	return strings.Join([]string{f.Message.FQMN(), f.GetName()}, ".")
+}
+
+// IsScalarType returns whether or not this field points to a scalar type.
+func (f *Field) IsScalarType() bool {
+	switch f.GetType() {
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE, descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		return IsWellKnownType(f.GetTypeName())
+	}
+
+	return true
 }
 
 // FieldPath is a path to a field from a request message.
