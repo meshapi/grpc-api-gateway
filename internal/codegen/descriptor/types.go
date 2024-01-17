@@ -6,7 +6,7 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
-	"github.com/meshapi/grpc-rest-gateway/utilities"
+	"github.com/meshapi/grpc-rest-gateway/trie"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -303,7 +303,7 @@ type Binding struct {
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query
 // parameter.
-func (b *Binding) QueryParameterFilter() *utilities.DoubleArray {
+func (b *Binding) QueryParameterFilter() *trie.DoubleArray {
 	var seqs [][]string
 
 	if b.Body != nil {
@@ -330,7 +330,7 @@ func (b *Binding) QueryParameterFilter() *utilities.DoubleArray {
 		seqs = append(seqs, strings.Split(p.String(), "."))
 	}
 
-	return utilities.NewDoubleArray(seqs)
+	return trie.New(seqs)
 }
 
 // QueryParameter describes a query paramter.

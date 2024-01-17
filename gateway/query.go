@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/meshapi/grpc-rest-gateway/protoconvert"
-	"github.com/meshapi/grpc-rest-gateway/utilities"
+	"github.com/meshapi/grpc-rest-gateway/trie"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -25,7 +25,7 @@ import (
 // QueryParameterParseOptions hold all inputs for parsing query parameters.
 type QueryParameterParseOptions struct {
 	// Filter holds a trie that can block already bound or otherwise ignored query paramters.
-	Filter *utilities.DoubleArray
+	Filter *trie.DoubleArray
 
 	// Aliases is a table of arbitrary names mapped to field keys.
 	Aliases map[string]string

@@ -12,7 +12,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
-	"github.com/meshapi/grpc-rest-gateway/utilities"
+	"github.com/meshapi/grpc-rest-gateway/trie"
 )
 
 type param struct {
@@ -102,9 +102,9 @@ func (b binding) FieldMaskField() string {
 	return ""
 }
 
-// queryParameterFilter is a wrapper of utilities.DoubleArray which provides String() to output DoubleArray.Encoding in a stable and predictable format.
+// queryParameterFilter is a wrapper of trie.DoubleArray which provides String() to output DoubleArray.Encoding in a stable and predictable format.
 type queryParameterFilter struct {
-	*utilities.DoubleArray
+	*trie.DoubleArray
 }
 
 func (f queryParameterFilter) String() string {
@@ -113,7 +113,7 @@ func (f queryParameterFilter) String() string {
 		encodings[enc] = fmt.Sprintf("%q: %d", str, enc)
 	}
 	e := strings.Join(encodings, ", ")
-	return fmt.Sprintf("&utilities.DoubleArray{Encoding: map[string]int{%s}, Base: %#v, Check: %#v}", e, f.Base, f.Check)
+	return fmt.Sprintf("&trie.DoubleArray{Encoding: map[string]int{%s}, Base: %#v, Check: %#v}", e, f.Base, f.Check)
 }
 
 func prepareHTTPPath(path *httprule.Template) string {

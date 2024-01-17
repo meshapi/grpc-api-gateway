@@ -9,7 +9,7 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/gateway"
 	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
-	"github.com/meshapi/grpc-rest-gateway/utilities"
+	"github.com/meshapi/grpc-rest-gateway/trie"
 )
 
 func FuzzPopulateQueryParameters(f *testing.F) {
@@ -29,7 +29,7 @@ func FuzzPopulateQueryParameters(f *testing.F) {
 		if err != nil {
 			return
 		}
-		err = defaultQueryParser.Parse(in, values, gateway.QueryParameterParseOptions{Filter: utilities.NewDoubleArray(nil)})
+		err = defaultQueryParser.Parse(in, values, gateway.QueryParameterParseOptions{Filter: trie.New(nil)})
 		if err != nil {
 			return
 		}
