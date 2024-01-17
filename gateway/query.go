@@ -22,15 +22,24 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+// QueryParameterParseOptions hold all inputs for parsing query parameters.
+type QueryParameterParseOptions struct {
+	// Filter holds a trie that can block already bound or otherwise ignored query paramters.
+	Filter *utilities.DoubleArray
+
+	// Aliases is a table of arbitrary names mapped to field keys.
+	Aliases map[string]string
+}
+
 // QueryParameterParser defines interface for all query parameter parsers.
 type QueryParameterParser interface {
-	Parse(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error
+	Parse(msg proto.Message, values url.Values, inputs QueryParameterParseOptions) error
 }
 
 // PopulateQueryParameters parses query parameters
 // into "msg" using current query parser.
-func (s *ServeMux) PopulateQueryParameters(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
-	return s.queryParamParser.Parse(msg, values, filter)
+func (s *ServeMux) PopulateQueryParameters(msg proto.Message, values url.Values, inputs QueryParameterParseOptions) error {
+	return s.queryParamParser.Parse(msg, values, inputs)
 }
 
 // DefaultQueryParser is a QueryParameterParser which implements the default
@@ -41,14 +50,18 @@ type DefaultQueryParser struct{}
 
 // Parse populates "values" into "msg".
 // A value is ignored if its key starts with one of the elements in "filter".
-func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
+func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, input QueryParameterParseOptions) error {
 	for key, values := range values {
 		if messageKey, mapKey, ok := matchMapKey(key); ok {
 			key = messageKey
 			values = append([]string{mapKey}, values...)
 		}
+		fieldKey, ok := input.Aliases[key]
+		if ok {
+			key = fieldKey
+		}
 		fieldPath := strings.Split(key, ".")
-		if filter.HasCommonPrefix(fieldPath) {
+		if !ok && input.Filter.HasCommonPrefix(fieldPath) {
 			continue
 		}
 		if err := populateFieldValueFromPath(msg.ProtoReflect(), fieldPath, values); err != nil {

@@ -29,7 +29,7 @@ func FuzzPopulateQueryParameters(f *testing.F) {
 		if err != nil {
 			return
 		}
-		err = defaultQueryParser.Parse(in, values, utilities.NewDoubleArray(nil))
+		err = defaultQueryParser.Parse(in, values, gateway.QueryParameterParseOptions{Filter: utilities.NewDoubleArray(nil)})
 		if err != nil {
 			return
 		}

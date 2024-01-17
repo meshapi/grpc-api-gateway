@@ -82,7 +82,7 @@ func BenchmarkPopulateQueryParameters(b *testing.B) {
 
 	queryParser := &gateway.DefaultQueryParser{}
 	for i := 0; i < b.N; i++ {
-		_ = queryParser.Parse(msg, values, filter)
+		_ = queryParser.Parse(msg, values, gateway.QueryParameterParseOptions{Filter: filter})
 	}
 }
 
@@ -500,7 +500,7 @@ func TestPopulateParameters(t *testing.T) {
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			msg := spec.want.ProtoReflect().New().Interface()
-			err := queryParser.Parse(msg, spec.values, spec.filter)
+			err := queryParser.Parse(msg, spec.values, gateway.QueryParameterParseOptions{Filter: spec.filter})
 			if spec.wanterr != nil {
 				if err == nil || err.Error() != spec.wanterr.Error() {
 					t.Errorf("gateway.PopulateQueryParameters(msg, %v, %v) failed with %q; want error %q", spec.values, spec.filter, err, spec.wanterr)
@@ -592,7 +592,7 @@ func TestPopulateParametersWithFilters(t *testing.T) {
 		},
 	} {
 		msg := spec.want.ProtoReflect().New().Interface()
-		err := queryParser.Parse(msg, spec.values, spec.filter)
+		err := queryParser.Parse(msg, spec.values, gateway.QueryParameterParseOptions{Filter: spec.filter})
 		if err != nil {
 			t.Errorf("gateway.PoplateQueryParameters(msg, %v, %v) failed with %v; want success", spec.values, spec.filter, err)
 			continue
@@ -696,7 +696,7 @@ func TestPopulateQueryParametersWithInvalidNestedParameters(t *testing.T) {
 		},
 	} {
 		spec.msg = spec.msg.ProtoReflect().New().Interface()
-		err := queryParser.Parse(spec.msg, spec.values, spec.filter)
+		err := queryParser.Parse(spec.msg, spec.values, gateway.QueryParameterParseOptions{Filter: spec.filter})
 		if err == nil {
 			t.Errorf("gateway.PopulateQueryParameters(msg, %v, %v) did not fail; want error", spec.values, spec.filter)
 		}
