@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -22,8 +21,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
-
-var valuesKeyRegexp = regexp.MustCompile(`^(.*)\[(.*)\]$`)
 
 // QueryParameterParser defines interface for all query parameter parsers.
 type QueryParameterParser interface {
@@ -46,9 +43,13 @@ type DefaultQueryParser struct{}
 // A value is ignored if its key starts with one of the elements in "filter".
 func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
 	for key, values := range values {
-		if match := valuesKeyRegexp.FindStringSubmatch(key); len(match) == 3 {
-			key = match[1]
-			values = append([]string{match[2]}, values...)
+		//if match := valuesKeyRegexp.FindStringSubmatch(key); len(match) == 3 {
+		//  key = match[1]
+		//  values = append([]string{match[2]}, values...)
+		//}
+		if messageKey, mapKey, ok := matchMapKey(key); ok {
+			key = messageKey
+			values = append([]string{mapKey}, values...)
 		}
 		fieldPath := strings.Split(key, ".")
 		if filter.HasCommonPrefix(fieldPath) {
@@ -65,6 +66,18 @@ func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, filter *u
 func PopulateFieldFromPath(msg proto.Message, fieldPathString string, value string) error {
 	fieldPath := strings.Split(fieldPathString, ".")
 	return populateFieldValueFromPath(msg.ProtoReflect(), fieldPath, []string{value})
+}
+
+func matchMapKey(key string) (string, string, bool) {
+	start := strings.IndexByte(key, '[')
+	if start == -1 { // 0 is also not acceptable because it means there is no key, only braces.
+		return "", "", false
+	}
+	end := strings.LastIndexByte(key, ']')
+	if end == -1 || end != len(key)-1 || end <= start {
+		return "", "", false
+	}
+	return key[:start], key[start+1 : end], true
 }
 
 func populateFieldValueFromPath(msgValue protoreflect.Message, fieldPath []string, values []string) error {
