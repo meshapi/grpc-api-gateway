@@ -43,10 +43,6 @@ type DefaultQueryParser struct{}
 // A value is ignored if its key starts with one of the elements in "filter".
 func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
 	for key, values := range values {
-		//if match := valuesKeyRegexp.FindStringSubmatch(key); len(match) == 3 {
-		//  key = match[1]
-		//  values = append([]string{match[2]}, values...)
-		//}
 		if messageKey, mapKey, ok := matchMapKey(key); ok {
 			key = messageKey
 			values = append([]string{mapKey}, values...)
