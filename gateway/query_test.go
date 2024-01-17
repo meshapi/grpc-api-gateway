@@ -76,13 +76,15 @@ func BenchmarkPopulateQueryParameters(b *testing.B) {
 		"map_value14[key]":       {"true"},
 		"map_value15[true]":      {"value"},
 	}
-	filter := utilities.NewDoubleArray([][]string{
-		{"bool_value"}, {"repeated_value"},
-	})
+	input := gateway.QueryParameterParseOptions{
+		Filter: utilities.NewDoubleArray([][]string{
+			{"bool_value"}, {"repeated_value"},
+		}),
+	}
 
 	queryParser := &gateway.DefaultQueryParser{}
 	for i := 0; i < b.N; i++ {
-		_ = queryParser.Parse(msg, values, gateway.QueryParameterParseOptions{Filter: filter})
+		_ = queryParser.Parse(msg, values, input)
 	}
 }
 
