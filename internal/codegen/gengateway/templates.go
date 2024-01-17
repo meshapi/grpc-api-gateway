@@ -199,14 +199,12 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 				}
 
 				methodWithBindingsSeen = true
-				if true {
-					if err := handlerTemplate.Execute(w, binding{
-						Binding:           b,
-						Registry:          reg,
-						AllowPatchFeature: p.AllowPatchFeature,
-					}); err != nil {
-						return "", err
-					}
+				if err := handlerTemplate.Execute(w, binding{
+					Binding:           b,
+					Registry:          reg,
+					AllowPatchFeature: p.AllowPatchFeature,
+				}); err != nil {
+					return "", err
 				}
 
 				// Local
@@ -241,10 +239,8 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 		}
 	}
 
-	if true {
-		if err := trailerTemplate.Execute(w, tp); err != nil {
-			return "", err
-		}
+	if err := trailerTemplate.Execute(w, tp); err != nil {
+		return "", err
 	}
 	return w.String(), nil
 }
