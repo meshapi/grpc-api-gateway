@@ -34,10 +34,10 @@ func WithForwardResponseOption(forwardResponseOption ForwardResponseFunc) ServeM
 	})
 }
 
-// SetQueryParameterParser sets the query parameter parser, used to populate message from query parameters.
+// WithQueryParameterParser sets the query parameter parser, used to populate message from query parameters.
 // Configuring this will mean the generated OpenAPI output is no longer correct, and it should be
 // done with careful consideration.
-func SetQueryParameterParser(queryParameterParser QueryParameterParser) ServeMuxOption {
+func WithQueryParameterParser(queryParameterParser QueryParameterParser) ServeMuxOption {
 	return optionFunc(func(s *ServeMux) {
 		s.queryParamParser = queryParameterParser
 	})

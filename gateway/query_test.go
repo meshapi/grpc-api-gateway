@@ -80,12 +80,14 @@ func BenchmarkPopulateQueryParameters(b *testing.B) {
 		{"bool_value"}, {"repeated_value"},
 	})
 
+	queryParser := &gateway.DefaultQueryParser{}
 	for i := 0; i < b.N; i++ {
-		_ = gateway.PopulateQueryParameters(msg, values, filter)
+		_ = queryParser.Parse(msg, values, filter)
 	}
 }
 
 func TestPopulateParameters(t *testing.T) {
+	queryParser := &gateway.DefaultQueryParser{}
 	timeT := time.Date(2016, time.December, 15, 12, 23, 32, 49, time.UTC)
 	timeStr := timeT.Format(time.RFC3339Nano)
 	timePb := timestamppb.New(timeT)
@@ -498,7 +500,7 @@ func TestPopulateParameters(t *testing.T) {
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			msg := spec.want.ProtoReflect().New().Interface()
-			err := gateway.PopulateQueryParameters(msg, spec.values, spec.filter)
+			err := queryParser.Parse(msg, spec.values, spec.filter)
 			if spec.wanterr != nil {
 				if err == nil || err.Error() != spec.wanterr.Error() {
 					t.Errorf("gateway.PopulateQueryParameters(msg, %v, %v) failed with %q; want error %q", spec.values, spec.filter, err, spec.wanterr)
@@ -518,6 +520,7 @@ func TestPopulateParameters(t *testing.T) {
 }
 
 func TestPopulateParametersWithFilters(t *testing.T) {
+	queryParser := &gateway.DefaultQueryParser{}
 	for _, spec := range []struct {
 		values url.Values
 		filter *utilities.DoubleArray
@@ -589,7 +592,7 @@ func TestPopulateParametersWithFilters(t *testing.T) {
 		},
 	} {
 		msg := spec.want.ProtoReflect().New().Interface()
-		err := gateway.PopulateQueryParameters(msg, spec.values, spec.filter)
+		err := queryParser.Parse(msg, spec.values, spec.filter)
 		if err != nil {
 			t.Errorf("gateway.PoplateQueryParameters(msg, %v, %v) failed with %v; want success", spec.values, spec.filter, err)
 			continue
@@ -601,6 +604,7 @@ func TestPopulateParametersWithFilters(t *testing.T) {
 }
 
 func TestPopulateQueryParametersWithInvalidNestedParameters(t *testing.T) {
+	queryParser := &gateway.DefaultQueryParser{}
 	for _, spec := range []struct {
 		msg    proto.Message
 		values url.Values
@@ -692,7 +696,7 @@ func TestPopulateQueryParametersWithInvalidNestedParameters(t *testing.T) {
 		},
 	} {
 		spec.msg = spec.msg.ProtoReflect().New().Interface()
-		err := gateway.PopulateQueryParameters(spec.msg, spec.values, spec.filter)
+		err := queryParser.Parse(spec.msg, spec.values, spec.filter)
 		if err == nil {
 			t.Errorf("gateway.PopulateQueryParameters(msg, %v, %v) did not fail; want error", spec.values, spec.filter)
 		}

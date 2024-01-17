@@ -22,13 +22,14 @@ func FuzzPopulateQueryParameters(f *testing.F) {
 	f.Add("nested.nested.map_value%5Bfirst%5D=foo&nested.nested.map_value%5Bsecond%5D=bar&nested.nested.nested.repeated_value=a&nested.nested.nested.repeated_value=b&nested.nested.nested.repeated_value=c&nested.nested.nested.string_value=s&nested.nested.string_value=t&nested.string_value=u")
 	f.Add("oneof_string_value=foobar")
 	f.Add("nested_oneof_value_one.int64Value=-1&nested_oneof_value_one.string_value=foo")
+	defaultQueryParser := &gateway.DefaultQueryParser{}
 	f.Fuzz(func(t *testing.T, query string) {
 		in := &examplepb.ABitOfEverything{}
 		values, err := url.ParseQuery(query)
 		if err != nil {
 			return
 		}
-		err = gateway.PopulateQueryParameters(in, values, utilities.NewDoubleArray(nil))
+		err = defaultQueryParser.Parse(in, values, utilities.NewDoubleArray(nil))
 		if err != nil {
 			return
 		}

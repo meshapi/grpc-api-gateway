@@ -25,17 +25,15 @@ import (
 
 var valuesKeyRegexp = regexp.MustCompile(`^(.*)\[(.*)\]$`)
 
-var currentQueryParser QueryParameterParser = &DefaultQueryParser{}
-
-// QueryParameterParser defines interface for all query parameter parsers
+// QueryParameterParser defines interface for all query parameter parsers.
 type QueryParameterParser interface {
 	Parse(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error
 }
 
 // PopulateQueryParameters parses query parameters
-// into "msg" using current query parser
-func PopulateQueryParameters(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
-	return currentQueryParser.Parse(msg, values, filter)
+// into "msg" using current query parser.
+func (s *ServeMux) PopulateQueryParameters(msg proto.Message, values url.Values, filter *utilities.DoubleArray) error {
+	return s.queryParamParser.Parse(msg, values, filter)
 }
 
 // DefaultQueryParser is a QueryParameterParser which implements the default
