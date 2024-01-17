@@ -1,12 +1,12 @@
 {{$AllowPatchFeature := .AllowPatchFeature}}
-{{if .HasQueryParam}}
+{{if .HasQueryParameters}}
 var (
-	filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}} = {{.QueryParamFilter}}
+	filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}} = {{.QueryParameterFilter}}
 )
 {{end}}
 {{template "request-func-signature" .}} {
 	var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
-	var metadata runtime.ServerMetadata
+	var metadata gateway.ServerMetadata
 {{if .Body}}
 	{{- $isFieldMask := and $AllowPatchFeature (eq (.HTTPMethod) "PATCH") (.FieldMaskField) (not (eq "*" .GetBodyFieldPath)) }}
 	{{- if $isFieldMask }}
@@ -46,19 +46,18 @@ var (
 {{- if .HasRepeatedEnumPathParam}}
 		es []int32
 {{- end}}
-		ok bool
 		err error
 		_ = err
 	)
 	{{$binding := .}}
 	{{range $param := .PathParameters}}
 	{{$enum := $binding.LookupEnum $param}}
-	val, ok = pathParams[{{$param | printf "%q"}}]
-	if !ok {
+	val = pathParams.ByName({{$param | printf "%q"}})
+	if val == "" {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", {{$param | printf "%q"}})
 	}
 {{if $param.IsNestedProto3}}
-	err = runtime.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
+	err = gateway.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
 	}
@@ -94,11 +93,11 @@ var (
 {{end}}
 	{{end}}
 {{end}}
-{{if .HasQueryParam}}
+{{if .HasQueryParameters}}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
+	if err := gateway.PopulateQueryParameters(&protoReq, req.Form, filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 {{end}}
@@ -116,4 +115,4 @@ var (
 {{else}}
 	msg, err := client.{{.Method.GetName}}(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
-{{end}}
+}{{end}}

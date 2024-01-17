@@ -5,13 +5,14 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"github.com/meshapi/grpc-rest-gateway/utilities"
-	"google.golang.org/grpc/grpclog"
 )
 
 type param struct {
@@ -45,51 +46,8 @@ func (b binding) GetBodyFieldStructName() (string, error) {
 	return "", errors.New("no body field found")
 }
 
-// HasQueryParam determines if the binding needs parameters in query string.
-//
-// It sometimes returns true even though actually the binding does not need.
-// But it is not serious because it just results in a small amount of extra codes generated.
-func (b binding) HasQueryParam() bool {
-	if b.QueryParameterCustomization.DisableAutoDiscovery && len(b.QueryParameterCustomization.Aliases) == 0 {
-		return false
-	}
-	if b.Body != nil && len(b.Body.FieldPath) == 0 {
-		return false
-	}
-	fields := make(map[string]bool)
-	for _, f := range b.Method.RequestType.Fields {
-		fields[f.GetName()] = true
-	}
-	if b.Body != nil {
-		delete(fields, b.Body.FieldPath.String())
-	}
-	for _, p := range b.PathParameters {
-		delete(fields, p.FieldPath.String())
-	}
-	for _, p := range b.QueryParameterCustomization.IgnoredFields {
-		delete(fields, p.String())
-	}
-	return len(fields) > 0
-}
-
-func (b binding) QueryParamFilter() queryParamFilter {
-	var seqs [][]string
-	if b.Body != nil {
-		seqs = append(seqs, strings.Split(b.Body.FieldPath.String(), "."))
-		for _, comp := range b.Body.FieldPath {
-			if comp.Target.JsonName != nil {
-				seqs = append(seqs, strings.Split(*comp.Target.JsonName, "."))
-			}
-		}
-	}
-	for _, p := range b.PathParameters {
-		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
-		if p.Target.JsonName != nil {
-			seqs = append(seqs, strings.Split(*p.Target.JsonName, "."))
-		}
-	}
-	grpclog.Infof("%q: %+v", b.Method.FQMN(), seqs)
-	return queryParamFilter{utilities.NewDoubleArray(seqs)}
+func (b binding) QueryParameterFilter() queryParameterFilter {
+	return queryParameterFilter{DoubleArray: b.Binding.QueryParameterFilter()}
 }
 
 // HasEnumPathParam returns true if the path parameter slice contains a parameter
@@ -144,18 +102,69 @@ func (b binding) FieldMaskField() string {
 	return ""
 }
 
-// queryParamFilter is a wrapper of utilities.DoubleArray which provides String() to output DoubleArray.Encoding in a stable and predictable format.
-type queryParamFilter struct {
+// queryParameterFilter is a wrapper of utilities.DoubleArray which provides String() to output DoubleArray.Encoding in a stable and predictable format.
+type queryParameterFilter struct {
 	*utilities.DoubleArray
 }
 
-func (f queryParamFilter) String() string {
+func (f queryParameterFilter) String() string {
 	encodings := make([]string, len(f.Encoding))
 	for str, enc := range f.Encoding {
 		encodings[enc] = fmt.Sprintf("%q: %d", str, enc)
 	}
 	e := strings.Join(encodings, ", ")
 	return fmt.Sprintf("&utilities.DoubleArray{Encoding: map[string]int{%s}, Base: %#v, Check: %#v}", e, f.Base, f.Check)
+}
+
+func prepareHTTPPath(path *httprule.Template) string {
+	writer := &strings.Builder{}
+
+	if len(path.Segments) == 0 {
+		return "/"
+	}
+
+	for index, segment := range path.Segments {
+		switch segment.Type {
+		case httprule.SegmentTypeLiteral:
+			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
+		case httprule.SegmentTypeSelector:
+			_, _ = fmt.Fprintf(writer, "/:%s", segment.Value)
+		case httprule.SegmentTypeWildcard:
+			_, _ = fmt.Fprintf(writer, "/:_segment_"+strconv.Itoa(index))
+		case httprule.SegmentTypeCatchAllSelector:
+			_, _ = fmt.Fprintf(writer, "/*%s", segment.Value)
+		default:
+			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
+		}
+	}
+
+	return writer.String()
+}
+
+func prepareHTTPPattern(path *httprule.Template) string {
+	writer := &strings.Builder{}
+
+	if len(path.Segments) == 0 {
+		return "/"
+	}
+
+	for _, segment := range path.Segments {
+		switch segment.Type {
+		case httprule.SegmentTypeLiteral:
+			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
+		case httprule.SegmentTypeSelector:
+			_, _ = fmt.Fprintf(writer, "/{%s}", segment.Value)
+		case httprule.SegmentTypeWildcard:
+			_, _ = fmt.Fprintf(writer, "/?")
+		case httprule.SegmentTypeCatchAllSelector:
+			_, _ = fmt.Fprintf(writer, "/{%s=*}", segment.Value)
+		default:
+			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
+		}
+	}
+
+	return writer.String()
+
 }
 
 type trailerParams struct {
@@ -232,7 +241,7 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 		}
 	}
 
-	if false {
+	if true {
 		if err := trailerTemplate.Execute(w, tp); err != nil {
 			return "", err
 		}
@@ -296,5 +305,9 @@ var (
 
 	//go:embed templates/trailer.tmpl
 	templateDataTrailer string
-	trailerTemplate     = template.Must(template.New("trailer").Parse(templateDataTrailer))
+	trailerFuncMap      = map[string]interface{}{
+		"httpPath":    prepareHTTPPath,
+		"httpPattern": prepareHTTPPattern,
+	}
+	trailerTemplate = template.Must(template.New("trailer").Funcs(trailerFuncMap).Parse(templateDataTrailer))
 )

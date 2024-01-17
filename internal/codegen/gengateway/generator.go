@@ -42,6 +42,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"google.golang.org/grpc/grpclog",
 		"google.golang.org/grpc/metadata",
 		"google.golang.org/grpc/status",
+		"github.com/julienschmidt/httprouter",
 	} {
 		pkg := descriptor.GoPackage{
 			Path: pkgpath,

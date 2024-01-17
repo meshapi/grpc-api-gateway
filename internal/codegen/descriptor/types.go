@@ -248,6 +248,18 @@ type Body struct {
 	FieldPath FieldPath
 }
 
+// AssignableExpr returns an assignable expression in Go to be used to initialize method request object.
+// It starts with "msgExpr", which is the go expression of the method request object.
+func (b Body) AssignableExpr(msgExpr string, currentPackage string) string {
+	return b.FieldPath.AssignableExpr(msgExpr, currentPackage)
+}
+
+// AssignableExprPrep returns preparatory statements for an assignable expression to initialize the
+// method request object.
+func (b Body) AssignableExprPrep(msgExpr string, currentPackage string) string {
+	return b.FieldPath.AssignableExprPrep(msgExpr, currentPackage)
+}
+
 // QueryParamAlias describes a query parameter alias, used to set/rename query params.
 type QueryParamAlias struct {
 	// Name is the name that will be read from the query parameters.
@@ -524,24 +536,24 @@ func IsWellKnownType(typeName string) bool {
 
 var (
 	proto3ConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
-		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64",
-		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32",
-		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64",
-		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32",
-		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.Bool",
-		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.String",
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "protoconvert.Float64",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "protoconvert.Float32",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "protoconvert.Int64",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "protoconvert.Uint64",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "protoconvert.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "protoconvert.Uint64",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "protoconvert.Uint32",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "protoconvert.Bool",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "protoconvert.String",
 		// FieldDescriptorProto_TYPE_GROUP
 		// FieldDescriptorProto_TYPE_MESSAGE
-		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "gateway.Bytes",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32",
-		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.Enum",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64",
+		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "protoconvert.Bytes",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "protoconvert.Uint32",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "protoconvert.Enum",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "protoconvert.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "protoconvert.Int64",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "protoconvert.Int32",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "protoconvert.Int64",
 	}
 
 	proto3OptionalConvertFuncs = func() map[descriptorpb.FieldDescriptorProto_Type]string {
@@ -622,16 +634,16 @@ var (
 	}
 
 	wellKnownTypeConv = map[string]string{
-		".google.protobuf.Timestamp":   "gateway.Timestamp",
-		".google.protobuf.Duration":    "gateway.Duration",
-		".google.protobuf.StringValue": "gateway.StringValue",
-		".google.protobuf.FloatValue":  "gateway.FloatValue",
-		".google.protobuf.DoubleValue": "gateway.DoubleValue",
-		".google.protobuf.BoolValue":   "gateway.BoolValue",
-		".google.protobuf.BytesValue":  "gateway.BytesValue",
-		".google.protobuf.Int32Value":  "gateway.Int32Value",
-		".google.protobuf.UInt32Value": "gateway.UInt32Value",
-		".google.protobuf.Int64Value":  "gateway.Int64Value",
-		".google.protobuf.UInt64Value": "gateway.UInt64Value",
+		".google.protobuf.Timestamp":   "protoconvert.Timestamp",
+		".google.protobuf.Duration":    "protoconvert.Duration",
+		".google.protobuf.StringValue": "protoconvert.StringValue",
+		".google.protobuf.FloatValue":  "protoconvert.FloatValue",
+		".google.protobuf.DoubleValue": "protoconvert.DoubleValue",
+		".google.protobuf.BoolValue":   "protoconvert.BoolValue",
+		".google.protobuf.BytesValue":  "protoconvert.BytesValue",
+		".google.protobuf.Int32Value":  "protoconvert.Int32Value",
+		".google.protobuf.UInt32Value": "protoconvert.UInt32Value",
+		".google.protobuf.Int64Value":  "protoconvert.Int64Value",
+		".google.protobuf.UInt64Value": "protoconvert.UInt64Value",
 	}
 )

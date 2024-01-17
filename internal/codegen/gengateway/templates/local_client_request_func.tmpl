@@ -90,7 +90,7 @@
 {{end}}
 	{{end}}
 {{end}}
-{{if .HasQueryParam}}
+{{if .HasQueryParameters}}
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
