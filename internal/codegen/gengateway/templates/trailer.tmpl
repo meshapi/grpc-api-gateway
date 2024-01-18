@@ -76,10 +76,10 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		{{else}}
 		{{ if $b.ResponseBody }}
 		mux.ForwardResponseMessage(annotatedContext, outboundMarshaler, w, req, response_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}{resp})
-		{{ else }}
+		{{ else -}}
 		mux.ForwardResponseMessage(annotatedContext, outboundMarshaler, w, req, resp)
-		{{end}}
-		{{end}}
+		{{end -}}
+		{{end -}}
 	})
 	{{end}}
 	{{end}}
