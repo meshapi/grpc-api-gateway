@@ -93,9 +93,6 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
-	writer := gen.NewGeneratedFile("output.txt", "")
-	fmt.Fprintf(writer, "data: %+v", r.httpSpecRegistry)
-
 	for _, filePath := range filePaths {
 		if !gen.FilesByPath[filePath].Generate {
 			continue
