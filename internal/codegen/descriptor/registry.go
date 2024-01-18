@@ -324,12 +324,11 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 			}
 
 			// if query param is already used by another target, error out.
-			alreadyBound := binding.Body == nil ||
-				len(binding.Body.FieldPath) == 0 ||
+			alreadyBound := (binding.Body != nil && len(binding.Body.FieldPath) == 0) ||
 				queryParamFilter.HasCommonPrefix(strings.Split(queryParam.Selector, "."))
 			if alreadyBound {
 				return fmt.Errorf(
-					"cannot use selector %q for query parameter %q because it is already read from the payload",
+					"cannot use selector %q for query parameter %q because it will already be read from payload/path params",
 					queryParam.Selector, queryParam.Name)
 			}
 
@@ -413,7 +412,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	queryFilter := b.QueryParameterFilter()
 
 	// if body is not defined or it is '*' (everything), there are no query parameters.
-	if b.Body == nil || len(b.Body.FieldPath) == 0 {
+	if b.Body != nil && len(b.Body.FieldPath) == 0 {
 		return nil, nil
 	}
 

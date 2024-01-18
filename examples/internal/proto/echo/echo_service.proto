@@ -4,14 +4,14 @@ syntax = "proto3";
 //
 // Echo Service API consists of a single service which returns
 // a message.
-package meshapi.gateway.examples;
+package meshapi.gateway.examples.echo;
 
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 
 import "meshapi/gateway/annotations.proto";
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/examples/api/proto/echo";
+option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/echo";
 
 // Embedded represents a message embedded in SimpleMessage.
 message Embedded {
