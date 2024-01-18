@@ -3,6 +3,10 @@ gateway:
   endpoints:
     - selector: '.EchoService.Echo'
       post: '/v1/example/echo/{id}'
+      body: status
+      query_params:
+        - selector: num
+          name: pancake
       additional_bindings:
         - get: '/v1/example/echo/{id}/{num}'
         - get: '/v1/example/echo/{id}/{num}/{lang}'

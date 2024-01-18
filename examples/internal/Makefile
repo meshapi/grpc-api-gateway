@@ -6,7 +6,7 @@ clean:
 
 generate:
 	@rm -fr vendor && mkdir vendor
-	@cp -rl ../../api/meshapi vendor/
+	@cp -r ../../api/meshapi vendor/
 	@buf generate proto
 
 install:

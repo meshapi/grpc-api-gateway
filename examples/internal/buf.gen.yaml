@@ -1,12 +1,12 @@
 version: v1
 plugins:
-  - out: proto
+  - out: gen
     name: go
     opt: 'paths=source_relative'
-  - out: proto
+  - out: gen
     name: go-grpc
     opt: 'paths=source_relative'
-  - out: proto
+  - out: gen
     name: grpc-rest-gateway
     opt:
       - 'paths=source_relative'
