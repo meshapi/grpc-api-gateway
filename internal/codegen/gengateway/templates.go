@@ -47,6 +47,9 @@ func (b binding) GetBodyFieldStructName() (string, error) {
 }
 
 func (b binding) QueryParameterFilter() queryParameterFilter {
+	if b.QueryParameterCustomization.DisableAutoDiscovery {
+		return queryParameterFilter{DoubleArray: trie.New(nil)}
+	}
 	return queryParameterFilter{DoubleArray: b.Binding.QueryParameterFilter()}
 }
 
