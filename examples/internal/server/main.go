@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
 
-	"github.com/meshapi/grpc-rest-gateway/examples/internal/proto/echo"
+	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/echo"
+	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -19,22 +22,26 @@ func main() {
 
 	server := grpc.NewServer()
 	echo.RegisterEchoServiceServer(server, &EchoService{})
+	integration.RegisterQueryParamsTestServer(server, &queryParamsTestServer{})
 	reflection.Register(server)
 
-	//connection, err := grpc.Dial(":40000", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	//if err != nil {
-	//  log.Fatalf("failed to dial: %s", err)
-	//}
+	connection, err := grpc.Dial(":40000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial: %s", err)
+	}
 
 	restGateway := gateway.NewServeMux()
+	integration.RegisterQueryParamsTestHandler(context.Background(), restGateway, connection)
 
 	go func() {
 		log.Printf("starting HTTP on port 4000...")
 		if err := http.ListenAndServe(":4000", restGateway); err != nil {
-			log.Printf("failed to start HTTP Rest Gateway service: %s", err)
+			log.Fatalf("failed to start HTTP Rest Gateway service: %s", err)
 		}
 	}()
 
 	log.Printf("starting gRPC on port 40000...")
-	server.Serve(listener)
+	if err := server.Serve(listener); err != nil {
+		log.Fatalf("failed to start gRPC server: %s", err)
+	}
 }

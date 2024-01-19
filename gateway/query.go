@@ -29,6 +29,9 @@ type QueryParameterParseOptions struct {
 
 	// Aliases is a table of arbitrary names mapped to field keys.
 	Aliases map[string]string
+
+	// LimitToAliases limits the query parameters to aliases only. Used when auto discovery is disabled.
+	LimitToAliases bool
 }
 
 // QueryParameterParser defines interface for all query parameter parsers.
@@ -59,6 +62,8 @@ func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, input Que
 		fieldKey, ok := input.Aliases[key]
 		if ok {
 			key = fieldKey
+		} else if input.LimitToAliases {
+			continue
 		}
 		fieldPath := strings.Split(key, ".")
 		if !ok && input.Filter.HasCommonPrefix(fieldPath) {

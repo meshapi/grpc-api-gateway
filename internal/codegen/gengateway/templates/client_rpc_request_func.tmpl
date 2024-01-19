@@ -10,6 +10,9 @@ var (
 		{{- end}}
 		},
 		{{- end }}
+		{{- if .QueryParameterCustomization.DisableAutoDiscovery }}
+		LimitToAliases: true,
+		{{- end }}
 	}
 )
 {{end}}
