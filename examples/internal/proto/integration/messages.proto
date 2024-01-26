@@ -24,6 +24,6 @@ message TestMessage {
 		string note_content = 6;
 	}
 	Details nested_detail = 7;
-	repeated Details repeated_details = 8;
+	repeated string repeated_strings = 8;
 	map<string,string> table = 9;
 }

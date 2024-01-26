@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/echo"
-	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
+	integrationapi "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
+	"github.com/meshapi/grpc-rest-gateway/examples/internal/integration"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,7 +23,7 @@ func main() {
 
 	server := grpc.NewServer()
 	echo.RegisterEchoServiceServer(server, &EchoService{})
-	integration.RegisterQueryParamsTestServer(server, &queryParamsTestServer{})
+	integrationapi.RegisterQueryParamsTestServer(server, &integration.QueryParamsTestServer{})
 	reflection.Register(server)
 
 	connection, err := grpc.Dial(":40000", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -31,7 +32,7 @@ func main() {
 	}
 
 	restGateway := gateway.NewServeMux()
-	integration.RegisterQueryParamsTestHandler(context.Background(), restGateway, connection)
+	integrationapi.RegisterQueryParamsTestHandler(context.Background(), restGateway, connection)
 
 	go func() {
 		log.Printf("starting HTTP on port 4000...")
