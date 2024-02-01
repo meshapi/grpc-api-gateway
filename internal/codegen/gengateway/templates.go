@@ -26,8 +26,9 @@ type param struct {
 
 type binding struct {
 	*descriptor.Binding
-	Registry          *descriptor.Registry
-	AllowPatchFeature bool
+	Registry                   *descriptor.Registry
+	RepeatedPathParamSeparator PathParameterSeparator
+	AllowPatchFeature          bool
 }
 
 // GetBodyFieldPath returns the binding body's field path.
@@ -203,9 +204,10 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 
 				methodWithBindingsSeen = true
 				if err := handlerTemplate.Execute(w, binding{
-					Binding:           b,
-					Registry:          reg,
-					AllowPatchFeature: p.AllowPatchFeature,
+					Binding:                    b,
+					Registry:                   reg,
+					AllowPatchFeature:          p.AllowPatchFeature,
+					RepeatedPathParamSeparator: g.RepeatedPathParameterSeparator,
 				}); err != nil {
 					return "", err
 				}
@@ -213,9 +215,10 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 				// Local
 				if false {
 					if err := localHandlerTemplate.Execute(w, binding{
-						Binding:           b,
-						Registry:          reg,
-						AllowPatchFeature: p.AllowPatchFeature,
+						Binding:                    b,
+						Registry:                   reg,
+						AllowPatchFeature:          p.AllowPatchFeature,
+						RepeatedPathParamSeparator: g.RepeatedPathParameterSeparator,
 					}); err != nil {
 						return "", err
 					}

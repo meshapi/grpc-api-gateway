@@ -22,6 +22,21 @@ func (p PathParameterSeparator) String() string {
 	}
 }
 
+func (p PathParameterSeparator) Separator() rune {
+	switch p {
+	case PathParameterSeparatorCSV:
+		return ','
+	case PathParameterSeparatorTSV:
+		return '\t'
+	case PathParameterSeparatorSSV:
+		return ' '
+	case PathParameterSeparatorPipes:
+		return '|'
+	default:
+		return ',' // NB: default to CSV.
+	}
+}
+
 func (p *PathParameterSeparator) Set(value string) error {
 	switch strings.ToLower(value) {
 	case "csv":
