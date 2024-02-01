@@ -24,6 +24,7 @@ func main() {
 	server := grpc.NewServer()
 	echo.RegisterEchoServiceServer(server, &EchoService{})
 	integrationapi.RegisterQueryParamsTestServer(server, &integration.QueryParamsTestServer{})
+	integrationapi.RegisterPathParamsTestServer(server, &integration.PathParamsTestServer{})
 	reflection.Register(server)
 
 	connection, err := grpc.Dial(":40000", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -33,6 +34,7 @@ func main() {
 
 	restGateway := gateway.NewServeMux()
 	integrationapi.RegisterQueryParamsTestHandler(context.Background(), restGateway, connection)
+	integrationapi.RegisterPathParamsTestHandler(context.Background(), restGateway, connection)
 
 	go func() {
 		log.Printf("starting HTTP on port 4000...")

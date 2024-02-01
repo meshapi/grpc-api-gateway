@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package meshapi.gateway.examples.integration;
+
+import "integration/messages.proto";
+import "meshapi/gateway/annotations.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+
+service PathParamsTest {
+	rpc Echo(TestMessage) returns (TestMessage) {
+		option (meshapi.gateway.http) = {
+			get: '/path/enum/{id}/{priority}',
+			additional_bindings: [
+				{get: '/path/oneof/{id}/{note_details.type_id}/{month_num}'},
+				{get: '/path/repeated_strings/{id}/{repeated_strings}'},
+				{custom: {method:'test', path:'/path/catch-all/*/{id}/{nested_detail.text=*}'}}
+			]
+		};
+	};
+}

@@ -3,15 +3,12 @@ package integration_test
 import (
 	"context"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestQueryParams(t *testing.T) {
@@ -157,31 +154,7 @@ func TestQueryParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			responseRecorder := httptest.NewRecorder()
-			mux.ServeHTTP(responseRecorder, tt.Request)
-
-			if responseRecorder.Result().StatusCode != 200 {
-				t.Fatalf("received status code %d", responseRecorder.Result().StatusCode)
-				return
-			}
-
-			expectedResponse := &integration.TestMessage{}
-			if !Unmarshal(t, strings.NewReader(tt.Response), expectedResponse) {
-				return
-			}
-
-			body := responseRecorder.Result().Body
-			defer body.Close()
-
-			response := &integration.TestMessage{}
-			if !Unmarshal(t, body, response) {
-				return
-			}
-
-			if diff := cmp.Diff(expectedResponse, response, protocmp.Transform()); diff != "" {
-				t.Fatalf("incorrect response:\n%s", diff)
-				return
-			}
+			AssertEchoRequest(t, mux, tt.Request, tt.Response)
 		})
 	}
 }

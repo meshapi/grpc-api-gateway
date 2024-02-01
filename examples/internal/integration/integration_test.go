@@ -5,15 +5,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"sync"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	integrationapi "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/grpctest"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/integration"
+	"github.com/meshapi/grpc-rest-gateway/gateway"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/testing/protocmp"
 )
 
 var (
@@ -27,6 +31,7 @@ var (
 		instance := grpctest.NewManager(nil, "shared-grpc-server", func(s *grpc.Server) {
 			// register all services here.
 			integrationapi.RegisterQueryParamsTestServer(s, &integration.QueryParamsTestServer{})
+			integrationapi.RegisterPathParamsTestServer(s, &integration.PathParamsTestServer{})
 		})
 		instance.Start()
 
@@ -55,4 +60,32 @@ func Unmarshal(t *testing.T, reader io.Reader, value protoreflect.ProtoMessage) 
 	}
 
 	return true
+}
+
+func AssertEchoRequest(t *testing.T, mux *gateway.ServeMux, req *http.Request, responseText string) {
+	responseRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(responseRecorder, req)
+
+	if responseRecorder.Result().StatusCode != 200 {
+		t.Fatalf("received status code %d", responseRecorder.Result().StatusCode)
+		return
+	}
+
+	expectedResponse := &integrationapi.TestMessage{}
+	if !Unmarshal(t, strings.NewReader(responseText), expectedResponse) {
+		return
+	}
+
+	body := responseRecorder.Result().Body
+	defer body.Close()
+
+	response := &integrationapi.TestMessage{}
+	if !Unmarshal(t, body, response) {
+		return
+	}
+
+	if diff := cmp.Diff(expectedResponse, response, protocmp.Transform()); diff != "" {
+		t.Fatalf("incorrect response:\n%s", diff)
+		return
+	}
 }
