@@ -1,7 +1,7 @@
 {{$AllowPatchFeature := .AllowPatchFeature}}
 {{if .HasQueryParameters}}
 var (
-	filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}} = gateway.QueryParameterParseOptions{
+	query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}} = gateway.QueryParameterParseOptions{
 		Filter: {{.QueryParameterFilter}},
 		{{- if .QueryParameterCustomization.Aliases }}
 		Aliases: map[string]string{
@@ -109,7 +109,7 @@ var (
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := mux.PopulateQueryParameters(&protoReq, req.Form, filter_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
+	if err := mux.PopulateQueryParameters(&protoReq, req.Form, query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 {{end}}
