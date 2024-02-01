@@ -4,6 +4,12 @@ package meshapi.gateway.examples.integration;
 
 option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
 
+enum Priority {
+	High = 0;
+	Medium = 1;
+	Low = 2;
+}
+
 message Details {
 	oneof type {
 		string type_name = 1;
@@ -26,4 +32,5 @@ message TestMessage {
 	Details nested_detail = 7;
 	repeated string repeated_strings = 8;
 	map<string,string> table = 9;
+	Priority priority = 10;
 }

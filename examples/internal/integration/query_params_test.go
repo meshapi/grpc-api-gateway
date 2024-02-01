@@ -35,6 +35,24 @@ func TestQueryParams(t *testing.T) {
 			Response: `{"id":"ID","num":51,"month_name":"Jan"}`,
 		},
 		{
+			Name: "AutoMapAll-EnumValue",
+			Request: NewRequest("GET", "/query/auto-map-all",
+				url.Values{
+					"id":       []string{"ID"},
+					"priority": []string{"2"},
+				}, nil),
+			Response: `{"id":"ID","priority":"Low"}`,
+		},
+		{
+			Name: "AutoMapAll-EnumName",
+			Request: NewRequest("GET", "/query/auto-map-all",
+				url.Values{
+					"id":       []string{"ID"},
+					"priority": []string{"Medium"},
+				}, nil),
+			Response: `{"id":"ID","priority":"Medium"}`,
+		},
+		{
 			Name: "AutoMapAll-OneOf-Nested",
 			Request: NewRequest("GET", "/query/auto-map-all",
 				url.Values{
