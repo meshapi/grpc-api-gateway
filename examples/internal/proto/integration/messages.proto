@@ -12,6 +12,12 @@ enum Priority {
 	Low = 2;
 }
 
+enum Enum {
+	Zero = 0;
+	One = 1;
+	Two = 2;
+}
+
 message Details {
 	oneof type {
 		string type_name = 1;
@@ -35,6 +41,7 @@ message TestMessage {
 	repeated string repeated_strings = 8;
 	map<string,string> table = 9;
 	Priority priority = 10;
+	repeated Enum repeated_enums = 11;
 }
 
 message PatchRequestSample {

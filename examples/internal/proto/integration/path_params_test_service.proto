@@ -12,6 +12,7 @@ service PathParamsTest {
 		option (meshapi.gateway.http) = {
 			get: '/path/enum/{id}/{priority}',
 			additional_bindings: [
+				{get: '/path/repeated-enum/{id}/{repeated_enums}'},
 				{get: '/path/oneof/{id}/{note_details.type_id}/{month_num}'},
 				{get: '/path/repeated_strings/{id}/{repeated_strings}'},
 				{custom: {method:'test', path:'/path/catch-all/*/{id}/{nested_detail.text=*}'}}

@@ -30,6 +30,16 @@ func TestPathParams(t *testing.T) {
 			Response: `{"id":"ID","priority":"Low"}`,
 		},
 		{
+			Name:     "RepeataedEnum-Value",
+			Request:  NewRequest("GET", "/path/repeated-enum/ID/0,1", nil, nil),
+			Response: `{"id":"ID","repeated_enums":["Zero","One"]}`,
+		},
+		{
+			Name:     "RepeataedEnum-Name",
+			Request:  NewRequest("GET", "/path/repeated-enum/ID/One,Two", nil, nil),
+			Response: `{"id":"ID","repeated_enums":["One","Two"]}`,
+		},
+		{
 			Name:     "OneOf",
 			Request:  NewRequest("GET", "/path/oneof/ID/1/12", nil, nil),
 			Response: `{"id":"ID","note_details":{"type_id":"1"},"month_num":12}`,
