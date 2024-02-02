@@ -34,6 +34,8 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"io",
 		"net/http",
 		"github.com/meshapi/grpc-rest-gateway/gateway",
+		"github.com/meshapi/grpc-rest-gateway/iofactory",
+		"github.com/meshapi/grpc-rest-gateway/partialfieldmask",
 		"github.com/meshapi/grpc-rest-gateway/protoconvert",
 		"github.com/meshapi/grpc-rest-gateway/trie",
 		"google.golang.org/protobuf/proto",
