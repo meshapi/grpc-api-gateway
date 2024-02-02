@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -32,6 +33,7 @@ var (
 			// register all services here.
 			integrationapi.RegisterQueryParamsTestServer(s, &integration.QueryParamsTestServer{})
 			integrationapi.RegisterPathParamsTestServer(s, &integration.PathParamsTestServer{})
+			integrationapi.RegisterPatchRequestTestServer(s, &integration.PatchRequestTestServer{})
 		})
 		instance.Start()
 
@@ -62,7 +64,7 @@ func Unmarshal(t *testing.T, reader io.Reader, value protoreflect.ProtoMessage) 
 	return true
 }
 
-func AssertEchoRequest(t *testing.T, mux *gateway.ServeMux, req *http.Request, responseText string) {
+func AssertEchoRequest[T protoreflect.ProtoMessage](t *testing.T, mux *gateway.ServeMux, req *http.Request, responseText string) {
 	responseRecorder := httptest.NewRecorder()
 	mux.ServeHTTP(responseRecorder, req)
 
@@ -71,7 +73,9 @@ func AssertEchoRequest(t *testing.T, mux *gateway.ServeMux, req *http.Request, r
 		return
 	}
 
-	expectedResponse := &integrationapi.TestMessage{}
+	var zeroMessage T
+
+	expectedResponse := reflect.New(reflect.TypeOf(zeroMessage).Elem()).Interface().(T)
 	if !Unmarshal(t, strings.NewReader(responseText), expectedResponse) {
 		return
 	}
@@ -79,7 +83,7 @@ func AssertEchoRequest(t *testing.T, mux *gateway.ServeMux, req *http.Request, r
 	body := responseRecorder.Result().Body
 	defer body.Close()
 
-	response := &integrationapi.TestMessage{}
+	response := reflect.New(reflect.TypeOf(zeroMessage).Elem()).Interface().(T)
 	if !Unmarshal(t, body, response) {
 		return
 	}

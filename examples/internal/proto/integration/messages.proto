@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package meshapi.gateway.examples.integration;
 
+import "google/protobuf/field_mask.proto";
+
 option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
 
 enum Priority {
@@ -33,4 +35,9 @@ message TestMessage {
 	repeated string repeated_strings = 8;
 	map<string,string> table = 9;
 	Priority priority = 10;
+}
+
+message PatchRequestSample {
+	TestMessage body = 1;
+	google.protobuf.FieldMask update_mask = 2;
 }

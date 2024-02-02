@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package meshapi.gateway.examples.integration;
+
+import "integration/messages.proto";
+import "meshapi/gateway/annotations.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+
+service PatchRequestTest {
+	rpc Patch(PatchRequestSample) returns (PatchRequestSample) {
+		option (meshapi.gateway.http) = {
+			put: '/patch/full/{body.id}',
+			body: '*',
+			additional_bindings: [
+				{put: '/patch/body/{body.id}', body: 'body'},
+				{patch: '/patch/full/{body.id}', body: '*'},
+				{patch: '/patch/body/{body.id}', body: 'body'}
+			]
+		};
+	};
+}

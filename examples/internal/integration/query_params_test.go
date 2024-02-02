@@ -154,7 +154,7 @@ func TestQueryParams(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			AssertEchoRequest(t, mux, tt.Request, tt.Response)
+			AssertEchoRequest[*integration.TestMessage](t, mux, tt.Request, tt.Response)
 		})
 	}
 }
