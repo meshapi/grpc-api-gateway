@@ -23,4 +23,10 @@ service StreamingTest {
 			get: '/streaming/server/generate'
 		};
 	}
+
+	rpc BulkCapitalize(stream BulkCapitalizeRequest) returns (stream BulkCapitalizeResponse) {
+		option (meshapi.gateway.http) = {
+			post: '/streaming/bidi/bulk-capitalize'
+		};
+	}
 }

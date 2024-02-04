@@ -111,3 +111,46 @@ func AssertEchoRequest[T protoreflect.ProtoMessage](t *testing.T, mux *gateway.S
 		return
 	}
 }
+
+// AssertChunkedResponse runs the mux's handler for the given HTTP request and asserts the responses matches the
+// expected JSON text chunks.
+func AssertChunkedResponse[T protoreflect.ProtoMessage](t *testing.T, mux *gateway.ServeMux, req *http.Request, responseTexts []string) {
+
+	responseRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(responseRecorder, req)
+
+	if responseRecorder.Result().StatusCode != 200 {
+		t.Fatalf("received status code %d", responseRecorder.Result().StatusCode)
+		return
+	}
+
+	var zeroMessage T
+
+	for _, expectedResponseText := range responseTexts {
+		expectedResponse := reflect.New(reflect.TypeOf(zeroMessage).Elem()).Interface().(T)
+		receivedResponse := reflect.New(reflect.TypeOf(zeroMessage).Elem()).Interface().(T)
+
+		line, err := responseRecorder.Body.ReadString('\n')
+		if err != nil {
+			t.Fatalf("error reading chunk: %s", err)
+			return
+		}
+
+		if !Unmarshal(t, strings.NewReader(expectedResponseText), expectedResponse) {
+			return
+		}
+
+		if !Unmarshal(t, strings.NewReader(line), receivedResponse) {
+			return
+		}
+
+		if diff := cmp.Diff(expectedResponse, receivedResponse, protocmp.Transform()); diff != "" {
+			t.Fatalf("incorrect response:\n%s", diff)
+			return
+		}
+	}
+
+	if line, err := responseRecorder.Body.ReadString('\n'); err != io.EOF {
+		t.Fatalf("expected EOF but received %q", line)
+	}
+}

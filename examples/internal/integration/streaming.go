@@ -3,6 +3,7 @@ package integration
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 )
@@ -48,6 +49,30 @@ func (s StreamingTestServer) Generate(req *integration.GenerateRequest, server i
 
 		if err != nil {
 			return fmt.Errorf("failed to send message: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s StreamingTestServer) BulkCapitalize(server integration.StreamingTest_BulkCapitalizeServer) error {
+	count := 0
+	for {
+		req, err := server.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to receive: %w", err)
+		}
+
+		count++
+		err = server.Send(&integration.BulkCapitalizeResponse{
+			Index: int32(count),
+			Text:  strings.ToUpper(req.Text),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to send: %w", err)
 		}
 	}
 

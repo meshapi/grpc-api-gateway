@@ -66,3 +66,12 @@ message GenerateResponse {
 	int32 index = 1;
 	int32 value = 2;
 }
+
+message BulkCapitalizeRequest {
+	string text = 1;
+}
+
+message BulkCapitalizeResponse {
+	int32 index = 1;
+	string text = 2;
+}

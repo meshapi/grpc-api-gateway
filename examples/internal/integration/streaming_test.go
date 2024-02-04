@@ -2,17 +2,12 @@ package integration_test
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
-	"google.golang.org/protobuf/testing/protocmp"
 )
 
 func TestClientStreamingChunked(t *testing.T) {
@@ -66,41 +61,34 @@ func TestServerStreamingChunked(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) {
-			responseRecorder := httptest.NewRecorder()
-			mux.ServeHTTP(responseRecorder, tt.Request)
+			AssertChunkedResponse[*integration.GenerateResponse](t, mux, tt.Request, tt.Responses)
+		})
+	}
+}
 
-			if responseRecorder.Result().StatusCode != 200 {
-				t.Fatalf("received status code %d", responseRecorder.Result().StatusCode)
-				return
-			}
+func TestServerAndClientStreamingChunked(t *testing.T) {
+	manager := StartSharedTestServer()
+	mux := gateway.NewServeMux()
+	integration.RegisterStreamingTestHandler(context.Background(), mux, manager.ClientConnection())
 
-			expectedResponse := &integration.GenerateResponse{}
-			receivedResponse := &integration.GenerateResponse{}
-			for _, expectedResponseText := range tt.Responses {
-				line, err := responseRecorder.Body.ReadString('\n')
-				if err != nil {
-					t.Fatalf("error reading chunk: %s", err)
-					return
-				}
-				expectedResponse.Reset()
-				if !Unmarshal(t, strings.NewReader(expectedResponseText), expectedResponse) {
-					return
-				}
+	tests := []struct {
+		Name      string
+		Request   *http.Request
+		Responses []string
+	}{
+		{
+			Name:    "Generate",
+			Request: NewRequest("POST", "/streaming/bidi/bulk-capitalize", nil, NewChunkedBody(`{"text":"hi"}`, `{"text":"bye"}`)),
+			Responses: []string{
+				`{"text": "HI","index":1}`,
+				`{"text": "BYE","index":2}`,
+			},
+		},
+	}
 
-				receivedResponse.Reset()
-				if !Unmarshal(t, strings.NewReader(line), receivedResponse) {
-					return
-				}
-
-				if diff := cmp.Diff(expectedResponse, receivedResponse, protocmp.Transform()); diff != "" {
-					t.Fatalf("incorrect response:\n%s", diff)
-					return
-				}
-			}
-
-			if line, err := responseRecorder.Body.ReadString('\n'); err != io.EOF {
-				t.Fatalf("expected EOF but received %q", line)
-			}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			AssertChunkedResponse[*integration.BulkCapitalizeResponse](t, mux, tt.Request, tt.Responses)
 		})
 	}
 }
