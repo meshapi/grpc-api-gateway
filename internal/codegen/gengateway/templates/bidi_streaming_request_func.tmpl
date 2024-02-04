@@ -1,5 +1,5 @@
 {{template "request-func-signature" .}} {
-	var metadata runtime.ServerMetadata
+	var metadata gateway.ServerMetadata
 	stream, err := client.{{.Method.GetName}}(ctx)
 	if err != nil {
 		grpclog.Infof("Failed to start streaming: %v", err)
