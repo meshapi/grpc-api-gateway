@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -34,6 +35,7 @@ var (
 			integrationapi.RegisterQueryParamsTestServer(s, &integration.QueryParamsTestServer{})
 			integrationapi.RegisterPathParamsTestServer(s, &integration.PathParamsTestServer{})
 			integrationapi.RegisterPatchRequestTestServer(s, &integration.PatchRequestTestServer{})
+			integrationapi.RegisterStreamingTestServer(s, &integration.StreamingTestServer{})
 		})
 		instance.Start()
 
@@ -41,6 +43,7 @@ var (
 	})
 )
 
+// NewRequest is a shortcut method for creating HTTP requests with query parameters.
 func NewRequest(method, path string, values url.Values, body io.Reader) *http.Request {
 	if values != nil {
 		path = path + "?" + values.Encode()
@@ -49,6 +52,7 @@ func NewRequest(method, path string, values url.Values, body io.Reader) *http.Re
 	return httptest.NewRequest(method, path, body)
 }
 
+// Unmarshal unmarshals a proto message from a reader instance.
 func Unmarshal(t *testing.T, reader io.Reader, value protoreflect.ProtoMessage) bool {
 	content, err := io.ReadAll(reader)
 	if err != nil {
@@ -64,6 +68,20 @@ func Unmarshal(t *testing.T, reader io.Reader, value protoreflect.ProtoMessage) 
 	return true
 }
 
+// NewChunkedBody returns a reader that simulates a chunked request for a client streaming request.
+func NewChunkedBody(chunks ...string) io.Reader {
+	buffer := &bytes.Buffer{}
+
+	for _, chunk := range chunks {
+		buffer.WriteString(chunk)
+		buffer.Write([]byte("\r\n"))
+	}
+
+	return buffer
+}
+
+// AssertEchoRequest runs the mux's handler for the given HTTP request and asserts the response matches the expected
+// JSON text.
 func AssertEchoRequest[T protoreflect.ProtoMessage](t *testing.T, mux *gateway.ServeMux, req *http.Request, responseText string) {
 	responseRecorder := httptest.NewRecorder()
 	mux.ServeHTTP(responseRecorder, req)

@@ -48,3 +48,12 @@ message PatchRequestSample {
 	TestMessage body = 1;
 	google.protobuf.FieldMask update_mask = 2;
 }
+
+message AddRequest {
+	int32 value = 1;
+}
+
+message AddResponse {
+	int32 sum = 1;
+	int32 count = 2;
+}

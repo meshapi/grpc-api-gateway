@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gorilla/websocket"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/echo"
 	integrationapi "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/integration"
@@ -14,6 +15,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
+
+type S struct {
+	upgrader websocket.Upgrader
+}
 
 func main() {
 	listener, err := net.Listen("tcp", ":40000")
@@ -26,6 +31,7 @@ func main() {
 	integrationapi.RegisterQueryParamsTestServer(server, &integration.QueryParamsTestServer{})
 	integrationapi.RegisterPathParamsTestServer(server, &integration.PathParamsTestServer{})
 	integrationapi.RegisterPatchRequestTestServer(server, &integration.PatchRequestTestServer{})
+	integrationapi.RegisterStreamingTestServer(server, &integration.StreamingTestServer{})
 	reflection.Register(server)
 
 	connection, err := grpc.Dial(":40000", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -37,6 +43,7 @@ func main() {
 	integrationapi.RegisterQueryParamsTestHandler(context.Background(), restGateway, connection)
 	integrationapi.RegisterPathParamsTestHandler(context.Background(), restGateway, connection)
 	integrationapi.RegisterPatchRequestTestHandler(context.Background(), restGateway, connection)
+	integrationapi.RegisterStreamingTestHandler(context.Background(), restGateway, connection)
 
 	go func() {
 		log.Printf("starting HTTP on port 4000...")
