@@ -57,3 +57,12 @@ message AddResponse {
 	int32 sum = 1;
 	int32 count = 2;
 }
+
+message GenerateRequest {
+	int32 count = 1;
+}
+
+message GenerateResponse {
+	int32 index = 1;
+	int32 value = 2;
+}

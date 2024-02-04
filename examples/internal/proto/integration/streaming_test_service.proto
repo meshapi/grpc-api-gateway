@@ -17,4 +17,10 @@ service StreamingTest {
 			]
 		};
 	};
+
+	rpc Generate(GenerateRequest) returns (stream GenerateResponse) {
+		option (meshapi.gateway.http) = {
+			get: '/streaming/server/generate'
+		};
+	}
 }

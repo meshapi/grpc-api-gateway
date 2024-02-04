@@ -3,7 +3,6 @@ package integration
 import (
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
 )
@@ -13,7 +12,6 @@ type StreamingTestServer struct {
 }
 
 func (s StreamingTestServer) Add(server integration.StreamingTest_AddServer) error {
-
 	result := &integration.AddResponse{}
 
 	for {
@@ -24,7 +22,6 @@ func (s StreamingTestServer) Add(server integration.StreamingTest_AddServer) err
 		if err != nil {
 			return fmt.Errorf("failed to read client streaming request: %w", err)
 		}
-		log.Printf("received: %+v", req)
 
 		result.Sum += req.Value
 		result.Count++
@@ -32,6 +29,26 @@ func (s StreamingTestServer) Add(server integration.StreamingTest_AddServer) err
 
 	if err := server.SendAndClose(result); err != nil {
 		return fmt.Errorf("failed to send: %w", err)
+	}
+
+	return nil
+}
+
+func (s StreamingTestServer) Generate(req *integration.GenerateRequest, server integration.StreamingTest_GenerateServer) error {
+	var current int32
+
+	var err error
+	for i := 0; i < int(req.Count); i++ {
+		current = current*2 + 1
+
+		err = server.Send(&integration.GenerateResponse{
+			Index: int32(i),
+			Value: current,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to send message: %w", err)
+		}
 	}
 
 	return nil
