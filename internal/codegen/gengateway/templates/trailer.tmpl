@@ -67,12 +67,12 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		}
 		{{if $m.GetServerStreaming}}
 		{{ if $b.ResponseBody }}
-		forward_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) {
+		mux.ForwardResponseStreamChunked(annotatedContext, outboundMarshaler, w, req, func() (proto.Message, error) {
 			res, err := resp.Recv()
 			return response_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}{res}, err
-		}, mux.GetForwardResponseOptions()...)
+		})
 		{{ else }}
-		forward_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		mux.ForwardResponseStreamChunked(annotatedContext, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() })
 		{{end}}
 		{{else}}
 		{{ if $b.ResponseBody }}

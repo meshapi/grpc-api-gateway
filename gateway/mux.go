@@ -2,7 +2,9 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"net/http"
 	"net/textproto"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
@@ -200,6 +203,7 @@ func (s *ServeMux) ForwardResponseMessage(
 	var buf []byte
 	var err error
 	// TODO: find out how to select response keys.
+	// TODO: can we use NewEncoder here to avoid the memory allocation here?
 	buf, err = marshaler.Marshal(receivedResponse)
 	if err != nil {
 		grpclog.Infof("Marshal error: %v", err)
@@ -214,5 +218,96 @@ func (s *ServeMux) ForwardResponseMessage(
 
 	if doForwardTrailers {
 		handleForwardResponseTrailer(writer, md)
+	}
+}
+
+// ForwardResponseStreamChunked forwards the stream from gRPC server to REST client using Transfer-Encoding chunked.
+func (s *ServeMux) ForwardResponseStreamChunked(
+	ctx context.Context,
+	marshaler Marshaler,
+	writer http.ResponseWriter,
+	req *http.Request,
+	recv func() (proto.Message, error)) {
+
+	f, ok := writer.(http.Flusher)
+	if !ok {
+		grpclog.Errorf("Flush not supported in %T", writer)
+		http.Error(writer, "unexpected type of web server", http.StatusInternalServerError)
+		return
+	}
+
+	md, ok := ServerMetadataFromContext(ctx)
+	if !ok {
+		grpclog.Infof("Failed to extract ServerMetadata from context")
+		http.Error(writer, "unexpected error", http.StatusInternalServerError)
+		return
+	}
+	s.handleForwardResponseServerMetadata(writer, md)
+
+	writer.Header().Set("Transfer-Encoding", "chunked")
+	if err := s.handleForwardResponseOptions(ctx, writer, nil); err != nil {
+		// TODO: Improve error handling here.
+		HTTPError(ctx, s, marshaler, writer, req, err)
+		return
+	}
+
+	var delimiter []byte
+	if d, ok := marshaler.(Delimited); ok {
+		delimiter = d.Delimiter()
+	} else {
+		delimiter = []byte("\n")
+	}
+
+	var wroteHeader bool
+	for {
+		resp, err := recv()
+		if errors.Is(err, io.EOF) {
+			return
+		}
+		if err != nil {
+			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			return
+		}
+		if err := s.handleForwardResponseOptions(ctx, writer, resp); err != nil {
+			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			return
+		}
+
+		if !wroteHeader {
+			writer.Header().Set("Content-Type", marshaler.ContentType(resp))
+		}
+
+		var buf []byte
+		httpBody, isHTTPBody := resp.(*httpbody.HttpBody)
+		switch {
+		case resp == nil:
+			buf, err = marshaler.Marshal(errorChunk(status.New(codes.Internal, "empty response")))
+		case isHTTPBody:
+			buf = httpBody.GetData()
+		default:
+			//result := map[string]interface{}{"result": resp}
+			// TODO: find out how to select response keys.
+			//if rb, ok := resp.(responseBody); ok {
+			//  result["result"] = rb.XXX_ResponseBody()
+			//}
+
+			buf, err = marshaler.Marshal(resp)
+		}
+
+		if err != nil {
+			grpclog.Infof("Failed to marshal response chunk: %v", err)
+			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			return
+		}
+		if _, err := writer.Write(buf); err != nil {
+			grpclog.Infof("Failed to send response chunk: %v", err)
+			return
+		}
+		wroteHeader = true
+		if _, err := writer.Write(delimiter); err != nil {
+			grpclog.Infof("Failed to send delimiter chunk: %v", err)
+			return
+		}
+		f.Flush()
 	}
 }
