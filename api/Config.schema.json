@@ -56,6 +56,11 @@
                 "disable_query_param_discovery": {
                     "type": "boolean",
                     "description": "disable_query_param_discovery can be used to avoid auto binding query parameters."
+                },
+                "stream": {
+                    "$ref": "#/definitions/meshapi.gateway.StreamConfig",
+                    "additionalProperties": false,
+                    "description": "stream holds configurations for streaming methods."
                 }
             },
             "additionalProperties": false,
@@ -163,6 +168,11 @@
                 "disable_query_param_discovery": {
                     "type": "boolean",
                     "description": "disable_query_param_discovery can be used to avoid auto binding query parameters."
+                },
+                "stream": {
+                    "$ref": "#/definitions/meshapi.gateway.StreamConfig",
+                    "additionalProperties": false,
+                    "description": "stream holds configurations for streaming methods."
                 }
             },
             "additionalProperties": false,
@@ -237,6 +247,26 @@
             "type": "object",
             "title": "Query Parameter Binding",
             "description": "QueryParameterBinding describes a query parameter to request message binding."
+        },
+        "meshapi.gateway.StreamConfig": {
+            "properties": {
+                "disable_websockets": {
+                    "type": "boolean",
+                    "description": "disable_websockets indicates whether or not websockets are allowed for this method. client must still ask for a connection upgrade."
+                },
+                "disable_sse": {
+                    "type": "boolean",
+                    "description": "disable_sse indicates whether or not server-sent events are allowed. see: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events SSE is only used when Accept-Type from the request includes MIME type text/event-stream."
+                },
+                "disable_chunked_transfer": {
+                    "type": "boolean",
+                    "description": "disable_chunked indicates whether or not chunked transfer encoding is allowed. NOTE: chunked transfer encoding is disabled in HTTP/2 so this option will only be available if request is HTTP/1."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Stream Config",
+            "description": "StreamConfig sets the behavior of the HTTP server for gRPC streaming methods."
         }
     }
 }

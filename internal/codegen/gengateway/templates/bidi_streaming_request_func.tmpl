@@ -40,3 +40,81 @@
 	metadata.HeaderMD = header
 	return stream, metadata, nil
 }
+{{if .NeedsWebsocket }}
+{{template "websocket-func-signature" .}} {
+	websocketConnection, err := mux.UpgradeToWebsocket(w, req)
+	if err != nil {
+		// how should we handle this?
+		return
+	}
+	stream, err := client.{{.Method.GetName}}(ctx)
+	if err != nil {
+		// how should we handle this?
+		return
+	}
+	closeWebsocketConnection := sync.OnceFunc(func () {
+		if err := websocketConnection.Close(); err != nil {
+			grpclog.Infof("Failed to close websocket connection: %v", err)
+		}
+	})
+	defer closeWebsocketConnection()
+	var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
+	var protoRes {{.Method.ResponseType.GoType .Method.Service.File.GoPkg.Path}}
+	go func() {
+		defer closeWebsocketConnection()
+		for {
+			protoRes.Reset()
+			err := stream.RecvMsg(&protoRes)
+			if err == io.EOF {
+				// anything else we should do here?
+				break
+			}
+			if err != nil {
+				// how to handle these errors?
+				break
+			}
+			data, err := outboundMarshaler.Marshal(&protoRes)
+			if err != nil {
+				grpclog.Infof("Failed to marshal gRPC response: %v", err)
+				// how to handle these errors?
+				break
+			}
+			if err := websocketConnection.SendMessage(data); err != nil {
+				grpclog.Infof("Failed to send gRPC response via websocket connection: %v", err)
+				// how to handle these errors?
+				break
+			}
+		}
+	}()
+	for {
+		data, err := websocketConnection.ReceiveMessage()
+		if err == io.EOF {
+			// anything else we should do?
+			break
+		}
+		if err != nil {
+			grpclog.Infof("failed to receive message: %v", err)
+			break
+		}
+		protoReq.Reset()
+		if err := inboundMarshaler.Unmarshal(data, &protoReq); err != nil {
+			grpclog.Infof("Failed to decode request from websocket: %v", err)
+			// how do we handle the error here?
+			break // do we necessarily want to break here?
+		}
+
+		if err := stream.SendMsg(&protoReq); err != nil {
+			if err == io.EOF {
+				break
+			}
+			grpclog.Infof("Failed to send request from websocket: %v", err)
+			// how do we handle the error here?
+			break
+		}
+	}
+	if err := stream.CloseSend(); err != nil {
+		grpclog.Infof("Failed to terminate gRPC client stream: %v")
+		// how do we handle the error here?
+	}
+}
+{{end}}

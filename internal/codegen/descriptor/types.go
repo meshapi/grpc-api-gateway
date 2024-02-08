@@ -7,6 +7,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"github.com/meshapi/grpc-rest-gateway/trie"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -278,6 +279,16 @@ type QueryParameterCustomization struct {
 	DisableAutoDiscovery bool
 }
 
+// StreamConfig includes directions on which streaming modes are enabled/disabled.
+type StreamConfig struct {
+	// AllowWebsocket indicates whether or not websocket is allowed.
+	AllowWebsocket bool
+	// AllowSSE indicates whether or not SSE is allowed.
+	AllowSSE bool
+	// AllowChunkedTransfer indicates whether or not chunked transfer encoding is allowed.
+	AllowChunkedTransfer bool
+}
+
 // Binding describes how an HTTP endpoint is bound to a gRPC method.
 type Binding struct {
 	// Method is the method which the endpoint is bound to.
@@ -296,9 +307,16 @@ type Binding struct {
 	Body *Body
 	// ResponseBody describes field in response struct to marshal in HTTP response body.
 	ResponseBody *Body
-
 	// QueryParameters is the full list of query parameters.
 	QueryParameters []QueryParameter
+	// StreamConfig holds streaming API configurations.
+	StreamConfig StreamConfig
+}
+
+// NeedsWebsocket returns whether or not websocket binding is needed.
+func (b *Binding) NeedsWebsocket() bool {
+	grpclog.Infof("method: %+v, streaming: %+v, allow ws: %+v", b.HTTPMethod, b.Method.GetServerStreaming(), b.StreamConfig.AllowWebsocket)
+	return b.HTTPMethod == "GET" && b.Method.GetServerStreaming() && b.StreamConfig.AllowWebsocket
 }
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query

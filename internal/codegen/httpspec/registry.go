@@ -88,6 +88,7 @@ func (r *Registry) LoadFromService(filePath, protoPackage string, service *descr
 			QueryParams:                embeddedBinding.GetQueryParams(),
 			AdditionalBindings:         embeddedBinding.GetAdditionalBindings(),
 			DisableQueryParamDiscovery: embeddedBinding.DisableQueryParamDiscovery,
+			Stream:                     embeddedBinding.Stream,
 		}
 		setPatternFromProtoDefinition(embeddedBinding.Pattern, endpointBinding)
 		config.Gateway.Endpoints = append(config.Gateway.Endpoints, endpointBinding)

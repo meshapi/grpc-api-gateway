@@ -12,6 +12,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/websocket"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -31,6 +32,9 @@ type ForwardResponseFunc func(context.Context, http.ResponseWriter, proto.Messag
 
 // MetadataAnnotatorFunc updates the outgoing gRPC request context based on the incoming HTTP request.
 type MetadataAnnotatorFunc func(context.Context, *http.Request) metadata.MD
+
+// WebsocketUpgradeFunc handles a protocol upgrade and creates a websocket connection.
+type WebsocketUpgradeFunc func(http.ResponseWriter, *http.Request) (websocket.Connection, error)
 
 // DefaultHeaderMatcher is used to pass http request headers to/from gRPC context. This adds permanent HTTP header
 // keys (as specified by the IANA, e.g: Accept, Cookie, Host) to the gRPC metadata with the grpcgateway- prefix. If you want to know which headers are considered permanent, you can view the isPermanentHTTPHeader function.
@@ -61,6 +65,7 @@ type ServeMux struct {
 	errorHandler              ErrorHandlerFunc
 	streamErrorHandler        StreamErrorHandlerFunc
 	routingErrorHandler       RoutingErrorHandlerFunc
+	websocketUpgradeFunc      WebsocketUpgradeFunc
 	disablePathLengthFallback bool
 }
 
@@ -93,6 +98,15 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 	}
 
 	return mux
+}
+
+// UpgradeToWebsocket upgrades an HTTP request to a websocket connection.
+func (s *ServeMux) UpgradeToWebsocket(response http.ResponseWriter, req *http.Request) (websocket.Connection, error) {
+	if s.websocketUpgradeFunc != nil {
+		return s.websocketUpgradeFunc(response, req)
+	}
+
+	return nil, errors.New("websockets are not supported in this server")
 }
 
 // ServeHTTP dispatches the request to the first handler whose pattern matches to r.Method and r.URL.Path.
@@ -278,6 +292,7 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 		}
 
 		var buf []byte
+		// TODO: is this necessary when marshaler is a type that can handle http body?
 		httpBody, isHTTPBody := resp.(*httpbody.HttpBody)
 		switch {
 		case resp == nil:

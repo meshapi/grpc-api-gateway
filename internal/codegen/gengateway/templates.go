@@ -266,6 +266,12 @@ var (
 		handlerTemplate.New("request-func-signature").Parse(
 			strings.ReplaceAll(templateDataRequestFuncSignature, "\n", "")))
 
+	//go:embed templates/websocket_func_signature.tmpl
+	templateDataWebsocketFuncSignature string
+	_                                  = template.Must(
+		handlerTemplate.New("websocket-func-signature").Parse(
+			strings.ReplaceAll(templateDataWebsocketFuncSignature, "\n", "")))
+
 	//go:embed templates/client_streaming_request_func.tmpl
 	templateDataClientStreamingRequestFunc string
 	_                                      = template.Must(

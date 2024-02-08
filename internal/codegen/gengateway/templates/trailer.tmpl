@@ -59,6 +59,12 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 			gateway.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
+		{{if $b.NeedsWebsocket }}
+		if req.Header.Get("Connection") == "Upgrade" {
+			 websocket_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, inboundMarshaler, outboundMarshaler, mux, client, w, req)
+			 return
+		}
+		{{end}}
 		resp, md, err := request_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, inboundMarshaler, mux, client, req, pathParams)
 		annotatedContext = gateway.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {

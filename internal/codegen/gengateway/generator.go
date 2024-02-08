@@ -33,6 +33,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"context",
 		"io",
 		"net/http",
+		"sync",
 		"github.com/meshapi/grpc-rest-gateway/gateway",
 		"github.com/meshapi/grpc-rest-gateway/iofactory",
 		"github.com/meshapi/grpc-rest-gateway/partialfieldmask",

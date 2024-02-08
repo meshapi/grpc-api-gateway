@@ -26,7 +26,10 @@ service StreamingTest {
 
 	rpc BulkCapitalize(stream BulkCapitalizeRequest) returns (stream BulkCapitalizeResponse) {
 		option (meshapi.gateway.http) = {
-			post: '/streaming/bidi/bulk-capitalize'
+			post: '/streaming/bidi/bulk-capitalize',
+			additional_bindings: [
+				{get: '/streaming/bidi/bulk-capitalize'}
+			]
 		};
 	}
 }

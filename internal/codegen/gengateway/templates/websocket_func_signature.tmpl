@@ -1,0 +1,1 @@
+func websocket_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}(ctx context.Context, inboundMarshaler, outboundMarshaler gateway.Marshaler, mux *gateway.ServeMux, client {{.Method.Service.InstanceName}}Client, w http.ResponseWriter, req *http.Request)
