@@ -31,3 +31,6 @@ gateway:
           body: 'nested_detail'
         - post: '/query/body-only'
           body: '*'
+        - custom:
+            method: 'TEST'
+            path: '/query/auto-map-all'

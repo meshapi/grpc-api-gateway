@@ -274,6 +274,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 		Index                           int
 		DisableQueryParamsAutoDiscovery bool
 		QueryParams                     []*api.QueryParameterBinding
+		StreamConfig                    *api.StreamConfig
 	}
 
 	insertBinding := func(input BindingInput) error {
@@ -360,6 +361,22 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 			return err
 		}
 
+		if binding.Method.GetClientStreaming() || binding.Method.GetServerStreaming() {
+			if input.StreamConfig != nil {
+				binding.StreamConfig = StreamConfig{
+					AllowWebsocket:       !input.StreamConfig.DisableWebsockets,
+					AllowSSE:             !input.StreamConfig.DisableSse,
+					AllowChunkedTransfer: !input.StreamConfig.DisableChunkedTransfer,
+				}
+			} else {
+				binding.StreamConfig = StreamConfig{
+					AllowWebsocket:       true,
+					AllowSSE:             true,
+					AllowChunkedTransfer: true,
+				}
+			}
+		}
+
 		bindings = append(bindings, &binding)
 		return nil
 	}
@@ -377,6 +394,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 		Index:                           0,
 		DisableQueryParamsAutoDiscovery: spec.Binding.DisableQueryParamDiscovery,
 		QueryParams:                     spec.Binding.GetQueryParams(),
+		StreamConfig:                    spec.Binding.Stream,
 	}
 
 	if err := insertBinding(input); err != nil {
@@ -397,6 +415,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 			Index:                           index + 1,
 			DisableQueryParamsAutoDiscovery: additionalBinding.DisableQueryParamDiscovery,
 			QueryParams:                     additionalBinding.GetQueryParams(),
+			StreamConfig:                    additionalBinding.Stream,
 		}
 
 		if err := insertBinding(input); err != nil {

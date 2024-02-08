@@ -26,8 +26,9 @@ type param struct {
 
 type binding struct {
 	*descriptor.Binding
-	Registry          *descriptor.Registry
-	AllowPatchFeature bool
+	Registry                   *descriptor.Registry
+	RepeatedPathParamSeparator PathParameterSeparator
+	AllowPatchFeature          bool
 }
 
 // GetBodyFieldPath returns the binding body's field path.
@@ -47,6 +48,9 @@ func (b binding) GetBodyFieldStructName() (string, error) {
 }
 
 func (b binding) QueryParameterFilter() queryParameterFilter {
+	if b.QueryParameterCustomization.DisableAutoDiscovery {
+		return queryParameterFilter{DoubleArray: trie.New(nil)}
+	}
 	return queryParameterFilter{DoubleArray: b.Binding.QueryParameterFilter()}
 }
 
@@ -200,9 +204,10 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 
 				methodWithBindingsSeen = true
 				if err := handlerTemplate.Execute(w, binding{
-					Binding:           b,
-					Registry:          reg,
-					AllowPatchFeature: p.AllowPatchFeature,
+					Binding:                    b,
+					Registry:                   reg,
+					AllowPatchFeature:          p.AllowPatchFeature,
+					RepeatedPathParamSeparator: g.RepeatedPathParameterSeparator,
 				}); err != nil {
 					return "", err
 				}
@@ -210,9 +215,10 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 				// Local
 				if false {
 					if err := localHandlerTemplate.Execute(w, binding{
-						Binding:           b,
-						Registry:          reg,
-						AllowPatchFeature: p.AllowPatchFeature,
+						Binding:                    b,
+						Registry:                   reg,
+						AllowPatchFeature:          p.AllowPatchFeature,
+						RepeatedPathParamSeparator: g.RepeatedPathParameterSeparator,
 					}); err != nil {
 						return "", err
 					}
@@ -259,6 +265,12 @@ var (
 	_                                = template.Must(
 		handlerTemplate.New("request-func-signature").Parse(
 			strings.ReplaceAll(templateDataRequestFuncSignature, "\n", "")))
+
+	//go:embed templates/websocket_func_signature.tmpl
+	templateDataWebsocketFuncSignature string
+	_                                  = template.Must(
+		handlerTemplate.New("websocket-func-signature").Parse(
+			strings.ReplaceAll(templateDataWebsocketFuncSignature, "\n", "")))
 
 	//go:embed templates/client_streaming_request_func.tmpl
 	templateDataClientStreamingRequestFunc string

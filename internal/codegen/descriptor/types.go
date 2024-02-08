@@ -7,6 +7,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"github.com/meshapi/grpc-rest-gateway/trie"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -278,6 +279,16 @@ type QueryParameterCustomization struct {
 	DisableAutoDiscovery bool
 }
 
+// StreamConfig includes directions on which streaming modes are enabled/disabled.
+type StreamConfig struct {
+	// AllowWebsocket indicates whether or not websocket is allowed.
+	AllowWebsocket bool
+	// AllowSSE indicates whether or not SSE is allowed.
+	AllowSSE bool
+	// AllowChunkedTransfer indicates whether or not chunked transfer encoding is allowed.
+	AllowChunkedTransfer bool
+}
+
 // Binding describes how an HTTP endpoint is bound to a gRPC method.
 type Binding struct {
 	// Method is the method which the endpoint is bound to.
@@ -296,9 +307,16 @@ type Binding struct {
 	Body *Body
 	// ResponseBody describes field in response struct to marshal in HTTP response body.
 	ResponseBody *Body
-
 	// QueryParameters is the full list of query parameters.
 	QueryParameters []QueryParameter
+	// StreamConfig holds streaming API configurations.
+	StreamConfig StreamConfig
+}
+
+// NeedsWebsocket returns whether or not websocket binding is needed.
+func (b *Binding) NeedsWebsocket() bool {
+	grpclog.Infof("method: %+v, streaming: %+v, allow ws: %+v", b.HTTPMethod, b.Method.GetServerStreaming(), b.StreamConfig.AllowWebsocket)
+	return b.HTTPMethod == "GET" && b.Method.GetServerStreaming() && b.StreamConfig.AllowWebsocket
 }
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query
@@ -569,24 +587,24 @@ var (
 
 	// TODO: replace it with a IIFE
 	proto3RepeatedConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
-		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolSlice",
-		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "protoconvert.Float64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "protoconvert.Float32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "protoconvert.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "protoconvert.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "protoconvert.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "protoconvert.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "protoconvert.BoolSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "protoconvert.StringSlice",
 		// FieldDescriptorProto_TYPE_GROUP
 		// FieldDescriptorProto_TYPE_MESSAGE
-		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "gateway.BytesSlice",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumSlice",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_BYTES:    "protoconvert.BytesSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "protoconvert.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "protoconvert.EnumSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "protoconvert.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "protoconvert.Int64Slice",
 	}
 
 	proto2ConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
@@ -612,25 +630,25 @@ var (
 	}
 
 	proto2RepeatedConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
-		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolSlice",
-		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "protoconvert.Float64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "protoconvert.Float32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "protoconvert.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "protoconvert.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "protoconvert.Uint64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "protoconvert.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "protoconvert.BoolSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "protoconvert.StringSlice",
 		// FieldDescriptorProto_TYPE_GROUP
 		// FieldDescriptorProto_TYPE_MESSAGE
 		// FieldDescriptorProto_TYPE_BYTES
 		// TODO(maros7) Handle bytes
-		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumSlice",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32Slice",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "protoconvert.Uint32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "protoconvert.EnumSlice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "protoconvert.Int64Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "protoconvert.Int32Slice",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "protoconvert.Int64Slice",
 	}
 
 	wellKnownTypeConv = map[string]string{

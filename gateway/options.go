@@ -43,6 +43,13 @@ func WithQueryParameterParser(queryParameterParser QueryParameterParser) ServeMu
 	})
 }
 
+// WithWebsocketUpgrader enables websocket upgrades for the serve mux.
+func WithWebsocketUpgrader(upgradeFunc WebsocketUpgradeFunc) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.websocketUpgradeFunc = upgradeFunc
+	})
+}
+
 // WithIncomingHeaderMatcher returns a ServeMuxOption representing a headerMatcher for incoming request to gateway.
 //
 // This matcher will be called with each header in http.Request. If matcher returns true, that header will be
