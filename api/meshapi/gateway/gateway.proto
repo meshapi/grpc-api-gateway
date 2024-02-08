@@ -61,6 +61,9 @@ message EndpointBinding {
 
 	// disable_query_param_discovery can be used to avoid auto binding query parameters.
 	bool disable_query_param_discovery = 12;
+
+	// stream holds configurations for streaming methods.
+	StreamConfig stream = 13;
 }
 
 message AdditionalEndpointBinding {
@@ -94,6 +97,9 @@ message AdditionalEndpointBinding {
 
 	// disable_query_param_discovery can be used to avoid auto binding query parameters.
 	bool disable_query_param_discovery = 11;
+
+	// stream holds configurations for streaming methods.
+	StreamConfig stream = 12;
 }
 
 // CustomPattern describes an HTTP pattern and custom method.
@@ -115,4 +121,24 @@ message QueryParameterBinding {
 
 	// ignore avoids reading this query parameter altogether (default: false).
 	bool ignore = 3;
+}
+
+// StreamConfig sets the behavior of the HTTP server for gRPC streaming methods.
+message StreamConfig {
+	// disable_websockets indicates whether or not websockets are allowed for this method.
+	// client must still ask for a connection upgrade.
+	bool disable_websockets = 1;
+
+	// disable_sse indicates whether or not server-sent events are allowed.
+	//
+	// see: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+	//
+	// SSE is only used when Accept-Type from the request includes MIME type text/event-stream.
+	bool disable_sse = 2;
+
+	// disable_chunked indicates whether or not chunked transfer encoding is allowed.
+	//
+	// NOTE: chunked transfer encoding is disabled in HTTP/2 so this option will only be available if request
+	// is HTTP/1.
+	bool disable_chunked_transfer = 3;
 }

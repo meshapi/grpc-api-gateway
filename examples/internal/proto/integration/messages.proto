@@ -2,7 +2,21 @@ syntax = "proto3";
 
 package meshapi.gateway.examples.integration;
 
+import "google/protobuf/field_mask.proto";
+
 option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+
+enum Priority {
+	High = 0;
+	Medium = 1;
+	Low = 2;
+}
+
+enum Enum {
+	Zero = 0;
+	One = 1;
+	Two = 2;
+}
 
 message Details {
 	oneof type {
@@ -24,6 +38,40 @@ message TestMessage {
 		string note_content = 6;
 	}
 	Details nested_detail = 7;
-	repeated Details repeated_details = 8;
+	repeated string repeated_strings = 8;
 	map<string,string> table = 9;
+	Priority priority = 10;
+	repeated Enum repeated_enums = 11;
+}
+
+message PatchRequestSample {
+	TestMessage body = 1;
+	google.protobuf.FieldMask update_mask = 2;
+}
+
+message AddRequest {
+	int32 value = 1;
+}
+
+message AddResponse {
+	int32 sum = 1;
+	int32 count = 2;
+}
+
+message GenerateRequest {
+	int32 count = 1;
+}
+
+message GenerateResponse {
+	int32 index = 1;
+	int32 value = 2;
+}
+
+message BulkCapitalizeRequest {
+	string text = 1;
+}
+
+message BulkCapitalizeResponse {
+	int32 index = 1;
+	string text = 2;
 }

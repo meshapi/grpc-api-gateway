@@ -31,4 +31,5 @@ message ProtoEndpointBinding {
 	repeated QueryParameterBinding query_params = 9;
 	repeated AdditionalEndpointBinding additional_bindings = 10;
 	bool disable_query_param_discovery = 11;
+	StreamConfig stream = 12;
 }

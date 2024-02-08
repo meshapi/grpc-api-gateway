@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package meshapi.gateway.examples.integration;
+
+import "integration/messages.proto";
+import "meshapi/gateway/annotations.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+
+service StreamingTest {
+	rpc Add(stream AddRequest) returns (AddResponse) {
+		option (meshapi.gateway.http) = {
+			post: '/streaming/client/add',
+			body: '*',
+			additional_bindings: [
+				{get: '/streaming/client/add'}
+			]
+		};
+	};
+
+	rpc Generate(GenerateRequest) returns (stream GenerateResponse) {
+		option (meshapi.gateway.http) = {
+			get: '/streaming/server/generate'
+		};
+	}
+
+	rpc BulkCapitalize(stream BulkCapitalizeRequest) returns (stream BulkCapitalizeResponse) {
+		option (meshapi.gateway.http) = {
+			post: '/streaming/bidi/bulk-capitalize',
+			additional_bindings: [
+				{get: '/streaming/bidi/bulk-capitalize'}
+			]
+		};
+	}
+}
