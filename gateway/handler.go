@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -36,7 +35,7 @@ func (s *ServeMux) handleForwardResponseOptions(ctx context.Context, w http.Resp
 	return nil
 }
 
-func (s *ServeMux) handleForwardResponseStreamError(
+func (s *ServeMux) handleForwardResponseStreamErrorChunked(
 	ctx context.Context,
 	wroteHeader bool,
 	marshaler Marshaler,
@@ -45,29 +44,28 @@ func (s *ServeMux) handleForwardResponseStreamError(
 	err error,
 	delimiter []byte) {
 
-	st := s.streamErrorHandler(ctx, err)
-	msg := errorChunk(st)
+	status, msg := s.streamErrorHandler(ctx, req, err)
 	if !wroteHeader {
 		writer.Header().Set("Content-Type", marshaler.ContentType(msg))
-		writer.WriteHeader(HTTPStatusFromCode(st.Code()))
+		writer.WriteHeader(status)
 	}
-	buf, err := marshaler.Marshal(msg)
-	if err != nil {
-		grpclog.Infof("Failed to marshal an error: %v", err)
-		return
+
+	if msg != nil {
+		buf, err := marshaler.Marshal(msg)
+		if err != nil {
+			grpclog.Infof("Failed to marshal an error: %v", err)
+			return
+		}
+		if _, err := writer.Write(buf); err != nil {
+			grpclog.Infof("Failed to notify error to client: %v", err)
+			return
+		}
 	}
-	if _, err := writer.Write(buf); err != nil {
-		grpclog.Infof("Failed to notify error to client: %v", err)
-		return
-	}
+
 	if _, err := writer.Write(delimiter); err != nil {
 		grpclog.Infof("Failed to send delimiter chunk: %v", err)
 		return
 	}
-}
-
-func errorChunk(st *status.Status) map[string]proto.Message {
-	return map[string]proto.Message{"error": st.Proto()}
 }
 
 func handleForwardResponseTrailer(w http.ResponseWriter, md ServerMetadata) {

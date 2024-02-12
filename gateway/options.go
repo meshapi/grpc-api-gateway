@@ -109,6 +109,15 @@ func WithErrorHandler(fn ErrorHandlerFunc) ServeMuxOption {
 	})
 }
 
+// WithWebsocketErrorHandler returns a ServeMuxOption for configuring a websocket error handler.
+//
+// This can be used to configure a custom error response.
+func WithWebsocketErrorHandler(fn WebsocketErrorHandlerFunc) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.websocketErrorHandler = fn
+	})
+}
+
 // WithStreamErrorHandler returns a ServeMuxOption that will use the given custom stream
 // error handler, which allows for customizing the error trailer for server-streaming
 // calls.

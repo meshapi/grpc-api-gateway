@@ -33,16 +33,16 @@ var (
 	{{- end}}
 	{{- if not $isFieldMask }}
 	if err := marshaler.NewDecoder(req.Body).Decode(&{{.Body.AssignableExpr "protoReq" .Method.Service.File.GoPkg.Path}}); err != nil && err != io.EOF  {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, gateway.ErrMarshal{Err: err, Inbound: true}
 	}
 	{{end}}
 	{{- if $isFieldMask }}
 	if err := marshaler.NewDecoder(newReader()).Decode(&{{.Body.AssignableExpr "protoReq" .Method.Service.File.GoPkg.Path}}); err != nil && err != io.EOF  {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, gateway.ErrMarshal{Err: err, Inbound: true}
 	}
 	if protoReq.{{.FieldMaskField}} == nil || len(protoReq.{{.FieldMaskField}}.GetPaths()) == 0 {
 			if fieldMask, err := partialfieldmask.FieldMaskFromRequestBodyJSON(newReader(), protoReq.{{.GetBodyFieldStructName}}); err != nil {
-				return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+				return nil, metadata, gateway.ErrMarshal{Err: err, Inbound: true}
 			} else {
 				protoReq.{{.FieldMaskField}} = fieldMask
 			}
@@ -66,23 +66,23 @@ var (
 	{{$enum := $binding.LookupEnum $param}}
 	val = pathParams.ByName({{$param | printf "%q"}})
 	if val == "" {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", {{$param | printf "%q"}})
+		return nil, metadata, gateway.ErrPathParameterMissing{Name: {{$param | printf "%q"}}}
 	}
 {{if $param.IsNestedProto3}}
 	err = gateway.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		return nil, metadata, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}}
 	}
 	{{if $enum}}
 		e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 		if err != nil {
-			return nil, metadata, status.Errorf(codes.InvalidArgument, "could not parse path as enum value, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+			return nil, metadata, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}}
 		}
 	{{end}}
 {{else if $enum}}
 	e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		return nil, metadata, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}}
 	}
 {{else}}
 	{{- $protoReq := $param.AssignableExprPrep "protoReq" $binding.Method.Service.File.GoPkg.Path -}}
@@ -91,7 +91,7 @@ var (
 	{{- end}}
 	{{$param.AssignableExpr "protoReq" $binding.Method.Service.File.GoPkg.Path}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}})
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		return nil, metadata, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}}
 	}
 {{end}}
 {{if and $enum $param.IsRepeated}}
@@ -107,10 +107,10 @@ var (
 {{end}}
 {{if .HasQueryParameters}}
 	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, gateway.ErrInvalidQueryParameters{Err: err}
 	}
 	if err := mux.PopulateQueryParameters(&protoReq, req.Form, query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		return nil, metadata, gateway.ErrInvalidQueryParameters{Err: err}
 	}
 {{end}}
 {{if .Method.GetServerStreaming}}
@@ -150,30 +150,26 @@ var (
 	{{$enum := $binding.LookupEnum $param}}
 	val = pathParams.ByName({{$param | printf "%q"}})
 	if val == "" {
-		// how to handle error here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", {{$param | printf "%q"}})
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterMissing{Name: {{$param | printf "%q"}}})
 		return
 	}
 {{if $param.IsNestedProto3}}
 	err = gateway.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
-		// how to handle errors here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}})
 		return
 	}
 	{{if $enum}}
 		e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 		if err != nil {
-			// how to handle errors here?
-			// return nil, metadata, status.Errorf(codes.InvalidArgument, "could not parse path as enum value, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+			mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}})
 			return
 		}
 	{{end}}
 {{else if $enum}}
 	e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 	if err != nil {
-		// how to handle errors here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}})
 		return
 	}
 {{else}}
@@ -183,8 +179,7 @@ var (
 	{{- end}}
 	{{$param.AssignableExpr "protoReq" $binding.Method.Service.File.GoPkg.Path}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}})
 	if err != nil {
-		// how to handle errors here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}})
 		return
 	}
 {{end}}
@@ -201,83 +196,48 @@ var (
 {{end}}
 {{if .HasQueryParameters}}
 	if err := req.ParseForm(); err != nil {
-		// how to handle errors here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrInvalidQueryParameters{Err: err})
 		return
 	}
 	if err := mux.PopulateQueryParameters(&protoReq, req.Form, query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
-		// how to handle errors here?
-		// return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrInvalidQueryParameters{Err: err})
 		return
 	}
 {{end}}
 	websocketConnection, err := mux.UpgradeToWebsocket(w, req)
 	if err != nil {
-		// how should we handle this?
+		grpclog.Infof("Failed to upgrade HTTP request: %v", err)
 		return
 	}
-	closeWebsocketConnection := sync.OnceFunc(func () {
+	closeConnection := func() {
 		if err := websocketConnection.Close(); err != nil {
 			grpclog.Infof("Failed to close websocket connection: %v", err)
 		}
-	})
-	defer closeWebsocketConnection()
+	}
 	requestData, err := websocketConnection.ReceiveMessage()
 	if err == io.EOF {
+		closeConnection()
 		return
 	}
 	if err != nil {
-		// how do we handle this error?
 		grpclog.Infof("failed to receive message: %v", err)
+		closeConnection()
 		return
 	}
 	if err := inboundMarshaler.Unmarshal(requestData, &protoReq); err != nil {
 		grpclog.Infof("Failed to decode request from websocket: %v", err)
-		// how do we handle the error here?
+		mux.WebsocketError(ctx, outboundMarshaler, req, websocketConnection, gateway.ErrMarshal{Err: err, Inbound: true})
+		closeConnection()
 		return
 	}
 	stream, err := client.{{.Method.GetName}}(ctx, &protoReq)
 	if err != nil {
-		// how do we handle error here?
+		grpclog.Infof("Failed to start gRPC stream: %v", err)
+		mux.WebsocketError(ctx, outboundMarshaler, req, websocketConnection, err)
+		closeConnection()
 		return
 	}
 	var protoRes {{.Method.ResponseType.GoType .Method.Service.File.GoPkg.Path}}
-	go func() {
-		defer closeWebsocketConnection()
-		for {
-			protoRes.Reset()
-			err := stream.RecvMsg(&protoRes)
-			if err == io.EOF {
-				// anything else we should do here?
-				break
-			}
-			if err != nil {
-				// how to handle these errors?
-				break
-			}
-			data, err := outboundMarshaler.Marshal(&protoRes)
-			if err != nil {
-				grpclog.Infof("Failed to marshal gRPC response: %v", err)
-				// how to handle these errors?
-				break
-			}
-			if err := websocketConnection.SendMessage(data); err != nil {
-				grpclog.Infof("Failed to send gRPC response over websocket connection: %v", err)
-				// how to handle these errors?
-				break
-			}
-		}
-	}()
-	for {
-		_, err := websocketConnection.ReceiveMessage()
-		if err == io.EOF {
-			// anything else we should do?
-			break
-		}
-		if err != nil {
-			grpclog.Infof("failed to receive message: %v", err)
-			break
-		}
-	}
+	mux.ForwardWebsocketServerStreaming(ctx, req, stream, websocketConnection, outboundMarshaler, &protoRes)
 }
 {{end}}

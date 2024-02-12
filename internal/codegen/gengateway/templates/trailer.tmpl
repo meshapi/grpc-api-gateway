@@ -56,11 +56,11 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		annotatedContext, err = gateway.AnnotateContext(ctx, mux, req, "/{{$svc.File.GetPackage}}.{{$svc.GetName}}/{{$m.GetName}}")
 		{{- end }}
 		if err != nil {
-			gateway.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			mux.HTTPError(ctx, outboundMarshaler, w, req, err)
 			return
 		}
 		{{if $b.NeedsWebsocket }}
-		if req.Header.Get("Connection") == "Upgrade" {
+		if mux.IsWebsocketUpgrade(req) {
 			 websocket_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, inboundMarshaler, outboundMarshaler, mux, client, w, req)
 			 return
 		}
@@ -68,7 +68,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		resp, md, err := request_{{$svc.GetName}}_{{$m.GetName}}_{{$b.Index}}(annotatedContext, inboundMarshaler, mux, client, req, pathParams)
 		annotatedContext = gateway.NewServerMetadataContext(annotatedContext, md)
 		if err != nil {
-			gateway.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			mux.HTTPError(annotatedContext, outboundMarshaler, w, req, err)
 			return
 		}
 		{{if $m.GetServerStreaming}}

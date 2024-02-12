@@ -14,7 +14,7 @@
 		}
 		if err != nil {
 			grpclog.Infof("Failed to decode request: %v", err)
-			return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+			return nil, metadata, gateway.ErrMarshal{Err: err, Inbound: true}
 		}
 		if err = stream.Send(&protoReq); err != nil {
 			if err == io.EOF {

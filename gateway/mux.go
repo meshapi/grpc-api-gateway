@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"net/textproto"
 	"strings"
+	"sync"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
 	"github.com/meshapi/grpc-rest-gateway/websocket"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
@@ -63,6 +65,7 @@ type ServeMux struct {
 	outgoingHeaderMatcher     HeaderMatcherFunc
 	metadataAnnotators        []MetadataAnnotatorFunc
 	errorHandler              ErrorHandlerFunc
+	websocketErrorHandler     WebsocketErrorHandlerFunc
 	streamErrorHandler        StreamErrorHandlerFunc
 	routingErrorHandler       RoutingErrorHandlerFunc
 	websocketUpgradeFunc      WebsocketUpgradeFunc
@@ -79,6 +82,7 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 		metadataAnnotators:        nil,
 		errorHandler:              DefaultHTTPErrorHandler,
 		streamErrorHandler:        DefaultStreamErrorHandler,
+		websocketErrorHandler:     DefaultWebsocketErrorHandler,
 		routingErrorHandler:       DefaultRoutingErrorHandler,
 		disablePathLengthFallback: false,
 	}
@@ -86,6 +90,17 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 	for _, opt := range opts {
 		opt.apply(mux)
 	}
+
+	mux.router.HandleMethodNotAllowed = true
+	mux.router.MethodNotAllowed = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, outboundMarshaler := mux.MarshalerForRequest(r)
+		mux.routingErrorHandler(r.Context(), mux, outboundMarshaler, w, r, ErrRoutingMethodNotAllowed)
+	})
+
+	mux.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, outboundMarshaler := mux.MarshalerForRequest(r)
+		mux.routingErrorHandler(r.Context(), mux, outboundMarshaler, w, r, ErrRoutingNotFound)
+	})
 
 	if mux.incomingHeaderMatcher == nil {
 		mux.incomingHeaderMatcher = DefaultHeaderMatcher
@@ -175,6 +190,16 @@ func (s *ServeMux) MarshalerForRequest(req *http.Request) (inbound, outbound Mar
 	return inbound, outbound
 }
 
+// IsWebsocketUpgrade returns whether or not the client is requesting for connection upgrade to websocket.
+func (s *ServeMux) IsWebsocketUpgrade(req *http.Request) bool {
+	if value := req.Header.Get("Connection"); value != "" && strings.ToLower(value) == "upgrade" {
+		if upgrade := req.Header.Get("Upgrade"); upgrade != "" && strings.ToLower(upgrade) == "websocket" {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *ServeMux) isPathLengthFallback(r *http.Request) bool {
 	return !s.disablePathLengthFallback && r.Method == http.MethodPost && r.Header.Get("Content-Type") == "application/x-www-form-urlencoded"
 }
@@ -209,8 +234,7 @@ func (s *ServeMux) ForwardResponseMessage(
 	writer.Header().Set("Content-Type", contentType)
 
 	if err := s.handleForwardResponseOptions(ctx, writer, receivedResponse); err != nil {
-		// TODO: Improve error handling here.
-		HTTPError(ctx, s, marshaler, writer, req, err)
+		s.HTTPError(ctx, marshaler, writer, req, err)
 		return
 	}
 
@@ -221,8 +245,7 @@ func (s *ServeMux) ForwardResponseMessage(
 	buf, err = marshaler.Marshal(receivedResponse)
 	if err != nil {
 		grpclog.Infof("Marshal error: %v", err)
-		// TODO: Improve error handling.
-		HTTPError(ctx, s, marshaler, writer, req, err)
+		s.HTTPError(ctx, marshaler, writer, req, ErrMarshal{Err: err, Inbound: false})
 		return
 	}
 
@@ -261,7 +284,7 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 	writer.Header().Set("Transfer-Encoding", "chunked")
 	if err := s.handleForwardResponseOptions(ctx, writer, nil); err != nil {
 		// TODO: Improve error handling here.
-		HTTPError(ctx, s, marshaler, writer, req, err)
+		s.HTTPError(ctx, marshaler, writer, req, err)
 		return
 	}
 
@@ -279,11 +302,11 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 			return
 		}
 		if err != nil {
-			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			s.handleForwardResponseStreamErrorChunked(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
 			return
 		}
 		if err := s.handleForwardResponseOptions(ctx, writer, resp); err != nil {
-			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			s.handleForwardResponseStreamErrorChunked(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
 			return
 		}
 
@@ -296,7 +319,7 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 		httpBody, isHTTPBody := resp.(*httpbody.HttpBody)
 		switch {
 		case resp == nil:
-			buf, err = marshaler.Marshal(errorChunk(status.New(codes.Internal, "empty response")))
+			buf, err = marshaler.Marshal(status.New(codes.Internal, "empty response"))
 		case isHTTPBody:
 			buf = httpBody.GetData()
 		default:
@@ -311,7 +334,7 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 
 		if err != nil {
 			grpclog.Infof("Failed to marshal response chunk: %v", err)
-			s.handleForwardResponseStreamError(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
+			s.handleForwardResponseStreamErrorChunked(ctx, wroteHeader, marshaler, writer, req, err, delimiter)
 			return
 		}
 		if _, err := writer.Write(buf); err != nil {
@@ -324,5 +347,130 @@ func (s *ServeMux) ForwardResponseStreamChunked(
 			return
 		}
 		f.Flush()
+	}
+}
+
+type ProtoMessage interface {
+	proto.Message
+	Reset()
+}
+
+func (s *ServeMux) ForwardWebsocket(
+	ctx context.Context,
+	req *http.Request, stream grpc.ClientStream, ws websocket.Connection,
+	inboundMarshaler, outboundMarshaler Marshaler,
+	protoReq, protoRes ProtoMessage) {
+
+	closeWebsocketConnection := sync.OnceFunc(func() {
+		if err := ws.Close(); err != nil {
+			grpclog.Infof("Failed to close websocket connection: %v", err)
+		}
+	})
+	defer closeWebsocketConnection()
+
+	// receive from gRPC stream and forward to websocket.
+	go func() {
+		defer closeWebsocketConnection()
+
+		for {
+			protoRes.Reset()
+			err := stream.RecvMsg(protoRes)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				grpclog.Infof("Failed to receive message from gRPC stream: %v", err)
+				break
+			}
+			data, err := outboundMarshaler.Marshal(protoRes)
+			if err != nil {
+				s.websocketErrorHandler(ctx, outboundMarshaler, req, ws, ErrMarshal{Err: err, Inbound: false})
+				break
+			}
+			if err := ws.SendMessage(data); err != nil {
+				grpclog.Infof("Failed to send gRPC response via websocket connection: %v", err)
+				break
+			}
+		}
+	}()
+
+	// receive from websocket, forward to gRPC stream.
+	for {
+		data, err := ws.ReceiveMessage()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			grpclog.Infof("failed to receive message: %v", err)
+			break
+		}
+		protoReq.Reset()
+		if err := inboundMarshaler.Unmarshal(data, protoReq); err != nil {
+			grpclog.Infof("Failed to decode request from websocket: %v", err)
+			s.websocketErrorHandler(ctx, outboundMarshaler, req, ws, ErrMarshal{Err: err, Inbound: true})
+			break
+		}
+
+		if err := stream.SendMsg(protoReq); err != nil {
+			if err != io.EOF {
+				grpclog.Infof("Failed to send request from websocket: %v", err)
+			}
+			break
+		}
+	}
+	if err := stream.CloseSend(); err != nil {
+		grpclog.Infof("Failed to terminate gRPC client stream: %v")
+	}
+}
+
+func (s *ServeMux) ForwardWebsocketServerStreaming(
+	ctx context.Context,
+	req *http.Request, stream grpc.ClientStream, ws websocket.Connection,
+	outboundMarshaler Marshaler,
+	protoRes ProtoMessage) {
+
+	closeWebsocketConnection := sync.OnceFunc(func() {
+		if err := ws.Close(); err != nil {
+			grpclog.Infof("Failed to close websocket connection: %v", err)
+		}
+	})
+	defer closeWebsocketConnection()
+
+	// receive from gRPC stream and forward to websocket.
+	go func() {
+		defer closeWebsocketConnection()
+
+		for {
+			protoRes.Reset()
+			err := stream.RecvMsg(protoRes)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				grpclog.Infof("Failed to receive message from gRPC stream: %v", err)
+				break
+			}
+			data, err := outboundMarshaler.Marshal(protoRes)
+			if err != nil {
+				s.websocketErrorHandler(ctx, outboundMarshaler, req, ws, ErrMarshal{Err: err, Inbound: false})
+				break
+			}
+			if err := ws.SendMessage(data); err != nil {
+				grpclog.Infof("Failed to send gRPC response via websocket connection: %v", err)
+				break
+			}
+		}
+	}()
+
+	// receive from websocket, forward to gRPC stream.
+	for {
+		_, err := ws.ReceiveMessage()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			grpclog.Infof("failed to receive message: %v", err)
+			break
+		}
 	}
 }
