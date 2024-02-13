@@ -1,4 +1,4 @@
-package marshal_test
+package protomarshal_test
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
 	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-rest-gateway/protomarshal"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -18,7 +18,7 @@ import (
 )
 
 func TestJSONBuiltinMarshal(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	msg := &examplepb.SimpleMessage{
 		Id: "foo",
 	}
@@ -38,7 +38,7 @@ func TestJSONBuiltinMarshal(t *testing.T) {
 }
 
 func TestJSONBuiltinMarshalField(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinFieldFixtures {
 		buf, err := m.Marshal(fixt.data)
 		if err != nil {
@@ -51,7 +51,7 @@ func TestJSONBuiltinMarshalField(t *testing.T) {
 }
 
 func TestJSONBuiltinMarshalFieldKnownErrors(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinKnownErrors {
 		buf, err := m.Marshal(fixt.data)
 		if err != nil {
@@ -65,7 +65,7 @@ func TestJSONBuiltinMarshalFieldKnownErrors(t *testing.T) {
 
 func TestJSONBuiltinsnmarshal(t *testing.T) {
 	var (
-		m   marshal.JSONBuiltin
+		m   protomarshal.JSONBuiltin
 		got = new(examplepb.SimpleMessage)
 
 		data = []byte(`{"id": "foo"}`)
@@ -83,7 +83,7 @@ func TestJSONBuiltinsnmarshal(t *testing.T) {
 }
 
 func TestJSONBuiltinUnmarshalField(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinFieldFixtures {
 		dest := alloc(reflect.TypeOf(fixt.data))
 		if err := m.Unmarshal([]byte(fixt.json), dest.Interface()); err != nil {
@@ -105,7 +105,7 @@ func alloc(t reflect.Type) reflect.Value {
 }
 
 func TestJSONBuiltinUnmarshalFieldKnownErrors(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinKnownErrors {
 		dest := reflect.New(reflect.TypeOf(fixt.data))
 		if err := m.Unmarshal([]byte(fixt.json), dest.Interface()); err == nil {
@@ -115,7 +115,7 @@ func TestJSONBuiltinUnmarshalFieldKnownErrors(t *testing.T) {
 }
 
 func TestJSONBuiltinEncoder(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	msg := &examplepb.SimpleMessage{
 		Id: "foo",
 	}
@@ -136,7 +136,7 @@ func TestJSONBuiltinEncoder(t *testing.T) {
 }
 
 func TestJSONBuiltinEncoderFields(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinFieldFixtures {
 		var buf bytes.Buffer
 		enc := m.NewEncoder(&buf)
@@ -152,7 +152,7 @@ func TestJSONBuiltinEncoderFields(t *testing.T) {
 
 func TestJSONBuiltinDecoder(t *testing.T) {
 	var (
-		m   marshal.JSONBuiltin
+		m   protomarshal.JSONBuiltin
 		got = new(examplepb.SimpleMessage)
 
 		data = `{"id": "foo"}`
@@ -172,7 +172,7 @@ func TestJSONBuiltinDecoder(t *testing.T) {
 }
 
 func TestJSONBuiltinDecoderFields(t *testing.T) {
-	var m marshal.JSONBuiltin
+	var m protomarshal.JSONBuiltin
 	for _, fixt := range builtinFieldFixtures {
 		r := strings.NewReader(fixt.json)
 		dec := m.NewDecoder(r)

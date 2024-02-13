@@ -1,11 +1,11 @@
-package marshal_test
+package protomarshal_test
 
 import (
 	"bytes"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
 	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-rest-gateway/protomarshal"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -36,7 +36,7 @@ var message = &examplepb.ABitOfEverything{
 }
 
 func TestProtoMarshalUnmarshal(t *testing.T) {
-	marshaller := marshal.ProtoMarshaller{}
+	marshaller := protomarshal.ProtoMarshaller{}
 
 	// Marshal
 	buffer, err := marshaller.Marshal(message)
@@ -61,7 +61,7 @@ func TestProtoMarshalUnmarshal(t *testing.T) {
 }
 
 func TestProtoEncoderDecodert(t *testing.T) {
-	marshaller := marshal.ProtoMarshaller{}
+	marshaller := protomarshal.ProtoMarshaller{}
 
 	var buf bytes.Buffer
 

@@ -1,4 +1,4 @@
-package marshal_test
+package protomarshal_test
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
 	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-rest-gateway/protomarshal"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -101,7 +101,7 @@ func TestJSONPbMarshal(t *testing.T) {
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			m := marshal.JSONPb{
+			m := protomarshal.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
 					EmitUnpopulated: spec.emitUnpopulated,
 					Indent:          spec.indent,
@@ -130,7 +130,7 @@ func TestJSONPbMarshal(t *testing.T) {
 }
 
 func TestJSONPbMarshalFields(t *testing.T) {
-	var m marshal.JSONPb
+	var m protomarshal.JSONPb
 	m.UseEnumNumbers = true // builtin fixtures include an enum, expected to be marshaled as int
 	for _, spec := range builtinFieldFixtures {
 		buf, err := m.Marshal(spec.data)
@@ -172,7 +172,7 @@ func TestJSONPbMarshalFields(t *testing.T) {
 
 func TestJSONPbUnmarshal(t *testing.T) {
 	var (
-		m   marshal.JSONPb
+		m   protomarshal.JSONPb
 		got examplepb.ABitOfEverything
 	)
 	for i, data := range []string{
@@ -246,7 +246,7 @@ func TestJSONPbUnmarshal(t *testing.T) {
 }
 
 func TestJSONPbUnmarshalFields(t *testing.T) {
-	var m marshal.JSONPb
+	var m protomarshal.JSONPb
 	for _, fixt := range fieldFixtures {
 		if fixt.skipUnmarshal {
 			continue
@@ -341,7 +341,7 @@ func TestJSONPbEncoder(t *testing.T) {
 			},
 		},
 	} {
-		m := marshal.JSONPb{
+		m := protomarshal.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				EmitUnpopulated: spec.emitUnpopulated,
 				Indent:          spec.indent,
@@ -371,7 +371,7 @@ func TestJSONPbEncoder(t *testing.T) {
 }
 
 func TestJSONPbEncoderFields(t *testing.T) {
-	var m marshal.JSONPb
+	var m protomarshal.JSONPb
 	for _, fixt := range fieldFixtures {
 		var buf bytes.Buffer
 		enc := m.NewEncoder(&buf)
@@ -395,7 +395,7 @@ func TestJSONPbEncoderFields(t *testing.T) {
 
 func TestJSONPbDecoder(t *testing.T) {
 	var (
-		m   marshal.JSONPb
+		m   protomarshal.JSONPb
 		got examplepb.ABitOfEverything
 	)
 	for _, data := range []string{
@@ -470,7 +470,7 @@ func TestJSONPbDecoder(t *testing.T) {
 }
 
 func TestJSONPbDecoderFields(t *testing.T) {
-	var m marshal.JSONPb
+	var m protomarshal.JSONPb
 	for _, fixt := range fieldFixtures {
 		if fixt.skipUnmarshal {
 			continue
@@ -489,7 +489,7 @@ func TestJSONPbDecoderFields(t *testing.T) {
 
 func TestJSONPbDecoderUnknownField(t *testing.T) {
 	var (
-		m = marshal.JSONPb{
+		m = protomarshal.JSONPb{
 			UnmarshalOptions: protojson.UnmarshalOptions{
 				DiscardUnknown: false,
 			},
@@ -672,7 +672,7 @@ func TestJSONPbUnmarshalNullField(t *testing.T) {
 	var out map[string]interface{}
 
 	const json = `{"foo": null}`
-	marshaler := &marshal.JSONPb{}
+	marshaler := &protomarshal.JSONPb{}
 	if err := marshaler.Unmarshal([]byte(json), &out); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -687,7 +687,7 @@ func TestJSONPbUnmarshalNullField(t *testing.T) {
 }
 
 func TestJSONPbMarshalResponseBodies(t *testing.T) {
-	marshaler := &marshal.JSONPb{}
+	marshaler := &protomarshal.JSONPb{}
 	for i, spec := range []struct {
 		input           interface{}
 		emitUnpopulated bool
@@ -897,7 +897,7 @@ func TestJSONPbMarshalResponseBodies(t *testing.T) {
 	} {
 
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			m := marshal.JSONPb{
+			m := protomarshal.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
 					EmitUnpopulated: spec.emitUnpopulated,
 				},

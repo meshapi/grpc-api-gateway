@@ -12,7 +12,7 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/protomarshal"
 	"github.com/meshapi/grpc-rest-gateway/websocket"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
@@ -60,7 +60,7 @@ type ServeMux struct {
 	// handlers maps HTTP method to a list of handlers.
 	queryParamParser          QueryParameterParser
 	forwardResponseOptions    []ForwardResponseFunc
-	marshalers                marshal.Registry
+	marshalers                protomarshal.Registry
 	incomingHeaderMatcher     HeaderMatcherFunc
 	outgoingHeaderMatcher     HeaderMatcherFunc
 	metadataAnnotators        []MetadataAnnotatorFunc
@@ -80,7 +80,7 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 		router:                 httprouter.New(),
 		queryParamParser:       &DefaultQueryParser{},
 		forwardResponseOptions: make([]ForwardResponseFunc, 0),
-		marshalers:             marshal.NewMarshalerMIMERegistry(),
+		marshalers:             protomarshal.NewMarshalerMIMERegistry(),
 		metadataAnnotators:     nil,
 		sseConfig: SSEConfig{
 			EndOfStreamMessage: &SSEMessage{
@@ -170,14 +170,14 @@ func (s *ServeMux) Handle(method, pattern string, handler http.Handler) {
 // exactly match in the registry.
 // Otherwise, it follows the above logic for "*"/InboundMarshaler/OutboundMarshaler.
 func (s *ServeMux) MarshalerForRequest(req *http.Request) (inbound, outbound Marshaler) {
-	for _, acceptVal := range req.Header[marshal.AcceptHeader] {
+	for _, acceptVal := range req.Header[protomarshal.AcceptHeader] {
 		if m, ok := s.marshalers.MIMEMap[acceptVal]; ok {
 			outbound = m
 			break
 		}
 	}
 
-	for _, contentTypeVal := range req.Header[marshal.ContentTypeHeader] {
+	for _, contentTypeVal := range req.Header[protomarshal.ContentTypeHeader] {
 		contentType, _, err := mime.ParseMediaType(contentTypeVal)
 		if err != nil {
 			grpclog.Infof("Failed to parse Content-Type %s: %v", contentTypeVal, err)
@@ -190,7 +190,7 @@ func (s *ServeMux) MarshalerForRequest(req *http.Request) (inbound, outbound Mar
 	}
 
 	if inbound == nil {
-		inbound = s.marshalers.MIMEMap[marshal.MIMEWildcard]
+		inbound = s.marshalers.MIMEMap[protomarshal.MIMEWildcard]
 	}
 	if outbound == nil {
 		outbound = inbound

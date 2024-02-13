@@ -1,21 +1,21 @@
 package gateway
 
-import "github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+import "github.com/meshapi/grpc-rest-gateway/protomarshal"
 
 // Marshaler defines a conversion between byte sequence and gRPC payloads / fields.
-type Marshaler = marshal.Marshaler
+type Marshaler = protomarshal.Marshaler
 
 // Decoder decodes a byte sequence
-type Decoder = marshal.Decoder
+type Decoder = protomarshal.Decoder
 
 // Encoder encodes gRPC payloads / fields into byte sequence.
-type Encoder = marshal.Encoder
+type Encoder = protomarshal.Encoder
 
 // DecoderFunc adapts an decoder function into Decoder.
-type DecoderFunc = marshal.DecoderFunc
+type DecoderFunc = protomarshal.DecoderFunc
 
 // EncoderFunc adapts an encoder function into Encoder
-type EncoderFunc = marshal.EncoderFunc
+type EncoderFunc = protomarshal.EncoderFunc
 
 // Delimited defines the streaming delimiter.
-type Delimited = marshal.Delimited
+type Delimited = protomarshal.Delimited

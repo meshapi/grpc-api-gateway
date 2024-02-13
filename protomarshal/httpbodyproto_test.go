@@ -1,4 +1,4 @@
-package marshal_test
+package protomarshal_test
 
 import (
 	"bytes"
@@ -7,12 +7,12 @@ import (
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway/internal/marshal"
+	"github.com/meshapi/grpc-rest-gateway/protomarshal"
 )
 
 func TestHTTPBodyContentType(t *testing.T) {
-	m := marshal.HTTPBodyMarshaler{
-		&marshal.JSONPb{
+	m := protomarshal.HTTPBodyMarshaler{
+		&protomarshal.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames: true,
 			},
@@ -33,8 +33,8 @@ func TestHTTPBodyContentType(t *testing.T) {
 }
 
 func TestHTTPBodyMarshal(t *testing.T) {
-	m := marshal.HTTPBodyMarshaler{
-		&marshal.JSONPb{
+	m := protomarshal.HTTPBodyMarshaler{
+		&protomarshal.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames: true,
 			},

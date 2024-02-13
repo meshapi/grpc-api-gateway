@@ -1,4 +1,4 @@
-package marshal
+package protomarshal
 
 import (
 	"google.golang.org/genproto/googleapis/api/httpbody"
