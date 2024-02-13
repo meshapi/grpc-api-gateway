@@ -33,7 +33,7 @@ func main() {
 	integrationapi.RegisterQueryParamsTestServer(server, &integration.QueryParamsTestServer{})
 	integrationapi.RegisterPathParamsTestServer(server, &integration.PathParamsTestServer{})
 	integrationapi.RegisterPatchRequestTestServer(server, &integration.PatchRequestTestServer{})
-	integrationapi.RegisterStreamingTestServer(server, &integration.StreamingTestServer{})
+	integrationapi.RegisterStreamingTestServer(server, integration.NewStreamingTestServer())
 	reflection.Register(server)
 
 	grpclog.SetLoggerV2(grpclog.NewLoggerV2(os.Stdout, os.Stdout, os.Stdout))

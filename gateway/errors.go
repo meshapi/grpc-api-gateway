@@ -59,6 +59,17 @@ type (
 		// Err is the underlying parsing error.
 		Err error
 	}
+
+	// ErrStreamingMethodNotAllowed is the error related to when a server receives a request that does not use any of the
+	// available streaming methods.
+	ErrStreamingMethodNotAllowed struct {
+		// MethodSupportsWebsocket indicates whether or not the server accepts websocket for this method.
+		MethodSupportsWebsocket bool
+		// MethodSupportsSSE indicates whether or not the server accepts SSE for this method.
+		MethodSupportsSSE bool
+		// MethodSupportsChunkedTransfer indicates whether or not the server accepts chunked transfer streaming.
+		MethodSupportsChunkedTransfer bool
+	}
 )
 
 const (
@@ -134,6 +145,14 @@ func (e ErrInvalidQueryParameters) GRPCStatus() *status.Status {
 	return status.New(codes.InvalidArgument, e.Error())
 }
 
+func (e ErrStreamingMethodNotAllowed) Error() string {
+	return "Streaming Method Not Allowed"
+}
+
+func (e ErrStreamingMethodNotAllowed) GRPCStatus() *status.Status {
+	return status.New(codes.Unimplemented, e.Error())
+}
+
 type (
 	// ErrorHandlerFunc is the signature used to configure error handling.
 	ErrorHandlerFunc func(context.Context, *ServeMux, Marshaler, http.ResponseWriter, *http.Request, error)
@@ -145,8 +164,14 @@ type (
 	// The data is flexible format and will be unmarshaled using the marshaler for the request.
 	// If the returning data is nil, no data will be written.
 	//
-	// This is used for chunked transfer and SSE streaming modes.
+	// This is used for chunked transfer only.
 	StreamErrorHandlerFunc func(context.Context, *http.Request, error) (httpStatus int, data any)
+
+	// SSEErrorHandlerFunc is the signature used to configure SSE error handling.
+	//
+	// This function should return desired SSE message for the error response. If the returned message is nil, no
+	// response is sent.
+	SSEErrorHandlerFunc func(context.Context, Marshaler, *http.Request, error) *SSEMessage
 
 	// WebsocketErrorHandlerFunc is the signature used to configure websocket error handling.
 	//
@@ -305,7 +330,24 @@ func DefaultHTTPErrorHandler(ctx context.Context, mux *ServeMux, marshaler Marsh
 
 func DefaultStreamErrorHandler(_ context.Context, _ *http.Request, err error) (int, any) {
 	st := status.Convert(err)
-	return HTTPStatusFromCode(st.Code()), st
+	return HTTPStatusFromCode(st.Code()), st.Proto()
+}
+
+func DefaultSSEErrorHandler(_ context.Context, marshaler Marshaler, _ *http.Request, err error) *SSEMessage {
+	const fallback = `{"code": 13, "message": "failed to marshal error message"}`
+
+	message := &SSEMessage{
+		Event: "failure",
+	}
+
+	st := status.Convert(err)
+	message.Data, err = marshaler.Marshal(st.Proto())
+	if err != nil {
+		grpclog.Infof("Failed to marshal SSE error message: %v", err)
+		message.Data = []byte(fallback)
+	}
+
+	return message
 }
 
 // DefaultRoutingErrorHandler is our default handler for routing errors.

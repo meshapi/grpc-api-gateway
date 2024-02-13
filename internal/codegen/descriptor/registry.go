@@ -375,6 +375,12 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 					AllowChunkedTransfer: true,
 				}
 			}
+
+			if binding.Method.GetServerStreaming() && !binding.HasAnyStreamingMethod() {
+				return fmt.Errorf(
+					"streaming method %q does not support any streaming method (sse, websocket, chunked transfer),"+
+						" note that you must use GET for SSE and Websocket streaming methods", md.FQMN())
+			}
 		}
 
 		bindings = append(bindings, &binding)

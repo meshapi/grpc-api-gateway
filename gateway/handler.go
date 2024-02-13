@@ -2,6 +2,8 @@ package gateway
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
 	"net/textproto"
 	"strings"
@@ -65,6 +67,41 @@ func (s *ServeMux) handleForwardResponseStreamErrorChunked(
 	if _, err := writer.Write(delimiter); err != nil {
 		grpclog.Infof("Failed to send delimiter chunk: %v", err)
 		return
+	}
+}
+
+// writeSSEMessage formats and writes an SSE message.
+func (s *ServeMux) writeSSEMessage(writer io.Writer, message *SSEMessage) error {
+	if message.ID != "" {
+		if _, err := fmt.Fprintf(writer, "id: %s\n", message.ID); err != nil {
+			return err
+		}
+	}
+	if message.Event != "" {
+		if _, err := fmt.Fprintf(writer, "event: %s\n", message.Event); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(writer, "data: %s\n\n", message.Data); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ServeMux) handleForwardResponseStreamErrorSSE(
+	ctx context.Context,
+	marshaler Marshaler,
+	writer http.ResponseWriter,
+	req *http.Request,
+	err error) {
+
+	msg := s.sseErrorHandler(ctx, marshaler, req, err)
+	if msg == nil {
+		return
+	}
+
+	if err := s.writeSSEMessage(writer, msg); err != nil {
+		grpclog.Infof("Failed to write SSE error message: %v", err)
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/internal/casing"
 	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
 	"github.com/meshapi/grpc-rest-gateway/trie"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -315,8 +314,23 @@ type Binding struct {
 
 // NeedsWebsocket returns whether or not websocket binding is needed.
 func (b *Binding) NeedsWebsocket() bool {
-	grpclog.Infof("method: %+v, streaming: %+v, allow ws: %+v", b.HTTPMethod, b.Method.GetServerStreaming(), b.StreamConfig.AllowWebsocket)
 	return b.HTTPMethod == "GET" && b.Method.GetServerStreaming() && b.StreamConfig.AllowWebsocket
+}
+
+// NeedsSSE returns whether or not websocket binding is needed.
+func (b *Binding) NeedsSSE() bool {
+	return b.HTTPMethod == "GET" && b.Method.GetServerStreaming() && b.StreamConfig.AllowSSE
+}
+
+// NeedsChunkedTransfer returns whether or not chunked transfer is needed.
+func (b *Binding) NeedsChunkedTransfer() bool {
+	return b.Method.GetServerStreaming() && b.StreamConfig.AllowChunkedTransfer
+}
+
+// HasAnyStreamingMethod returns whether or not this binding supports any streaming method.
+// (SSE, Websocket, Chunked Transfer).
+func (b *Binding) HasAnyStreamingMethod() bool {
+	return b.NeedsChunkedTransfer() || b.NeedsSSE() || b.NeedsWebsocket()
 }
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query

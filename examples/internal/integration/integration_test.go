@@ -35,7 +35,7 @@ var (
 			integrationapi.RegisterQueryParamsTestServer(s, &integration.QueryParamsTestServer{})
 			integrationapi.RegisterPathParamsTestServer(s, &integration.PathParamsTestServer{})
 			integrationapi.RegisterPatchRequestTestServer(s, &integration.PatchRequestTestServer{})
-			integrationapi.RegisterStreamingTestServer(s, &integration.StreamingTestServer{})
+			integrationapi.RegisterStreamingTestServer(s, integration.NewStreamingTestServer())
 		})
 		instance.Start()
 

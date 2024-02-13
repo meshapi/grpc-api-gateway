@@ -13,7 +13,12 @@ service StreamingTest {
 			post: '/streaming/client/add',
 			body: '*',
 			additional_bindings: [
-				{get: '/streaming/client/add'}
+				{get: '/streaming/client/add'},
+				{
+					post: '/streaming/client/add-raw',
+					body: 'value',
+					response_body: 'sum'
+				}
 			]
 		};
 	};
@@ -28,7 +33,51 @@ service StreamingTest {
 		option (meshapi.gateway.http) = {
 			post: '/streaming/bidi/bulk-capitalize',
 			additional_bindings: [
-				{get: '/streaming/bidi/bulk-capitalize'}
+				{get: '/streaming/bidi/bulk-capitalize'},
+				{
+					post: '/streaming/bidi/bulk-capitalize-raw',
+					body: 'text',
+					response_body: 'text'
+				}
+			]
+		};
+	}
+
+	rpc NotifyMe(NotifyMeRequest) returns (stream NotifyMeResponse) {
+		option (meshapi.gateway.http) = {
+			get: '/streaming/server/notifications',
+			stream: {
+				disable_chunked_transfer: true,
+			},
+			additional_bindings: [
+				{
+					get: '/streaming/server/notifications-text-only',
+					response_body: 'text'
+					stream: {
+						disable_chunked_transfer: true,
+					}
+				}
+			]
+		};
+	}
+
+	rpc Chat(stream ChatRequest) returns (stream ChatResponse) {
+		option (meshapi.gateway.http) = {
+			get: '/streaming/bidi/chat',
+			stream: {
+				disable_sse: true,
+				disable_chunked_transfer: true,
+			},
+			additional_bindings: [
+				{
+					get: '/streaming/bidi/chat-text-only',
+					stream: {
+						disable_sse: true,
+						disable_chunked_transfer: true,
+					},
+					body: 'text',
+					response_body: 'text'
+				}
 			]
 		};
 	}

@@ -1,3 +1,4 @@
+{{if .NeedsChunkedTransfer }}
 {{template "request-func-signature" .}} {
 	var metadata gateway.ServerMetadata
 	stream, err := client.{{.Method.GetName}}(ctx)
@@ -8,7 +9,15 @@
 	dec := marshaler.NewDecoder(req.Body)
 	handleSend := func() error {
 		var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
+		{{if and .Body (not (eq (len .Body.FieldPath) 0)) -}}
+		{{- $protoReq := .Body.AssignableExprPrep "protoReq" .Method.Service.File.GoPkg.Path -}}
+		{{- if ne "" $protoReq }}
+		{{printf "%s" $protoReq }}
+		{{- end}}
+		err := dec.Decode(&{{.Body.AssignableExpr "protoReq" .Method.Service.File.GoPkg.Path}})
+		{{else -}}
 		err := dec.Decode(&protoReq)
+		{{end -}}
 		if err == io.EOF {
 			return err
 		}
@@ -40,6 +49,7 @@
 	metadata.HeaderMD = header
 	return stream, metadata, nil
 }
+{{end}}
 {{if .NeedsWebsocket }}
 {{template "websocket-func-signature" .}} {
 	websocketConnection, err := mux.UpgradeToWebsocket(w, req)
@@ -58,6 +68,7 @@
 	}
 	var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
 	var protoRes {{.Method.ResponseType.GoType .Method.Service.File.GoPkg.Path}}
-	mux.ForwardWebsocket(ctx, req, stream, websocketConnection, inboundMarshaler, outboundMarshaler, &protoReq, &protoRes)
+	{{$HasPartialRequestBody := and .Body (not (eq (len .Body.FieldPath) 0)) }}
+	mux.ForwardWebsocket(ctx, req, stream, websocketConnection, inboundMarshaler, outboundMarshaler, {{if $HasPartialRequestBody}}request_type_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}{&protoReq}{{else}}&protoReq{{end}}, {{if .ResponseBody }}response_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}{&protoRes}{{else}}&protoRes{{end}})
 }
 {{end}}

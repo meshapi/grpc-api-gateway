@@ -11,6 +11,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// SSEMessage describes a single Server-Sent Events (SSE) message.
+//
+// See: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format
+type SSEMessage struct {
+	// ID is the event ID (optional).
+	ID string
+
+	// Event is the event portion of the SSE message (optional).
+	Event string
+
+	// Data is the event data.
+	// Must be UTF-8 encoded.
+	Data []byte
+}
+
+// SSEConfig configures the behavior of the Server-Sent Events (SSE).
+type SSEConfig struct {
+	// EndOfStreamMessage is the last message send when the gRPC client streaming finishes.
+	EndOfStreamMessage *SSEMessage
+}
+
 // ServeMuxOption is an option that can be given to a ServeMux on construction.
 type ServeMuxOption interface {
 	apply(*ServeMux)
@@ -47,6 +68,22 @@ func WithQueryParameterParser(queryParameterParser QueryParameterParser) ServeMu
 func WithWebsocketUpgrader(upgradeFunc WebsocketUpgradeFunc) ServeMuxOption {
 	return optionFunc(func(s *ServeMux) {
 		s.websocketUpgradeFunc = upgradeFunc
+	})
+}
+
+// WithSSEConfig sets Server-Sent Events (SSE) configuration.
+func WithSSEConfig(config SSEConfig) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.sseConfig = config
+	})
+}
+
+// WithSSEErrorHandler returns a ServeMuxOption for configuring an SSE error handler.
+//
+// This can be used to configure a custom error response.
+func WithSSEErrorHandler(handler SSEErrorHandlerFunc) ServeMuxOption {
+	return optionFunc(func(s *ServeMux) {
+		s.sseErrorHandler = handler
 	})
 }
 

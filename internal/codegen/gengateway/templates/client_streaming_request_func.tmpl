@@ -6,9 +6,18 @@
 		return nil, metadata, err
 	}
 	dec := marshaler.NewDecoder(req.Body)
+	var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
 	for {
-		var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
+		protoReq.Reset()
+		{{if and .Body (not (eq (len .Body.FieldPath) 0)) -}}
+		{{- $protoReq := .Body.AssignableExprPrep "protoReq" .Method.Service.File.GoPkg.Path -}}
+		{{- if ne "" $protoReq }}
+		{{printf "%s" $protoReq }}
+		{{- end}}
+		err = dec.Decode(&{{.Body.AssignableExpr "protoReq" .Method.Service.File.GoPkg.Path}})
+		{{else -}}
 		err = dec.Decode(&protoReq)
+		{{end -}}
 		if err == io.EOF {
 			break
 		}
