@@ -69,7 +69,7 @@ var (
 		return nil, metadata, gateway.ErrPathParameterMissing{Name: {{$param | printf "%q"}}}
 	}
 {{if $param.IsNestedProto3}}
-	err = gateway.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
+	err = protopath.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
 		return nil, metadata, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}}
 	}
@@ -154,7 +154,7 @@ var (
 		return
 	}
 {{if $param.IsNestedProto3}}
-	err = gateway.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
+	err = protopath.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
 		mux.HTTPError(ctx, outboundMarshaler, w, req, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}})
 		return
