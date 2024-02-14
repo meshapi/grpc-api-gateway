@@ -2,10 +2,10 @@ package gengateway
 
 import (
 	"fmt"
-	"go/format"
 	"path"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"golang.org/x/tools/imports"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -83,7 +83,13 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			continue
 		}
 
-		formatted, err := format.Source([]byte(code))
+		//formatted, err := format.Source([]byte(code))
+		//if err != nil {
+		//  grpclog.Errorf("%v: %s", err, code)
+		//  return nil, err
+		//}
+
+		formatted, err := imports.Process(file.GetName(), []byte(code), nil)
 		if err != nil {
 			grpclog.Errorf("%v: %s", err, code)
 			return nil, err

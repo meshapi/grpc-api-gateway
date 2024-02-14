@@ -15,8 +15,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/gengateway"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/gengateway"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/pluginpb"

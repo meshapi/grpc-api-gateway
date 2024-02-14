@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/casing"
-	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/casing"
+	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	"github.com/meshapi/grpc-rest-gateway/trie"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/httpspec"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 )
 
 const (

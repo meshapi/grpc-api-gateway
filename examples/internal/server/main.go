@@ -13,7 +13,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/examples/internal/integration"
 	"github.com/meshapi/grpc-rest-gateway/gateway"
 	ws "github.com/meshapi/grpc-rest-gateway/websocket"
-	"github.com/meshapi/grpc-rest-gateway/websocket/backends/gorillawrapper"
+	"github.com/meshapi/grpc-rest-gateway/websocket/wrapper/gorillawrapper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"

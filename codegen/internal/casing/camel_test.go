@@ -1,6 +1,10 @@
-package casing
+package casing_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/casing"
+)
 
 func TestCamelIdentifier(t *testing.T) {
 	casingTests := []struct {
@@ -37,7 +41,7 @@ func TestCamelIdentifier(t *testing.T) {
 
 	for _, ct := range casingTests {
 		t.Run(ct.name, func(t *testing.T) {
-			got := CamelIdentifier(ct.input)
+			got := casing.CamelIdentifier(ct.input)
 			if ct.want != got {
 				t.Errorf("want: %s, got: %s", ct.want, got)
 			}

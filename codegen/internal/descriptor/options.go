@@ -3,7 +3,7 @@ package descriptor
 import (
 	"flag"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/codegen/plugin"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 )
 
 // RegistryOptions holds all the options for the descriptor registry.

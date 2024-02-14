@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/internal/httprule"
+	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 )
 
 func TestParse(t *testing.T) {

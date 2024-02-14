@@ -1,2 +1,2 @@
 install:
-	@go install ./cmd/protoc-gen-grpc-rest-gateway/
+	@go install ./codegen/cmd/protoc-gen-grpc-rest-gateway/
