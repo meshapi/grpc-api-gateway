@@ -38,5 +38,9 @@ func prepareOptions() *gengateway.Options {
 		&generatorOptions.Standalone, "standalone", generatorOptions.Standalone,
 		"generates a standalone gateway package, which imports the target service package")
 
+	flag.BoolVar(
+		&generatorOptions.GenerateLocal, "generate-local", generatorOptions.GenerateLocal,
+		"(experimental, limited) generates code to directly use the server implementation instead of gRPC clients")
+
 	return &generatorOptions
 }

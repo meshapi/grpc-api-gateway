@@ -84,6 +84,9 @@ type Options struct {
 
 	// Standalone generates a standalone gateway package, which imports the target service package.
 	Standalone bool
+
+	// GenerateLocal generates code to work a server implementation directly.
+	GenerateLocal bool
 }
 
 // DefaultOptions returns the default options.
@@ -96,5 +99,6 @@ func DefaultOptions() Options {
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
 		Standalone:                     false,
+		GenerateLocal:                  false,
 	}
 }

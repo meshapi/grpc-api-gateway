@@ -1,7 +1,7 @@
 {{$AllowPatchFeature := .AllowPatchFeature}}
 {{template "local-request-func-signature" .}} {
 	var protoReq {{.Method.RequestType.GoType .Method.Service.File.GoPkg.Path}}
-	var metadata runtime.ServerMetadata
+	var metadata gateway.ServerMetadata
 {{if .Body}}
 	{{- $isFieldMask := and $AllowPatchFeature (eq (.HTTPMethod) "PATCH") (.FieldMaskField) (not (eq "*" .GetBodyFieldPath)) }}
 	{{- if $isFieldMask }}
@@ -32,7 +32,7 @@
 	}
 	{{end}}
 {{end}}
-{{if .PathParams}}
+{{if .PathParameters}}
 	var (
 		val string
 {{- if .HasEnumPathParam}}
@@ -46,25 +46,25 @@
 		_ = err
 	)
 	{{$binding := .}}
-	{{range $param := .PathParams}}
+	{{range $param := .PathParameters}}
 	{{$enum := $binding.LookupEnum $param}}
 	val, ok = pathParams[{{$param | printf "%q"}}]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", {{$param | printf "%q"}})
 	}
 {{if $param.IsNestedProto3}}
-	err = runtime.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
+	err = protopath.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
 	}
 	{{if $enum}}
-		e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.Registry.GetRepeatedPathParamSeparator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
+		e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 		if err != nil {
 			return nil, metadata, status.Errorf(codes.InvalidArgument, "could not parse path as enum value, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
 		}
 	{{end}}
 {{else if $enum}}
-	e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.Registry.GetRepeatedPathParamSeparator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType  $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
+	e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType  $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
 	}
@@ -73,7 +73,7 @@
 	{{- if ne "" $protoReq }}
 	{{printf "%s" $protoReq }}
 	{{- end}}
-	{{$param.AssignableExpr "protoReq" $binding.Method.Service.File.GoPkg.Path}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.Registry.GetRepeatedPathParamSeparator | printf "%c" | printf "%q"}}{{end}})
+	{{$param.AssignableExpr "protoReq" $binding.Method.Service.File.GoPkg.Path}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}})
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
 	}
@@ -94,7 +94,7 @@
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
+	if err := mux.PopulateQueryParameters(&protoReq, req.Form, query_params_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 {{end}}
@@ -104,3 +104,4 @@
 	msg, err := server.{{.Method.GetName}}(ctx, &protoReq)
 	return msg, metadata, err
 {{end}}
+}

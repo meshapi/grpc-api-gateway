@@ -212,8 +212,7 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 					return "", err
 				}
 
-				// Local
-				if false {
+				if g.Options.GenerateLocal {
 					if err := localHandlerTemplate.Execute(w, binding{
 						Binding:                    b,
 						Registry:                   reg,
@@ -238,8 +237,8 @@ func (g *Generator) applyTemplate(p param, reg *descriptor.Registry) (string, er
 		UseRequestContext:  p.UseRequestContext,
 		RegisterFuncSuffix: p.RegisterFuncSuffix,
 	}
-	// Local
-	if false {
+
+	if g.Options.GenerateLocal {
 		if err := localTrailerTemplate.Execute(w, tp); err != nil {
 			return "", err
 		}
@@ -309,7 +308,8 @@ var (
 
 	//go:embed templates/local_trailer.tmpl
 	templateDataLocalTrailer string
-	localTrailerTemplate     = template.Must(template.New("local-trailer").Parse(templateDataLocalTrailer))
+	localTrailerTemplate     = template.Must(
+		template.New("local-trailer").Funcs(trailerFuncMap).Parse(templateDataLocalTrailer))
 
 	//go:embed templates/trailer.tmpl
 	templateDataTrailer string

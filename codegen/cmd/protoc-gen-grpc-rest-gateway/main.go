@@ -26,16 +26,15 @@ func main() {
 	showVersion := flag.Bool("version", false, "show version")
 	logFile := flag.String("log_file", "", "path to the output log file")
 
+	generatorOptions := prepareOptions()
+	registryOptions := descriptor.DefaultRegistryOptions()
+	registryOptions.AddFlags(flag.CommandLine)
 	flag.Parse()
 
 	if *showVersion {
 		fmt.Printf("Version v0.1.0\n")
 		os.Exit(0)
 	}
-
-	generatorOptions := prepareOptions()
-	registryOptions := descriptor.DefaultRegistryOptions()
-	registryOptions.AddFlags(flag.CommandLine)
 
 	options := protogen.Options{
 		ParamFunc: flag.CommandLine.Set,
