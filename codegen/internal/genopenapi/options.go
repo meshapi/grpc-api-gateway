@@ -1,4 +1,4 @@
-package gengateway
+package genopenapi
 
 import "github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 
@@ -28,18 +28,4 @@ type Options struct {
 
 	// GenerateLocal generates code to work a server implementation directly.
 	GenerateLocal bool
-}
-
-// DefaultOptions returns the default options.
-func DefaultOptions() Options {
-	return Options{
-		RegisterFunctionSuffix:         "Handler",
-		UseHTTPRequestContext:          true,
-		AllowDeleteBody:                false,
-		RepeatedPathParameterSeparator: PathParameterSeparatorCSV,
-		AllowPatchFeature:              true,
-		OmitPackageDoc:                 false,
-		Standalone:                     false,
-		GenerateLocal:                  false,
-	}
 }

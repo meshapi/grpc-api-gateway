@@ -560,6 +560,62 @@ func (c FieldPathComponent) ValueExpr() string {
 	return casing.Camel(c.Name)
 }
 
+type PathParameterSeparator uint8
+
+func (p PathParameterSeparator) String() string {
+	switch p {
+	case PathParameterSeparatorCSV:
+		return "csv"
+	case PathParameterSeparatorTSV:
+		return "tsv"
+	case PathParameterSeparatorSSV:
+		return "ssv"
+	case PathParameterSeparatorPipes:
+		return "pipes"
+	default:
+		return "<unknown>"
+	}
+}
+
+func (p PathParameterSeparator) Separator() rune {
+	switch p {
+	case PathParameterSeparatorCSV:
+		return ','
+	case PathParameterSeparatorTSV:
+		return '\t'
+	case PathParameterSeparatorSSV:
+		return ' '
+	case PathParameterSeparatorPipes:
+		return '|'
+	default:
+		return ',' // NB: default to CSV.
+	}
+}
+
+func (p *PathParameterSeparator) Set(value string) error {
+	switch strings.ToLower(value) {
+	case "csv":
+		*p = PathParameterSeparatorCSV
+	case "tsv":
+		*p = PathParameterSeparatorTSV
+	case "ssv":
+		*p = PathParameterSeparatorSSV
+	case "pipes":
+		*p = PathParameterSeparatorPipes
+	default:
+		return fmt.Errorf("unrecognized value: '%s'. Allowed values are 'cav', 'pipes', 'ssv' and 'tsv'.", value)
+	}
+
+	return nil
+}
+
+const (
+	PathParameterSeparatorCSV = iota
+	PathParameterSeparatorPipes
+	PathParameterSeparatorSSV
+	PathParameterSeparatorTSV
+)
+
 // IsWellKnownType returns true if the provided fully qualified type name is considered 'well-known'.
 func IsWellKnownType(typeName string) bool {
 	_, ok := wellKnownTypeConv[typeName]
