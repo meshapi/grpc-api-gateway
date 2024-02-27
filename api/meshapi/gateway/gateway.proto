@@ -4,12 +4,6 @@ package meshapi.gateway;
 
 option go_package = "github.com/meshapi/grpc-rest-gateway/api";
 
-// Config is the content of a configuration file.
-message Config {
-	// gateway holds gateway configs.
-	GatewaySpec gateway = 1;
-}
-
 // GatewaySpec holds gRPC gateway configurations.
 message GatewaySpec {
 	// endpoints hold a series of endpoint binding specs.

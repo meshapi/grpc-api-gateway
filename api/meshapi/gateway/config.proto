@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package meshapi.gateway;
+
+import "meshapi/gateway/gateway.proto";
+import "meshapi/gateway/openapi/openapi.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/api";
+
+
+message OpenAPIServiceSpec {
+	// selector is dot separated gRPC service method selector.
+	//
+	// selector string can be configured to be relative if it begins with a '.' character
+	// but this is only supported when using the proto generators and only if a package
+	// can be deduced.
+	//
+	// if the selector does not begin with a '.' character, it will be treated as a
+	// fully qualified method name (FQMN).
+	string selector = 1;
+	// document can be used to override default values for OpenAPI document files when using the option to generate
+	// OpenAPI files per service. Additionally, this can be used to assign default values used by the operations/methods
+	// under this service.
+	gateway.openapi.Document document = 2;
+	// methods maps each method to an operation configuration.
+	map<string, gateway.openapi.Operation> methods = 3;
+}
+
+message OpenAPIMessageSpec {
+	// selector is dot separated protobuf message selector.
+	//
+	// selector string can be configured to be relative if it begins with a '.' character
+	// but this is only supported when using the proto generators and only if a package
+	// can be deduced.
+	//
+	// if the selector does not begin with a '.' character, it will be treated as a
+	// fully qualified message name (FQMN).
+	string selector = 1;
+	// schema controls the OpenAPI v3.1 schema generation for this proto message.
+	gateway.openapi.Schema schema = 2;
+	// fields allows controlling the OpenAPI v3.1 generation for individual fields in this proto message.
+	map<string, gateway.openapi.Schema> fields = 3;
+}
+
+// OpenAPISpec is a configuration object to control the OpenAPI v3.1 generation.
+// It uses a similar structure to OpenAPI v3.1 spec but it has differences as well.
+message OpenAPISpec {
+	// Document is the OpenAPI v3.1 document configuration which controls how the OpenAPI documentation is generated.
+	gateway.openapi.Document document = 1;
+	// Used to configure OpenAPI v3.1 output for gRPC services.
+	repeated OpenAPIServiceSpec services = 2;
+	// Used to configure OpenAPI v3.1 output for proto messages.
+	repeated OpenAPIMessageSpec messages = 3;
+}
+
+// Config is the content of a configuration file.
+message Config {
+	// gateway holds gateway configs.
+	GatewaySpec gateway = 1;
+
+	// openapi holds OpenAPI v3.1 configs.
+	OpenAPISpec openapi = 2;
+}
