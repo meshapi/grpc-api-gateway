@@ -12,15 +12,15 @@ func prepareOptions() *genopenapi.Options {
 
 	flag.BoolVar(
 		&generatorOptions.AllowDeleteBody, "allow_delete_body", generatorOptions.AllowDeleteBody,
-		"unless set, HTTP DELETE methods may not have a body")
+		"unless set, HTTP DELETE methods may not have a body.")
 
 	flag.Var(
 		&generatorOptions.RepeatedPathParameterSeparator, "repeated_path_param_separator",
-		"configures how repeated fields should be split. Allowed values are `csv`, `pipes`, `ssv` and `tsv`.")
+		"configures how repeated fields should be split. Allowed values are 'csv', 'pipes', 'ssv', and 'tsv'.")
 
 	flag.BoolVar(
 		&generatorOptions.AllowPatchFeature, "allow_patch_feature", generatorOptions.AllowPatchFeature,
-		"determines whether to use PATCH feature involving update masks (using google.protobuf.FieldMask).")
+		"determines whether to use the PATCH feature involving update masks (using google.protobuf.FieldMask).")
 
 	flag.BoolVar(
 		&generatorOptions.IncludeServicesOnly, "include_services_only", generatorOptions.IncludeServicesOnly,
@@ -37,11 +37,11 @@ func prepareOptions() *genopenapi.Options {
 
 	flag.Var(
 		&generatorOptions.OutputFormat, "output_format",
-		"controls the output format, allowed values are 'yaml' and 'json'.")
+		"controls the output format. Allowed values are 'yaml' and 'json'.")
 
 	flag.Var(
 		&generatorOptions.FieldNameMode, "field_name_mode",
-		"controls the naming of fields in the OpenAPI schemas, allowed values are 'proto' to "+
+		"controls the naming of fields in the OpenAPI schemas. Allowed values are 'proto' to "+
 			"use the proto field names and 'json' to use the camel case JSON names.")
 
 	flag.BoolVar(
@@ -54,16 +54,16 @@ func prepareOptions() *genopenapi.Options {
 
 	flag.Var(
 		&generatorOptions.SchemaNamingStrategy, "schema_naming_strategy",
-		"controls the name of OpenAPI schemas. use 'fqn' to use full name, 'simple' to use the shortest unique name"+
-			" and 'simple+version' to include a version prefix when one is available (ex. v1alpha1Message).")
+		"controls the name of OpenAPI schemas. Use 'fqn' to use full name, 'simple' to use the shortest unique name"+
+			" and 'simple+version' to include a version prefix when one is available (e.g., v1alpha1Message).")
 
 	flag.BoolVar(
 		&generatorOptions.UseGoTemplate, "use_go_templates", generatorOptions.UseGoTemplate,
-		"if enabled, tags, titles, summaries and links can use go templates. Refer to documentation for available values.")
+		"if enabled, tags, titles, summaries, and links can use go templates. Refer to documentation for available values.")
 
 	flag.Var(
 		&generatorOptions.GoTemplateArgs, "go_template_args",
-		"comma separated assignment of Go template args. Example: a=b,c=d")
+		"comma-separated assignment of Go template args. Example: a=b,c=d")
 
 	flag.BoolVar(
 		&generatorOptions.IgnoreComments, "ignore_comments", generatorOptions.IgnoreComments,
@@ -83,12 +83,12 @@ func prepareOptions() *genopenapi.Options {
 
 	flag.StringVar(
 		&generatorOptions.GlobalOpenAPIConfigFile, "global_openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
-		"if set, this config file gets used as a top level config for all proto files and services."+
+		"if set, this config file gets used as a top-level config for all proto files and services."+
 			" One can use one config file for both gRPC and OpenAPI configs.")
 
 	flag.StringVar(
 		&generatorOptions.GlobalOpenAPIConfigFile, "openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
-		"if set, this config file gets used as a top level config for all proto files and services.")
+		"if set, this config file gets used as a top-level config for all proto files and services.")
 
 	flag.StringVar(
 		&generatorOptions.OpenAPISeedFile, "openapi_template", generatorOptions.OpenAPISeedFile,
@@ -102,7 +102,7 @@ func prepareOptions() *genopenapi.Options {
 
 	flag.Var(
 		&generatorOptions.VisibilitySelectors, "visibility_selectors",
-		"comma separated list of included visibility labels. Example: INTERNAL,PARTNERS")
+		"comma-separated list of included visibility labels. Example: INTERNAL,PARTNERS")
 
 	flag.BoolVar(
 		&generatorOptions.PreserveProtoOrder, "preserve_proto_order", generatorOptions.PreserveProtoOrder,
