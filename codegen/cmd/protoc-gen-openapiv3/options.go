@@ -87,6 +87,11 @@ func prepareOptions() *genopenapi.Options {
 			" One can use one config file for both gRPC and OpenAPI configs.")
 
 	flag.StringVar(
+		&generatorOptions.OpenAPIConfigFilePattern, "global_openapi_config", generatorOptions.OpenAPIConfigFilePattern,
+		"openapi file pattern (without the extension segment) that gets used to try and load an OpenAPI config file"+
+			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
+
+	flag.StringVar(
 		&generatorOptions.GlobalOpenAPIConfigFile, "openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
 		"if set, this config file gets used as a top-level config for all proto files and services.")
 

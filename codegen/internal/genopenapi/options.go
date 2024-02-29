@@ -65,6 +65,14 @@ type Options struct {
 	// GlobalOpenAPIConfigFile points to the file that can be used to define global OpenAPI config file.
 	GlobalOpenAPIConfigFile string
 
+	// ConfigSearchPath holds the search path to use for looking up OpenAPI configs.
+	ConfigSearchPath string
+
+	// OpenAPIConfigFilePattern holds the file pattern for loading OpenAPI config files.
+	//
+	// This pattern must not include the extension and the priority is yaml, yml and finally json.
+	OpenAPIConfigFilePattern string
+
 	// OpenAPISeedFile holds an OpenAPI file in YAML/JSON format that will be used as a seed that will be merged
 	// with the generated OpenAPI files.
 	OpenAPISeedFile string
@@ -101,6 +109,8 @@ func DefaultOptions() Options {
 		DisableDefaultErrors:           false,
 		UseEnumNumbers:                 false,
 		GlobalOpenAPIConfigFile:        "",
+		ConfigSearchPath:               ".",
+		OpenAPIConfigFilePattern:       "{{ .Path }}_gateway",
 		OpenAPISeedFile:                "",
 		OmitEnumDefaultValue:           false,
 		VisibilitySelectors:            nil,

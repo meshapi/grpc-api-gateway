@@ -78,6 +78,7 @@ func main() {
 			targets[index] = target
 		}
 
+		generatorOptions.ConfigSearchPath = registryOptions.SearchPath
 		generator := genopenapi.New(descriptorRegistry, *generatorOptions)
 		responseFiles, err := generator.Generate(targets)
 		for _, file := range responseFiles {
