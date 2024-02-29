@@ -30,9 +30,6 @@ type Registry struct {
 	// files is a mapping from file path to descriptor
 	files map[string]*File
 
-	// prefix is a prefix to be inserted to golang package paths generated from proto package names.
-	//prefix string
-
 	// pkgMap is a user-specified mapping from file path to proto package.
 	//pkgMap map[string]string
 

@@ -79,15 +79,9 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		if err != nil {
 			return nil, fmt.Errorf("error generating rest gateway for %q: %w", file.GetName(), err)
 		}
-		if code == "" { // if there is no cod for this target, move on.
+		if code == "" { // if there is no code for this target, move on.
 			continue
 		}
-
-		//formatted, err := format.Source([]byte(code))
-		//if err != nil {
-		//  grpclog.Errorf("%v: %s", err, code)
-		//  return nil, err
-		//}
 
 		formatted, err := imports.Process(file.GetName(), []byte(code), nil)
 		if err != nil {

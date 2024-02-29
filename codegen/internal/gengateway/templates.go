@@ -27,7 +27,7 @@ type param struct {
 type binding struct {
 	*descriptor.Binding
 	Registry                   *descriptor.Registry
-	RepeatedPathParamSeparator PathParameterSeparator
+	RepeatedPathParamSeparator descriptor.PathParameterSeparator
 	AllowPatchFeature          bool
 }
 

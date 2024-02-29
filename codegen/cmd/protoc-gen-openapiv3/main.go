@@ -16,7 +16,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/gengateway"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -78,7 +78,7 @@ func main() {
 			targets[index] = target
 		}
 
-		generator := gengateway.New(descriptorRegistry, *generatorOptions)
+		generator := genopenapi.New(descriptorRegistry, *generatorOptions)
 		responseFiles, err := generator.Generate(targets)
 		for _, file := range responseFiles {
 			generatedFile := gen.NewGeneratedFile(file.GetName(), protogen.GoImportPath(file.GoPkg.Path))

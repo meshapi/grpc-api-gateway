@@ -603,7 +603,7 @@ func (p *PathParameterSeparator) Set(value string) error {
 	case "pipes":
 		*p = PathParameterSeparatorPipes
 	default:
-		return fmt.Errorf("unrecognized value: '%s'. Allowed values are 'cav', 'pipes', 'ssv' and 'tsv'.", value)
+		return fmt.Errorf("unrecognized value: %q. Allowed values are 'cav', 'pipes', 'ssv' and 'tsv'.", value)
 	}
 
 	return nil

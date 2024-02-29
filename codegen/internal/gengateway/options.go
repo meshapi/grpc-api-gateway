@@ -36,7 +36,7 @@ func DefaultOptions() Options {
 		RegisterFunctionSuffix:         "Handler",
 		UseHTTPRequestContext:          true,
 		AllowDeleteBody:                false,
-		RepeatedPathParameterSeparator: PathParameterSeparatorCSV,
+		RepeatedPathParameterSeparator: descriptor.PathParameterSeparatorCSV,
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
 		Standalone:                     false,
