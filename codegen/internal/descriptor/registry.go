@@ -40,6 +40,8 @@ type Registry struct {
 	httpSpecRegistry *httpspec.Registry
 
 	RegistryOptions
+
+	filePaths []string
 }
 
 // NewRegistry creates and initializes a new registry.
@@ -67,13 +69,13 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
-	filePaths := make([]string, 0, len(gen.FilesByPath))
+	r.filePaths = make([]string, 0, len(gen.FilesByPath))
 	for filePath := range gen.FilesByPath {
-		filePaths = append(filePaths, filePath)
+		r.filePaths = append(r.filePaths, filePath)
 	}
-	sort.Strings(filePaths)
+	sort.Strings(r.filePaths)
 
-	for _, filePath := range filePaths {
+	for _, filePath := range r.filePaths {
 		r.loadIncludedFile(filePath, gen.FilesByPath[filePath])
 
 		// if the file is a target of code genertaion, look for service mapping files.
@@ -91,7 +93,7 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
-	for _, filePath := range filePaths {
+	for _, filePath := range r.filePaths {
 		if !gen.FilesByPath[filePath].Generate {
 			continue
 		}
@@ -795,9 +797,9 @@ func (r *Registry) UnboundExternalHTTPSpecs() []httpspec.EndpointSpec {
 }
 
 // Iterate iterates over all processed files.
-func (r *Registry) Iterate(cb func(*File) error) error {
-	for _, file := range r.files {
-		if err := cb(file); err != nil {
+func (r *Registry) Iterate(cb func(fielPath string, protoFile *File) error) error {
+	for _, filePath := range r.filePaths {
+		if err := cb(filePath, r.files[filePath]); err != nil {
 			return err
 		}
 	}

@@ -86,6 +86,9 @@ type Options struct {
 	// PreserveProtoOrder adds the methods in the same order as they appear in the gRPC service instead of
 	// alphabetically.
 	PreserveProtoOrder bool
+
+	// MergeWithOverwrite will overwrite lists instead of appending.
+	MergeWithOverwrite bool
 }
 
 // DefaultOptions returns the default options.

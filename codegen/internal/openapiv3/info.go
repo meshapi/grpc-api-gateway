@@ -1,4 +1,4 @@
-package openapi
+package openapiv3
 
 type Contact struct {
 	Name  string `json:"name" yaml:"name"`

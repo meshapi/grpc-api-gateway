@@ -1,10 +1,10 @@
-package openapi_test
+package openapiv3_test
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapi"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 )
 
 type Root struct {
@@ -25,7 +25,7 @@ type Custom struct {
 	Fail bool
 }
 
-func (c *Custom) Validate(*openapi.Document) error {
+func (c *Custom) Validate(*openapiv3.Document) error {
 	if c.Fail {
 		return errors.New("failed")
 	}
@@ -126,7 +126,7 @@ func TestValidation(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
-			err := openapi.Validate(&tt.Value, nil)
+			err := openapiv3.Validate(&tt.Value, nil)
 			if err == nil {
 				if tt.Error != "" {
 					t.Fatalf("expected error %q but received none", tt.Error)

@@ -1,4 +1,4 @@
-package openapi
+package openapiv3
 
 import (
 	"fmt"

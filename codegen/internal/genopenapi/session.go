@@ -6,19 +6,23 @@ import (
 	"fmt"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapi"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/protobuf/types/pluginpb"
 	"gopkg.in/yaml.v3"
 )
 
-func (g *Generator) writeDocument(filePrefix string, doc *openapi.Document) (*descriptor.ResponseFile, error) {
+type Session struct {
+	Document *openapiv3.Document
+}
+
+func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
 	}
 
 	doc.OpenAPI = "3.1"
 	if doc.Info == nil {
-		doc.Info = &openapi.Info{
+		doc.Info = &openapiv3.Info{
 			Version: "version not set",
 		}
 	} else if doc.Info.Version == "" {

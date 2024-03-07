@@ -2,18 +2,17 @@ package genopenapi
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapi"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 )
 
 type Generator struct {
 	Options
 
 	registry        *descriptor.Registry
-	openapiRegistry *openapi.Registry
+	openapiRegistry *Registry
 
 	// httpEndpointsMap is used to find duplicate HTTP specifications.
 	//httpEndpointsMap map[endpointAnnotation]struct{}
@@ -23,7 +22,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 	return &Generator{
 		Options:         options,
 		registry:        descriptorRegistry,
-		openapiRegistry: openapi.NewRegistry(),
+		openapiRegistry: NewRegistry(&options),
 	}
 }
 
@@ -32,17 +31,12 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 
 	mergeOptions := []func(*mergo.Config){}
 
-	if g.Options.AllowDeleteBody {
+	if !g.Options.MergeWithOverwrite {
 		mergeOptions = append(mergeOptions, mergo.WithAppendSlice)
 	}
 
-	// we need to first prepare the registry and preload all schemas
-	// then we load the root one and prepare a global session.
-	if g.Options.GlobalOpenAPIConfigFile != "" {
-		globalConfigFilePath := filepath.Join(g.ConfigSearchPath, g.Options.GlobalOpenAPIConfigFile)
-		if err := g.openapiRegistry.LoadGlobalConfig(globalConfigFilePath); err != nil {
-			return nil, fmt.Errorf("failed to read global openapi file %q: %w", g.Options.GlobalOpenAPIConfigFile, err)
-		}
+	if err := g.openapiRegistry.LoadFromDescriptorRegistry(g.registry); err != nil {
+		return nil, err
 	}
 
 	for _, file := range targets {
@@ -56,11 +50,11 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		case OutputModePerService:
 			// loop over the services and add them one by one.
 		case OutputModePerProtoFile:
-			// we need to create a new session here but we'll just cheat here for a second.
-			// TODO: if the document dose not have any schema or paths, we should avoid generating the file.
+			// TODO: if the document dose not have any schema or paths that was generated,
+			// we should avoid generating the file.
 			doc, ok := g.openapiRegistry.LookupDocument(file)
 			if !ok {
-				doc = &openapi.Document{}
+				doc = &openapiv3.Document{}
 			}
 
 			// Merge with the root document if needed.
@@ -88,7 +82,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	return files, nil
 }
 
-func (g *Generator) addServiceToSession(doc *openapi.Document, service *descriptor.Service) error {
+func (g *Generator) addServiceToSession(doc *openapiv3.Document, service *descriptor.Service) error {
 	// we would in theory merge them but here we just want to prepare the files.
 
 	// create a session here.
@@ -104,6 +98,6 @@ func (g *Generator) addServiceToSession(doc *openapi.Document, service *descript
 	return nil
 }
 
-func (g *Generator) addFileMessagesToDocument(doc *openapi.Document, file *descriptor.File) error {
+func (g *Generator) addFileMessagesToDocument(doc *openapiv3.Document, file *descriptor.File) error {
 	return nil
 }
