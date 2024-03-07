@@ -23,24 +23,24 @@ type Info struct {
 }
 
 type ServerVariable struct {
-	Enum        []string `json:"enum" yaml:"enum"`
+	Enum        []string `json:"enum,omitempty" yaml:"enum,omitempty"`
 	Default     string   `json:"default" yaml:"default" validate:"required"`
-	Description string   `json:"description" yaml:"description"`
+	Description string   `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type Server struct {
-	URL         string                    `json:"url" yaml:"url"`
-	Description string                    `json:"description" yaml:"description"`
-	Variables   map[string]ServerVariable `json:"variables" yaml:"variables"`
+	URL         string                    `json:"url" yaml:"url" validate:"required"`
+	Description string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   map[string]ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
 type ExternalDocumentation struct {
-	Description string `json:"description" yaml:"description"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	URL         string `json:"url" yaml:"url" validate:"required"`
 }
 
 type Tag struct {
-	Name         string                `json:"name" yaml:"name" validate:"required"`
-	Description  string                `json:"description" yaml:"description"`
-	ExternalDocs ExternalDocumentation `json:"externalDocs" yaml:"externalDocs"`
+	Name         string                 `json:"name" yaml:"name" validate:"required"`
+	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	ExternalDocs *ExternalDocumentation `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }

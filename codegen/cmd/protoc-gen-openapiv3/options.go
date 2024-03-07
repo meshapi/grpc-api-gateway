@@ -82,18 +82,15 @@ func prepareOptions() *genopenapi.Options {
 		"if set, enums in the OpenAPI use the numerical values instead of string values.")
 
 	flag.StringVar(
-		&generatorOptions.GlobalOpenAPIConfigFile, "global_openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
+		&generatorOptions.GlobalOpenAPIConfigFile, "openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
 		"if set, this config file gets used as a top-level config for all proto files and services."+
-			" One can use one config file for both gRPC and OpenAPI configs.")
+			" One can use one config file for both gRPC and OpenAPI configs. By default if gateway config is specified,"+
+			" unless '-' is used for openapi_config, the same gets used for OpenAPI configs as well.")
 
 	flag.StringVar(
-		&generatorOptions.OpenAPIConfigFilePattern, "global_openapi_config", generatorOptions.OpenAPIConfigFilePattern,
+		&generatorOptions.OpenAPIConfigFilePattern, "openapi_config_pattern", generatorOptions.OpenAPIConfigFilePattern,
 		"openapi file pattern (without the extension segment) that gets used to try and load an OpenAPI config file"+
 			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
-
-	flag.StringVar(
-		&generatorOptions.GlobalOpenAPIConfigFile, "openapi_config", generatorOptions.GlobalOpenAPIConfigFile,
-		"if set, this config file gets used as a top-level config for all proto files and services.")
 
 	flag.StringVar(
 		&generatorOptions.OpenAPISeedFile, "openapi_template", generatorOptions.OpenAPISeedFile,

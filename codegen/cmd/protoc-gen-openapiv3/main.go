@@ -79,6 +79,12 @@ func main() {
 		}
 
 		generatorOptions.ConfigSearchPath = registryOptions.SearchPath
+		if generatorOptions.GlobalOpenAPIConfigFile == "" {
+			generatorOptions.GlobalOpenAPIConfigFile = registryOptions.GatewayFileLoadOptions.GlobalGatewayConfigFile
+		} else if generatorOptions.GlobalOpenAPIConfigFile == "-" {
+			generatorOptions.GlobalOpenAPIConfigFile = ""
+		}
+
 		generator := genopenapi.New(descriptorRegistry, *generatorOptions)
 		responseFiles, err := generator.Generate(targets)
 		for _, file := range responseFiles {

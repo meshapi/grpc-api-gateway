@@ -34,3 +34,8 @@ gateway:
         - custom:
             method: 'TEST'
             path: '/query/auto-map-all'
+
+openapi:
+  document:
+    info:
+      title: Query Parameter Integration Test API

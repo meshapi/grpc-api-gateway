@@ -10,5 +10,11 @@ plugins:
     name: grpc-rest-gateway
     opt:
       - 'paths=source_relative'
+      - 'config_search_path=proto'
+  - out: gen
+    name: openapiv3
+    opt:
+      - 'paths=source_relative'
       - 'log_file=log.txt'
+      - 'openapi_config=openapi_config.yaml'
       - 'config_search_path=proto'

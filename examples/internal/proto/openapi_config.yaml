@@ -1,0 +1,8 @@
+openapi:
+  document:
+    info:
+      title: Query Parameter Integration Test API
+      summary: This is an API only to demonstrate capabilities of gRPC Gateway and Open API generation.
+      description: |
+        Description of the OpenAPI would go here.
+      version: v0.1

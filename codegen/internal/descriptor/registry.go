@@ -61,7 +61,8 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
-		if err := r.httpSpecRegistry.LoadFromFile(r.GatewayFileLoadOptions.GlobalGatewayConfigFile, ""); err != nil {
+		filePath := filepath.Join(r.SearchPath, r.GatewayFileLoadOptions.GlobalGatewayConfigFile)
+		if err := r.httpSpecRegistry.LoadFromFile(filePath, ""); err != nil {
 			return fmt.Errorf("failed to load global gateway config file: %w", err)
 		}
 	}
@@ -791,4 +792,15 @@ func (r *Registry) UnboundExternalHTTPSpecs() []httpspec.EndpointSpec {
 	})
 
 	return missingMethods
+}
+
+// Iterate iterates over all processed files.
+func (r *Registry) Iterate(cb func(*File) error) error {
+	for _, file := range r.files {
+		if err := cb(file); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

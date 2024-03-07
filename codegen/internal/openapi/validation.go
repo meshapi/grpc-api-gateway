@@ -119,7 +119,7 @@ func getValidator(t reflect.Value) (Validator, bool) {
 		}
 	}
 
-	if t.Kind() == reflect.Pointer {
+	if t.Kind() == reflect.Pointer && !t.IsNil() {
 		validator, ok = t.Elem().Interface().(Validator)
 		if ok {
 			return validator, true
