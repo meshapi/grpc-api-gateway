@@ -1,6 +1,8 @@
 package openapiv3
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type Discriminator struct {
 	PropertyName string            `json:"propertyName,omitempty" yaml:"propertyName,omitempty"`
@@ -55,6 +57,14 @@ func (t TypeSet) MarshalJSON() ([]byte, error) {
 	return json.Marshal([]string(t))
 }
 
+func (t TypeSet) MarshalYAML() (any, error) {
+	if len(t) == 1 {
+		return t[0], nil
+	}
+
+	return []string(t), nil
+}
+
 // ItemSpec is used to generate correct "items" value in JSON schema.
 // If Schema is defined, schema gets marshaled, otherwise, items list gets used.
 type ItemSpec struct {
@@ -68,4 +78,12 @@ func (i *ItemSpec) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(i.Items)
+}
+
+func (i *ItemSpec) MarshalYAML() (any, error) {
+	if i.Schema != nil {
+		return i.Schema, nil
+	}
+
+	return i.Items, nil
 }
