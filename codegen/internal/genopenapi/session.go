@@ -20,7 +20,7 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[o
 		return nil, nil
 	}
 
-	doc.Object.OpenAPI = "3.1"
+	doc.Object.OpenAPI = openapiv3.OpenAPIVersion
 	if doc.Object.Info == nil {
 		doc.Object.Info = &openapiv3.Extensible[openapiv3.Info]{
 			Object: openapiv3.Info{

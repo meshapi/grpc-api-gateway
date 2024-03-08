@@ -358,9 +358,6 @@ message Schema {
 	//
 	// See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8
   string format = 40;
-	// extensions for JSON schema can be used to add additioanl values to the resulting JSON schema.
-	// These values will not have x- prefix.
-  map<string, google.protobuf.Value> extensions = 41;
 }
 
 // A simple object to allow referencing other components in the OpenAPI document, internally and externally.
