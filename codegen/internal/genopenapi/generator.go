@@ -54,7 +54,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			// we should avoid generating the file.
 			doc, ok := g.openapiRegistry.LookupDocument(file)
 			if !ok {
-				doc = &openapiv3.Document{}
+				doc = &openapiv3.Extensible[openapiv3.Document]{}
 			}
 
 			// Merge with the root document if needed.
@@ -64,10 +64,10 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				}
 			}
 
-			err := g.addFileMessagesToDocument(doc, file)
-			if err != nil {
-				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
-			}
+			//err := g.addFileMessagesToDocument(doc, file)
+			//if err != nil {
+			//  return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			//}
 
 			file, err := g.writeDocument(file.GeneratedFilenamePrefix+".openapi", doc)
 			if err != nil {

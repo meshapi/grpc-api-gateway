@@ -15,6 +15,11 @@ message Contact {
 	string url = 2;
 	// The email address of the contact person/organization. This MUST be in the form of an email address.
 	string email = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
 }
 
 // License information for the exposed API.
@@ -27,6 +32,11 @@ message License {
 	// A URL to the license used for the API. This MUST be in the form of a URL.
 	// The url field is mutually exclusive of the identifier field.
 	string url = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
 }
 
 // Info captures OpenAPI Info object.
@@ -47,6 +57,11 @@ message Info {
 	License license = 6;
 	// REQUIRED. The version of the OpenAPI document.
 	string version = 7;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 8;
 }
 
 // An object representing a Server Variable for server URL template substitution.
@@ -63,6 +78,11 @@ message ServerVariable {
 	// An optional description for the server variable.
 	// CommonMark syntax MAY be used for rich text representation.
 	string description = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
 }
 
 // An object representing a Server.
@@ -78,6 +98,11 @@ message Server {
 	// A map between a variable name and its value. The value is used for substitution in the
 	// server’s URL template.
 	map<string,ServerVariable> variables = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
 }
 
 // Lists the required security schemes to execute this operation. The name used for each property MUST
@@ -109,6 +134,11 @@ message ExternalDocumentation {
 	string description = 1;
 	// REQUIRED. The URL for the target documentation. This MUST be in the form of a URL.
 	string url = 2;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 3;
 }
 
 // Adds metadata to a single tag that is used by the Operation Object. It is not mandatory to have a Tag Object
@@ -122,6 +152,11 @@ message Tag {
 	string description = 2;
 	// Additional external documentation for this tag.
 	ExternalDocumentation external_docs = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
 }
 
 // See: https://spec.openapis.org/oas/latest.html#discriminator-object
@@ -130,6 +165,11 @@ message Discriminator {
 	string property_name = 1;
 	// An object to hold mappings between payload values and schema names or references.
 	map<string,string> mapping = 2;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 3;
 }
 
 enum SchemaDataType {
@@ -156,8 +196,6 @@ message FieldConfiguration {
 // Schema is a representation of OpenAPI v3.1 specification's Schema object.
 //
 // See: https://spec.openapis.org/oas/v3.1.0#schema-object
-//
-// TODO: add the field configuration
 message Schema {
 	// Adds support for polymorphism. The discriminator is an object name that is used to
 	// differentiate between other schemas which may satisfy the payload description.
@@ -320,6 +358,9 @@ message Schema {
 	//
 	// See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8
   string format = 40;
+	// extensions for JSON schema can be used to add additioanl values to the resulting JSON schema.
+	// These values will not have x- prefix.
+  map<string, google.protobuf.Value> extensions = 41;
 }
 
 // A simple object to allow referencing other components in the OpenAPI document, internally and externally.
@@ -375,6 +416,11 @@ message Link {
 	string description = 6;
 	// A server object to be used by the target operation.
 	Server server = 7;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 8;
 }
 
 // See: https://spec.openapis.org/oas/latest.html#example-object
@@ -393,6 +439,11 @@ message Example {
 	// be included in JSON or YAML documents. The value field and externalValue field are mutually exclusive.
 	// See the rules for resolving Relative References.
 	string external_value = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
 }
 
 // A single encoding definition applied to a single schema property.
@@ -429,6 +480,11 @@ message Encoding {
 	// application/x-www-form-urlencoded or multipart/form-data.
 	// If a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored.
 	bool allow_reserved = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
 }
 
 // Each Media Type Object provides schema and examples for the media type identified by its key.
@@ -453,6 +509,11 @@ message MediaType {
 	// MUST exist in the schema as a property. The encoding object SHALL only apply to requestBody objects when
 	// the media type is multipart or application/x-www-form-urlencoded.
 	map<string, Encoding> encoding = 4;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 5;
 }
 
 // Header object follows the structure of the Parameter object with the following changes:
@@ -583,6 +644,11 @@ message Response {
 	// A map of operations links that can be followed from the response. The key of the map is a short name for the link,
 	// following the naming constraints of the names for Component Objects.
 	map<string, Link> links = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
 }
 
 // Describes a single request body.
@@ -599,6 +665,11 @@ message RequestBody {
 	map<string, MediaType> content = 3;
 	// Determines if the request body is required in the request. Defaults to false.
 	bool required = 4;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 5;
 }
 
 // Defines a security scheme that can be used by the operations.
@@ -653,6 +724,11 @@ message SecurityScheme {
 	// REQUIRED. OpenId Connect URL to discover OAuth2 configuration values.
 	// This MUST be in the form of a URL. The OpenID Connect standard requires the use of TLS.
 	string open_id_connect_url = 9;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 10;
 }
 
 // Describes a single API operation on a path.
@@ -704,6 +780,11 @@ message Operation {
 	// If an alternative server object is specified at the Path Item Object or Root level,
 	// it will be overridden by this value.
 	repeated Server servers = 13;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 14;
 }
 
 // Holds a set of reusable objects for different aspects of the OAS. All objects defined within the
@@ -722,6 +803,11 @@ message Components {
 	map<string, Link> links = 8;
 	reserved 9;  // callbacks can be used in a seed template but are not supported, yet in the configs.
 	reserved 10; // path_items but this generator does not support defining path items explicitly at the moment.
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 11;
 }
 
 // This is the root object of the OpenAPI document.

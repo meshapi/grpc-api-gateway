@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	fieldTag         = "validate"
-	fieldTagRequired = "required"
+	validationFieldTag = "validate"
+	validationRequired = "required"
 )
 
 // Validator can be used to validate individual objects.
@@ -36,10 +36,10 @@ func Validate(obj any, doc *Document) error {
 
 	for i := 0; i < objectType.NumField(); i++ {
 		field := objectType.Field(i)
-		validationTag := field.Tag.Get(fieldTag)
+		validationTag := field.Tag.Get(validationFieldTag)
 		fieldValue := objectValue.Field(i)
 
-		if validationTag == fieldTagRequired {
+		if validationTag == validationRequired {
 			if fieldValue.IsZero() && field.Type.Kind() != reflect.Struct {
 				return fmt.Errorf("%q is required", field.Name)
 			}

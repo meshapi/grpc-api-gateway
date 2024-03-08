@@ -407,6 +407,31 @@
                         "additionalProperties": false
                     },
                     "type": "object"
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -427,6 +452,31 @@
                 "email": {
                     "type": "string",
                     "description": "The email address of the contact person/organization. This MUST be in the form of an email address."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -446,6 +496,31 @@
                     },
                     "type": "object",
                     "description": "An object to hold mappings between payload values and schema names or references."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -548,6 +623,31 @@
                 "allow_reserved": {
                     "type": "boolean",
                     "description": "Determines whether the parameter value SHOULD allow reserved characters, as defined by [RFC3986] :/?#[]@!$\u0026'()*+,;= to be included without percent-encoding. The default value is false. This property SHALL be ignored if the request body media type is not application/x-www-form-urlencoded or multipart/form-data. If a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -594,6 +694,31 @@
                 "external_value": {
                     "type": "string",
                     "description": "A URI that points to the literal example. This provides the capability to reference examples that cannot easily be included in JSON or YAML documents. The value field and externalValue field are mutually exclusive. See the rules for resolving Relative References."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -610,6 +735,31 @@
                 "url": {
                     "type": "string",
                     "description": "REQUIRED. The URL for the target documentation. This MUST be in the form of a URL."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -739,6 +889,31 @@
                 "version": {
                     "type": "string",
                     "description": "REQUIRED. The version of the OpenAPI document."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -759,6 +934,31 @@
                 "url": {
                     "type": "string",
                     "description": "A URL to the license used for the API. This MUST be in the form of a URL. The url field is mutually exclusive of the identifier field."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -835,6 +1035,31 @@
                     "$ref": "#/definitions/meshapi.gateway.openapi.Server",
                     "additionalProperties": false,
                     "description": "A server object to be used by the target operation."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -897,6 +1122,31 @@
                     },
                     "type": "object",
                     "description": "A map between a property name and its encoding information. The key, being the property name, MUST exist in the schema as a property. The encoding object SHALL only apply to requestBody objects when the media type is multipart or application/x-www-form-urlencoded."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -965,6 +1215,31 @@
                     "additionalProperties": false,
                     "type": "array",
                     "description": "An alternative server array to service this operation. If an alternative server object is specified at the Path Item Object or Root level, it will be overridden by this value."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1105,6 +1380,31 @@
                 "required": {
                     "type": "boolean",
                     "description": "Determines if the request body is required in the request. Defaults to false."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1146,6 +1446,31 @@
                     },
                     "type": "object",
                     "description": "A map of operations links that can be followed from the response. The key of the map is a short name for the link, following the naming constraints of the names for Component Objects."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1403,12 +1728,37 @@
                 "format": {
                     "type": "string",
                     "description": "Structural validation alone may be insufficient to validate that an instance meets all the requirements of an application. The \"format\" keyword is defined to allow interoperable semantic validation for a fixed subset of values which are accurately described by authoritative resources, be they RFCs or other external specifications. See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8"
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions for JSON schema can be used to add additioanl values to the resulting JSON schema. These values will not have x- prefix."
                 }
             },
             "additionalProperties": false,
             "type": "object",
             "title": "Schema",
-            "description": "Schema is a representation of OpenAPI v3.1 specification's Schema object. See: https://spec.openapis.org/oas/v3.1.0#schema-object TODO: add the field configuration"
+            "description": "Schema is a representation of OpenAPI v3.1 specification's Schema object. See: https://spec.openapis.org/oas/v3.1.0#schema-object"
         },
         "meshapi.gateway.openapi.Schema.Item": {
             "properties": {
@@ -1508,6 +1858,31 @@
                 "open_id_connect_url": {
                     "type": "string",
                     "description": "REQUIRED. OpenId Connect URL to discover OAuth2 configuration values. This MUST be in the form of a URL. The OpenID Connect standard requires the use of TLS."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1583,6 +1958,31 @@
                     },
                     "type": "object",
                     "description": "A map between a variable name and its value. The value is used for substitution in the server’s URL template."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1606,6 +2006,31 @@
                 "description": {
                     "type": "string",
                     "description": "An optional description for the server variable. CommonMark syntax MAY be used for rich text representation."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1627,6 +2052,31 @@
                     "$ref": "#/definitions/meshapi.gateway.openapi.ExternalDocumentation",
                     "additionalProperties": false,
                     "description": "Additional external documentation for this tag."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,

@@ -12,24 +12,26 @@ import (
 )
 
 type Session struct {
-	Document *openapiv3.Document
+	Document *openapiv3.Extensible[openapiv3.Document]
 }
 
-func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
+func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[openapiv3.Document]) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
 	}
 
-	doc.OpenAPI = "3.1"
-	if doc.Info == nil {
-		doc.Info = &openapiv3.Info{
-			Version: "version not set",
+	doc.Object.OpenAPI = "3.1"
+	if doc.Object.Info == nil {
+		doc.Object.Info = &openapiv3.Extensible[openapiv3.Info]{
+			Object: openapiv3.Info{
+				Version: "version not set",
+			},
 		}
-	} else if doc.Info.Version == "" {
-		doc.Info.Version = "version not set"
+	} else if doc.Object.Info.Object.Version == "" {
+		doc.Object.Info.Object.Version = "version not set"
 	}
 
-	if err := doc.Validate(); err != nil {
+	if err := doc.Object.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid OpenAPI file: %w", err)
 	}
 

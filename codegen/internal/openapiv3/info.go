@@ -13,13 +13,13 @@ type License struct {
 }
 
 type Info struct {
-	Title          string   `json:"title" yaml:"title" validate:"required"`
-	Summary        string   `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description    string   `json:"description,omitempty" yaml:"description,omitempty"`
-	TermsOfService string   `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
-	Contact        *Contact `json:"contact,omitempty" yaml:"contact,omitempty"`
-	License        *License `json:"license,omitempty" yaml:"license,omitempty"`
-	Version        string   `json:"version" yaml:"version" validate:"required"`
+	Title          string               `json:"title" yaml:"title" validate:"required"`
+	Summary        string               `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description    string               `json:"description,omitempty" yaml:"description,omitempty"`
+	TermsOfService string               `json:"termsOfService,omitempty" yaml:"termsOfService,omitempty"`
+	Contact        *Extensible[Contact] `json:"contact,omitempty" yaml:"contact,omitempty"`
+	License        *Extensible[License] `json:"license,omitempty" yaml:"license,omitempty"`
+	Version        string               `json:"version" yaml:"version" validate:"required"`
 }
 
 type ServerVariable struct {
@@ -29,9 +29,9 @@ type ServerVariable struct {
 }
 
 type Server struct {
-	URL         string                    `json:"url" yaml:"url" validate:"required"`
-	Description string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   map[string]ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string                                `json:"url" yaml:"url" validate:"required"`
+	Description string                                `json:"description,omitempty" yaml:"description,omitempty"`
+	Variables   map[string]Extensible[ServerVariable] `json:"variables,omitempty" yaml:"variables,omitempty"`
 }
 
 type ExternalDocumentation struct {
@@ -40,7 +40,7 @@ type ExternalDocumentation struct {
 }
 
 type Tag struct {
-	Name         string                 `json:"name" yaml:"name" validate:"required"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	ExternalDocs *ExternalDocumentation `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Name         string                             `json:"name" yaml:"name" validate:"required"`
+	Description  string                             `json:"description,omitempty" yaml:"description,omitempty"`
+	ExternalDocs *Extensible[ExternalDocumentation] `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
