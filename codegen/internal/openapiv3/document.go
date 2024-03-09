@@ -19,7 +19,7 @@ type (
 )
 
 const (
-	OpenAPIVersion = "3.1.0"
+	Version = "3.1.0"
 )
 
 // Document is the OpenAPI top-level document.
@@ -36,8 +36,8 @@ type Document struct {
 }
 
 func (d *Document) Validate() error {
-	if d.OpenAPI != OpenAPIVersion {
-		return fmt.Errorf("expected OpenAPI %s, instead got: %q", OpenAPIVersion, d.OpenAPI)
+	if d.OpenAPI != Version {
+		return fmt.Errorf("expected OpenAPI %s, instead got: %q", Version, d.OpenAPI)
 	}
 
 	return Validate(d, d)
