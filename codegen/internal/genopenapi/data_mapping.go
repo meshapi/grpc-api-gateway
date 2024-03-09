@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func mapDocument(doc *openapi.Document) (*openapiv3.ExtendedDocument, error) {
+func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
 	if doc == nil {
 		return nil, nil
 	}
@@ -24,8 +24,8 @@ func mapDocument(doc *openapi.Document) (*openapiv3.ExtendedDocument, error) {
 		return nil, fmt.Errorf("invalid info object: %w", err)
 	}
 
-	result := &openapiv3.ExtendedDocument{
-		Object: openapiv3.Document{
+	result := &openapiv3.Document{
+		Object: openapiv3.DocumentCore{
 			Info: info,
 		},
 		Extensions: extensions,
@@ -61,7 +61,7 @@ func mapDocument(doc *openapi.Document) (*openapiv3.ExtendedDocument, error) {
 	return result, nil
 }
 
-func mapExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExtendedExternalDocumentation, error) {
+func mapExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExternalDocumentation, error) {
 	if doc == nil {
 		return nil, nil
 	}
@@ -71,8 +71,8 @@ func mapExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExtendedExte
 		return nil, err
 	}
 
-	return &openapiv3.ExtendedExternalDocumentation{
-		Object: openapiv3.ExternalDocumentation{
+	return &openapiv3.ExternalDocumentation{
+		Object: openapiv3.ExternalDocumentationCore{
 			Description: doc.Description,
 			URL:         doc.Url,
 		},
@@ -96,7 +96,7 @@ func mapExtensions(table map[string]*structpb.Value) (map[string]any, error) {
 	return result, nil
 }
 
-func mapInfo(info *openapi.Info) (*openapiv3.ExtendedInfo, error) {
+func mapInfo(info *openapi.Info) (*openapiv3.Info, error) {
 	if info == nil {
 		return nil, nil
 	}
@@ -106,8 +106,8 @@ func mapInfo(info *openapi.Info) (*openapiv3.ExtendedInfo, error) {
 		return nil, err
 	}
 
-	result := &openapiv3.ExtendedInfo{
-		Object: openapiv3.Info{
+	result := &openapiv3.Info{
+		Object: openapiv3.InfoCore{
 			Title:          info.Title,
 			Summary:        info.Summary,
 			Description:    info.Description,
@@ -123,8 +123,8 @@ func mapInfo(info *openapi.Info) (*openapiv3.ExtendedInfo, error) {
 			return nil, fmt.Errorf("invalid contact object: %w", err)
 		}
 
-		result.Object.Contact = &openapiv3.ExtendedContact{
-			Object: openapiv3.Contact{
+		result.Object.Contact = &openapiv3.Contact{
+			Object: openapiv3.ContactCore{
 				Name:  info.Contact.Name,
 				URL:   info.Contact.Url,
 				Email: info.Contact.Email,
@@ -139,8 +139,8 @@ func mapInfo(info *openapi.Info) (*openapiv3.ExtendedInfo, error) {
 			return nil, fmt.Errorf("invalid contact object: %w", err)
 		}
 
-		result.Object.License = &openapiv3.ExtendedLicense{
-			Object: openapiv3.License{
+		result.Object.License = &openapiv3.License{
+			Object: openapiv3.LicenseCore{
 				Name:       info.License.Name,
 				Identifier: info.License.Identifier,
 				URL:        info.License.Url,
@@ -152,17 +152,17 @@ func mapInfo(info *openapi.Info) (*openapiv3.ExtendedInfo, error) {
 	return result, nil
 }
 
-func mapTags(tags []*openapi.Tag) ([]openapiv3.ExtendedTag, error) {
+func mapTags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 	if len(tags) == 0 {
 		return nil, nil
 	}
 
 	// defining these variables outside of the for loop to reuse them.
 	var extensions openapiv3.Extensions
-	var externalDocs *openapiv3.ExtendedExternalDocumentation
+	var externalDocs *openapiv3.ExternalDocumentation
 	var err error
 
-	result := make([]openapiv3.ExtendedTag, len(tags))
+	result := make([]openapiv3.Tag, len(tags))
 	for index, tag := range tags {
 		extensions, err = mapExtensions(tag.Extensions)
 		if err != nil {
@@ -174,8 +174,8 @@ func mapTags(tags []*openapi.Tag) ([]openapiv3.ExtendedTag, error) {
 			return nil, fmt.Errorf("invalid external doc in tag at index %d: %w", index, err)
 		}
 
-		result[index] = openapiv3.ExtendedTag{
-			Object: openapiv3.Tag{
+		result[index] = openapiv3.Tag{
+			Object: openapiv3.TagCore{
 				Name:         tag.Name,
 				Description:  tag.Description,
 				ExternalDocs: externalDocs,
@@ -187,7 +187,7 @@ func mapTags(tags []*openapi.Tag) ([]openapiv3.ExtendedTag, error) {
 	return result, nil
 }
 
-func mapServers(servers []*openapi.Server) ([]openapiv3.ExtendedServer, error) {
+func mapServers(servers []*openapi.Server) ([]openapiv3.Server, error) {
 	if len(servers) == 0 {
 		return nil, nil
 	}
@@ -196,24 +196,24 @@ func mapServers(servers []*openapi.Server) ([]openapiv3.ExtendedServer, error) {
 	var extensions, serverVarExtensions openapiv3.Extensions
 	var err error
 
-	result := make([]openapiv3.ExtendedServer, len(servers))
+	result := make([]openapiv3.Server, len(servers))
 	for index, server := range servers {
 		extensions, err = mapExtensions(server.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid server at index %d: %w", index, err)
 		}
 
-		var vars map[string]openapiv3.ExtendedServerVariable
+		var vars map[string]openapiv3.ServerVariable
 		if server.Variables != nil {
-			vars = map[string]openapiv3.ExtendedServerVariable{}
+			vars = map[string]openapiv3.ServerVariable{}
 			for name, serverVariable := range server.Variables {
 				serverVarExtensions, err = mapExtensions(serverVariable.Extensions)
 				if err != nil {
 					return nil, fmt.Errorf("invalid server variable %q: %w", name, err)
 				}
 
-				vars[name] = openapiv3.ExtendedServerVariable{
-					Object: openapiv3.ServerVariable{
+				vars[name] = openapiv3.ServerVariable{
+					Object: openapiv3.ServerVariableCore{
 						Enum:        serverVariable.EnumValues,
 						Default:     serverVariable.DefaultValue,
 						Description: serverVariable.Description,
@@ -223,8 +223,8 @@ func mapServers(servers []*openapi.Server) ([]openapiv3.ExtendedServer, error) {
 			}
 		}
 
-		result[index] = openapiv3.ExtendedServer{
-			Object: openapiv3.Server{
+		result[index] = openapiv3.Server{
+			Object: openapiv3.ServerCore{
 				URL:         server.Url,
 				Description: server.Description,
 				Variables:   vars,
@@ -236,14 +236,13 @@ func mapServers(servers []*openapi.Server) ([]openapiv3.ExtendedServer, error) {
 	return result, nil
 }
 
-func mapSchema(schema *openapi.Schema) (*openapiv3.ExtendedSchema, error) {
+func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 	if schema == nil {
 		return nil, nil
 	}
 
-	result := &openapiv3.ExtendedSchema{
-		Object: openapiv3.Schema{
-			//Discriminator:         &openapiv3.Extensible{},
+	result := &openapiv3.Schema{
+		Object: openapiv3.SchemaCore{
 			Ref:              schema.Ref,
 			Schema:           schema.Schema,
 			Title:            schema.Title,
@@ -313,6 +312,11 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.ExtendedSchema, error) {
 		return nil, fmt.Errorf("invalid not object: %w", err)
 	}
 
+	result.Object.Discriminator, err = mapDiscrimnator(schema.Discriminator)
+	if err != nil {
+		return nil, fmt.Errorf("invalid discriminator object: %w", err)
+	}
+
 	result.Object.Examples = mapExamples(schema.Examples)
 
 	// Add extra keys, note that in this specific case 'x-' prefix is not necessary.
@@ -324,6 +328,25 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.ExtendedSchema, error) {
 	}
 
 	return result, nil
+}
+
+func mapDiscrimnator(value *openapi.Discriminator) (*openapiv3.Discriminator, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	extensions, err := mapExtensions(value.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &openapiv3.Discriminator{
+		Object: openapiv3.DiscriminatorCore{
+			PropertyName: value.PropertyName,
+			Mapping:      value.Mapping,
+		},
+		Extensions: extensions,
+	}, nil
 }
 
 func mapType(types []openapi.SchemaDataType) openapiv3.TypeSet {
@@ -381,12 +404,12 @@ func mapSchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
 	return nil, nil
 }
 
-func mapSchemaList(schemas []*openapi.Schema) ([]*openapiv3.ExtendedSchema, error) {
+func mapSchemaList(schemas []*openapi.Schema) ([]*openapiv3.Schema, error) {
 	if len(schemas) == 0 {
 		return nil, nil
 	}
 
-	result := make([]*openapiv3.ExtendedSchema, len(schemas))
+	result := make([]*openapiv3.Schema, len(schemas))
 	for index, schemaFromProto := range schemas {
 		schema, err := mapSchema(schemaFromProto)
 		if err != nil {
@@ -398,12 +421,12 @@ func mapSchemaList(schemas []*openapi.Schema) ([]*openapiv3.ExtendedSchema, erro
 	return result, nil
 }
 
-func mapSchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.ExtendedSchema, error) {
+func mapSchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.Schema, error) {
 	if spec == nil {
 		return nil, nil
 	}
 
-	result := map[string]*openapiv3.ExtendedSchema{}
+	result := map[string]*openapiv3.Schema{}
 
 	for key, schemaFromProto := range spec {
 		schema, err := mapSchema(schemaFromProto)
@@ -429,15 +452,15 @@ func mapExamples(items []*structpb.Value) []any {
 	return nil
 }
 
-func mapComponents(components *openapi.Components) (*openapiv3.ExtendedComponents, error) {
+func mapComponents(components *openapi.Components) (*openapiv3.Components, error) {
 	if components == nil {
 		return nil, nil
 	}
 
 	var err error
 
-	result := &openapiv3.ExtendedComponents{
-		Object: openapiv3.Components{},
+	result := &openapiv3.Components{
+		Object: openapiv3.ComponentsCore{},
 	}
 
 	result.Object.Schemas, err = mapSchemaMap(components.Schemas)

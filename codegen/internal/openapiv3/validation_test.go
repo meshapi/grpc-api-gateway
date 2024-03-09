@@ -25,7 +25,7 @@ type Custom struct {
 	Fail bool
 }
 
-func (c *Custom) Validate(*openapiv3.Document) error {
+func (c *Custom) Validate(*openapiv3.DocumentCore) error {
 	if c.Fail {
 		return errors.New("failed")
 	}

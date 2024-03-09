@@ -13,11 +13,11 @@ const (
 // Validator can be used to validate individual objects.
 type Validator interface {
 	// Validate takes the entire document in case it is needed to look up references.
-	Validate(*Document) error
+	Validate(*DocumentCore) error
 }
 
 // Validate runs through the validation requirements and enforces them.
-func Validate(obj any, doc *Document) error {
+func Validate(obj any, doc *DocumentCore) error {
 	if obj == nil {
 		return nil
 	}

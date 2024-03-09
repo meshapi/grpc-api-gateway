@@ -32,9 +32,9 @@ type Registry struct {
 	Options *Options
 
 	// RootDocument is the global and top-level document loaded from the global config.
-	RootDocument *openapiv3.ExtendedDocument
+	RootDocument *openapiv3.Document
 
-	documents map[*descriptor.File]*openapiv3.ExtendedDocument
+	documents map[*descriptor.File]*openapiv3.Document
 
 	// schemas map[string]string
 }
@@ -43,7 +43,7 @@ func NewRegistry(options *Options) *Registry {
 	return &Registry{
 		Options:      options,
 		RootDocument: nil,
-		documents:    map[*descriptor.File]*openapiv3.ExtendedDocument{},
+		documents:    map[*descriptor.File]*openapiv3.Document{},
 	}
 }
 
@@ -69,7 +69,7 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 			return fmt.Errorf("failed to load OpenAPI configs for %q: %w", filePath, err)
 		}
 
-		var doc *openapiv3.ExtendedDocument
+		var doc *openapiv3.Document
 
 		if configFromFile.OpenAPISpec != nil && configFromFile.Document != nil {
 			doc, err = mapDocument(configFromFile.Document)
@@ -77,7 +77,7 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 				return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
 			}
 		} else {
-			doc = &openapiv3.ExtendedDocument{}
+			doc = &openapiv3.Document{}
 		}
 
 		configFromProto, ok := proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
@@ -132,7 +132,7 @@ func (r *Registry) loadConfigForFile(protoFilePath string, file *descriptor.File
 	return result, nil
 }
 
-func (r *Registry) LookupDocument(file *descriptor.File) (*openapiv3.ExtendedDocument, bool) {
+func (r *Registry) LookupDocument(file *descriptor.File) (*openapiv3.Document, bool) {
 	doc, ok := r.documents[file]
 	return doc, ok
 }

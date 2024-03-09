@@ -12,18 +12,18 @@ import (
 )
 
 type Session struct {
-	Document *openapiv3.Extensible[openapiv3.Document]
+	Document *openapiv3.Extensible[openapiv3.DocumentCore]
 }
 
-func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[openapiv3.Document]) (*descriptor.ResponseFile, error) {
+func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[openapiv3.DocumentCore]) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
 	}
 
 	doc.Object.OpenAPI = openapiv3.Version
 	if doc.Object.Info == nil {
-		doc.Object.Info = &openapiv3.Extensible[openapiv3.Info]{
-			Object: openapiv3.Info{
+		doc.Object.Info = &openapiv3.Extensible[openapiv3.InfoCore]{
+			Object: openapiv3.InfoCore{
 				Version: "version not set",
 			},
 		}

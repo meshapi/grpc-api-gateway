@@ -54,7 +54,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			// we should avoid generating the file.
 			doc, ok := g.openapiRegistry.LookupDocument(file)
 			if !ok {
-				doc = &openapiv3.Extensible[openapiv3.Document]{}
+				doc = &openapiv3.Extensible[openapiv3.DocumentCore]{}
 			}
 
 			// Merge with the root document if needed.
@@ -82,7 +82,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	return files, nil
 }
 
-func (g *Generator) addServiceToSession(doc *openapiv3.Document, service *descriptor.Service) error {
+func (g *Generator) addServiceToSession(doc *openapiv3.DocumentCore, service *descriptor.Service) error {
 	// we would in theory merge them but here we just want to prepare the files.
 
 	// create a session here.
@@ -98,6 +98,6 @@ func (g *Generator) addServiceToSession(doc *openapiv3.Document, service *descri
 	return nil
 }
 
-func (g *Generator) addFileMessagesToDocument(doc *openapiv3.Document, file *descriptor.File) error {
+func (g *Generator) addFileMessagesToDocument(doc *openapiv3.DocumentCore, file *descriptor.File) error {
 	return nil
 }

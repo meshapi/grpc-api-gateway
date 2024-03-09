@@ -1,7 +1,7 @@
 package openapiv3
 
-type Components struct {
-	Schemas   map[string]*Extensible[Schema]        `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+type ComponentsCore struct {
+	Schemas   map[string]*Extensible[SchemaCore]        `json:"schemas,omitempty" yaml:"schemas,omitempty"`
 	Responses map[string]*Ref[Extensible[Response]] `json:"responses,omitempty" yaml:"responses,omitempty"`
 }
 
@@ -19,7 +19,7 @@ type Header struct {
 	AllowEmptyValue bool                                 `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
 	Style           string                               `json:"style,omitempty" yaml:"style,omitempty"`
 	Explode         bool                                 `json:"explode,omitempty" yaml:"explode,omitempty"`
-	Schema          *Extensible[Schema]                  `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Schema          *Extensible[SchemaCore]                  `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Example         any                                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples        map[string]*Ref[Extensible[Example]] `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Content         map[string]*Extensible[MediaType]    `json:"content,omitempty" yaml:"content,omitempty"`
@@ -34,7 +34,7 @@ type Encoding struct {
 }
 
 type MediaType struct {
-	Schema   *Extensible[Schema] `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Schema   *Extensible[SchemaCore] `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Example  any                 `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples map[string]*Ref[Extensible[Example]]
 	Encoding map[string]*Extensible[Encoding]
@@ -46,7 +46,7 @@ type Link struct {
 	Parameters   map[string]any      `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	RequestBody  any                 `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
 	Description  string              `json:"description,omitempty" yaml:"description,omitempty"`
-	Server       *Extensible[Server] `json:"server,omitempty" yaml:"server,omitempty"`
+	Server       *Extensible[ServerCore] `json:"server,omitempty" yaml:"server,omitempty"`
 }
 
 type Response struct {
