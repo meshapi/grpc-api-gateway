@@ -1,11 +1,39 @@
 package openapiv3
 
 type ComponentsCore struct {
-	Schemas       map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Responses     map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
-	Parameters    map[string]*Ref[Parameter]         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Examples      map[string]*Ref[Example]           `json:"examples,omitempty" yaml:"examples,omitempty"`
-	RequestBodies map[string]*Ref[RequestBody]       `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
+	Schemas         map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+	Responses       map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Parameters      map[string]*Ref[Parameter]         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Examples        map[string]*Ref[Example]           `json:"examples,omitempty" yaml:"examples,omitempty"`
+	RequestBodies   map[string]*Ref[RequestBody]       `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
+	Headers         map[string]*Ref[Header]            `json:"headers,omitempty" yaml:"headers,omitempty"`
+	SecuritySchemes map[string]*Ref[SecurityScheme]    `json:"securitySchemes,omitempty" yaml:"securitySchemes,omitempty"`
+	Links           map[string]*Ref[Link]              `json:"links,omitempty" yaml:"links,omitempty"`
+}
+
+type SecuritySchemeCore struct {
+	Type             string      `json:"type,omitempty" yaml:"type,omitempty"`
+	Description      string      `json:"description,omitempty" yaml:"description,omitempty"`
+	Name             string      `json:"name,omitempty" yaml:"name,omitempty"`
+	In               string      `json:"in,omitempty" yaml:"in,omitempty"`
+	Scheme           string      `json:"scheme,omitempty" yaml:"scheme,omitempty"`
+	BearerFormat     string      `json:"bearerFormat,omitempty" yaml:"bearerFormat,omitempty"`
+	Flows            *OAuthFlows `json:"flows,omitempty" yaml:"flows,omitempty"`
+	OpenIDConnectURL string      `json:"openIdConnectUrl,omitempty" yaml:"openIdConnectUrl,omitempty"`
+}
+
+type OAuthFlowsCore struct {
+	Implicit          *OAuthFlow `json:"implicit,omitempty" yaml:"implicit,omitempty"`
+	Password          *OAuthFlow `json:"password,omitempty" yaml:"password,omitempty"`
+	ClientCredentials *OAuthFlow `json:"clientCredentials,omitempty" yaml:"clientCredentials,omitempty"`
+	AuthorizationCode *OAuthFlow `json:"authorizationCode,omitempty" yaml:"authorizationCode,omitempty"`
+}
+
+type OAuthFlowCore struct {
+	AuthorizationURL string            `json:"authorizationUrl,omitempty" yaml:"authorizationUrl,omitempty"`
+	TokenURL         string            `json:"tokenUrl,omitempty" yaml:"tokenUrl,omitempty"`
+	RefreshURL       string            `json:"refreshUrl,omitempty" yaml:"refreshUrl,omitempty"`
+	Scopes           map[string]string `json:"scopes,omitempty" yaml:"scopes,omitempty"`
 }
 
 type RequestBodyCore struct {

@@ -868,6 +868,121 @@ func mapRequestBodyMap(
 	return result, nil
 }
 
+func mapOAuthFlow(flow *openapi.SecurityScheme_OAuthFlow) (*openapiv3.OAuthFlow, error) {
+	if flow == nil {
+		return nil, nil
+	}
+
+	extensions, err := mapExtensions(flow.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &openapiv3.OAuthFlow{
+		Object: openapiv3.OAuthFlowCore{
+			AuthorizationURL: flow.AuthorizationUrl,
+			TokenURL:         flow.TokenUrl,
+			RefreshURL:       flow.RefreshUrl,
+			Scopes:           flow.Scopes,
+		},
+		Extensions: extensions,
+	}, nil
+}
+
+func mapOAuthFlows(flows *openapi.SecurityScheme_OAuthFlows) (*openapiv3.OAuthFlows, error) {
+	if flows == nil {
+		return nil, nil
+	}
+
+	extensions, err := mapExtensions(flows.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &openapiv3.OAuthFlows{
+		Object:     openapiv3.OAuthFlowsCore{},
+		Extensions: extensions,
+	}
+
+	result.Object.Implicit, err = mapOAuthFlow(flows.Implicit)
+	if err != nil {
+		return nil, fmt.Errorf("invalid implicit oauth flow: %w", err)
+	}
+
+	result.Object.Password, err = mapOAuthFlow(flows.Password)
+	if err != nil {
+		return nil, fmt.Errorf("invalid password oauth flow: %w", err)
+	}
+
+	result.Object.AuthorizationCode, err = mapOAuthFlow(flows.AuthorizationCode)
+	if err != nil {
+		return nil, fmt.Errorf("invalid authorizationCode oauth flow: %w", err)
+	}
+
+	result.Object.ClientCredentials, err = mapOAuthFlow(flows.ClientCredentials)
+	if err != nil {
+		return nil, fmt.Errorf("invalid clientCredentials oauth flow: %w", err)
+	}
+
+	return result, nil
+}
+
+func mapSecurityScheme(scheme *openapi.SecurityScheme) (*openapiv3.Ref[openapiv3.SecurityScheme], error) {
+	if scheme == nil {
+		return nil, nil
+	}
+
+	if scheme.Ref != nil {
+		return makeReference[openapiv3.SecurityScheme](scheme.Ref), nil
+	}
+
+	extensions, err := mapExtensions(scheme.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &openapiv3.Ref[openapiv3.SecurityScheme]{
+		Data: openapiv3.SecurityScheme{
+			Object: openapiv3.SecuritySchemeCore{
+				Type:             scheme.Type,
+				Description:      scheme.Description,
+				Name:             scheme.Name,
+				In:               scheme.In,
+				Scheme:           scheme.Scheme,
+				BearerFormat:     scheme.BearerFormat,
+				OpenIDConnectURL: scheme.OpenIdConnectUrl,
+			},
+			Extensions: extensions,
+		},
+	}
+
+	result.Data.Object.Flows, err = mapOAuthFlows(scheme.Flows)
+	if err != nil {
+		return nil, fmt.Errorf("invalid flows object: %w", err)
+	}
+
+	return result, nil
+}
+
+func mapSecuritySchemeMap(
+	securitySchemes map[string]*openapi.SecurityScheme) (map[string]*openapiv3.Ref[openapiv3.SecurityScheme], error) {
+	if securitySchemes == nil {
+		return nil, nil
+	}
+
+	result := make(map[string]*openapiv3.Ref[openapiv3.SecurityScheme], len(securitySchemes))
+	for key, securitySchemeFromProto := range securitySchemes {
+		securityScheme, err := mapSecurityScheme(securitySchemeFromProto)
+		if err != nil {
+			return nil, fmt.Errorf("invalid securityScheme for %q: %w", key, err)
+		}
+
+		result[key] = securityScheme
+	}
+
+	return result, nil
+}
+
 func mapComponents(components *openapi.Components) (*openapiv3.Components, error) {
 	if components == nil {
 		return nil, nil
@@ -902,6 +1017,21 @@ func mapComponents(components *openapi.Components) (*openapiv3.Components, error
 	result.Object.RequestBodies, err = mapRequestBodyMap(components.RequestBodies)
 	if err != nil {
 		return nil, fmt.Errorf("invalid requestBodies object: %w", err)
+	}
+
+	result.Object.Headers, err = mapHeaderMap(components.Headers)
+	if err != nil {
+		return nil, fmt.Errorf("invalid headers object: %w", err)
+	}
+
+	result.Object.SecuritySchemes, err = mapSecuritySchemeMap(components.SecuritySchemes)
+	if err != nil {
+		return nil, fmt.Errorf("invalid securitySchemes object: %w", err)
+	}
+
+	result.Object.Links, err = mapLinksMap(components.Links)
+	if err != nil {
+		return nil, fmt.Errorf("invalid links object: %w", err)
 	}
 
 	result.Extensions, err = mapExtensions(components.Extensions)

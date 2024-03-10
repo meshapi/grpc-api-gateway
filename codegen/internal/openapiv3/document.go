@@ -25,6 +25,9 @@ type (
 	Encoding              = Extensible[EncodingCore]
 	Link                  = Extensible[LinkCore]
 	RequestBody           = Extensible[RequestBodyCore]
+	SecurityScheme        = Extensible[SecuritySchemeCore]
+	OAuthFlows            = Extensible[OAuthFlowsCore]
+	OAuthFlow             = Extensible[OAuthFlowCore]
 )
 
 const (

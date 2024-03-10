@@ -1931,6 +1931,31 @@
                         "type": "string"
                     },
                     "type": "object"
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,
@@ -1959,6 +1984,31 @@
                     "$ref": "#/definitions/meshapi.gateway.openapi.SecurityScheme.OAuthFlow",
                     "additionalProperties": false,
                     "description": "Configuration for the OAuth Authorization Code flow. Previously called accessCode in OpenAPI 2.0."
+                },
+                "extensions": {
+                    "additionalProperties": {
+                        "oneOf": [
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Value",
+                        "description": "`Value` represents a dynamically typed value which can be either null, a number, a string, a boolean, a recursive struct value, or a list of values. A producer of value is expected to set one of these variants. Absence of any variant indicates an error. The JSON representation for `Value` is JSON value."
+                    },
+                    "type": "object",
+                    "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
                 }
             },
             "additionalProperties": false,

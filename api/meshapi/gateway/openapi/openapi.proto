@@ -712,6 +712,11 @@ message SecurityScheme {
 		string token_url = 2;
 		string refresh_url = 3;
 		map<string, string> scopes = 4;
+		// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+		// standard OpenAPI specification.
+		//
+		// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+		map<string, google.protobuf.Value> extensions = 5;
 	}
 
 	// See: https://spec.openapis.org/oas/latest.html#oauth-flows-object
@@ -724,6 +729,11 @@ message SecurityScheme {
 		OAuthFlow client_credentials = 3;
 		// Configuration for the OAuth Authorization Code flow. Previously called accessCode in OpenAPI 2.0.
 		OAuthFlow authorization_code = 4;
+		// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+		// standard OpenAPI specification.
+		//
+		// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+		map<string, google.protobuf.Value> extensions = 5;
 	}
 
 	// REQUIRED. An object containing configuration information for the flow types supported.
