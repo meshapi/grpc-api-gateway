@@ -19,6 +19,7 @@ type (
 	Discriminator         = Extensible[DiscriminatorCore]
 	Response              = Extensible[ResponseCore]
 	Header                = Extensible[HeaderCore]
+	Parameter             = Extensible[ParameterCore]
 	MediaType             = Extensible[MediaTypeCore]
 	Example               = Extensible[ExampleCore]
 	Encoding              = Extensible[EncodingCore]

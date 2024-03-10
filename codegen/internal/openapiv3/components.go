@@ -1,8 +1,10 @@
 package openapiv3
 
 type ComponentsCore struct {
-	Schemas   map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Responses map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Schemas    map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+	Responses  map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Parameters map[string]*Ref[Parameter]         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Examples   map[string]*Ref[Example]           `json:"examples,omitempty" yaml:"examples,omitempty"`
 }
 
 type ExampleCore struct {
@@ -17,6 +19,22 @@ type HeaderCore struct {
 	Required        bool                                     `json:"required,omitempty" yaml:"required,omitempty"`
 	Deprecated      bool                                     `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	AllowEmptyValue bool                                     `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	Style           string                                   `json:"style,omitempty" yaml:"style,omitempty"`
+	Explode         bool                                     `json:"explode,omitempty" yaml:"explode,omitempty"`
+	Schema          *Extensible[SchemaCore]                  `json:"schema,omitempty" yaml:"schema,omitempty"`
+	Example         any                                      `json:"example,omitempty" yaml:"example,omitempty"`
+	Examples        map[string]*Ref[Extensible[ExampleCore]] `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Content         map[string]*Extensible[MediaTypeCore]    `json:"content,omitempty" yaml:"content,omitempty"`
+}
+
+type ParameterCore struct {
+	Name            string                                   `json:"name,omitempty" yaml:"name,omitempty"`
+	In              string                                   `json:"in,omitempty" yaml:"in,omitempty"`
+	Description     string                                   `json:"description,omitempty" yaml:"description,omitempty"`
+	Required        bool                                     `json:"required,omitempty" yaml:"required,omitempty"`
+	Deprecated      bool                                     `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	AllowEmptyValue bool                                     `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
+	AllowReserved   bool                                     `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 	Style           string                                   `json:"style,omitempty" yaml:"style,omitempty"`
 	Explode         bool                                     `json:"explode,omitempty" yaml:"explode,omitempty"`
 	Schema          *Extensible[SchemaCore]                  `json:"schema,omitempty" yaml:"schema,omitempty"`

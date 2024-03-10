@@ -608,6 +608,61 @@ func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.R
 	return result, nil
 }
 
+func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*openapiv3.Ref[openapiv3.Parameter], error) {
+	if parameterMap == nil {
+		return nil, nil
+	}
+
+	result := make(map[string]*openapiv3.Ref[openapiv3.Parameter], len(parameterMap))
+	for key, paramFromProto := range parameterMap {
+		if paramFromProto.Ref != nil {
+			result[key] = makeReference[openapiv3.Parameter](paramFromProto.Ref)
+		}
+
+		extensions, err := mapExtensions(paramFromProto.Extensions)
+		if err != nil {
+			return nil, fmt.Errorf("invalid parameter for %q: %w", key, err)
+		}
+
+		header := &openapiv3.Ref[openapiv3.Parameter]{
+			Data: openapiv3.Parameter{
+				Object: openapiv3.ParameterCore{
+					Name:            paramFromProto.Name,
+					In:              paramFromProto.In,
+					Description:     paramFromProto.Description,
+					Required:        paramFromProto.Required,
+					Deprecated:      paramFromProto.Deprecated,
+					AllowEmptyValue: paramFromProto.AllowEmptyValue,
+					AllowReserved:   paramFromProto.AllowReserved,
+					Style:           paramFromProto.Style,
+					Explode:         paramFromProto.Explode,
+					Example:         paramFromProto.Example.AsInterface(),
+				},
+				Extensions: extensions,
+			},
+		}
+
+		header.Data.Object.Schema, err = mapSchema(paramFromProto.Schema)
+		if err != nil {
+			return nil, fmt.Errorf("invalid schema for %q: %w", key, err)
+		}
+
+		header.Data.Object.Examples, err = mapStructuredExampleMap(paramFromProto.Examples)
+		if err != nil {
+			return nil, fmt.Errorf("invalid examples list: %w", err)
+		}
+
+		header.Data.Object.Content, err = mapMediaTypes(paramFromProto.Content)
+		if err != nil {
+			return nil, fmt.Errorf("invalid media types object: %w", err)
+		}
+
+		result[key] = header
+	}
+
+	return result, nil
+}
+
 func mapStructuredExampleMap(examples map[string]*openapi.Example) (map[string]*openapiv3.Ref[openapiv3.Example], error) {
 	if examples == nil {
 		return nil, nil
@@ -781,6 +836,16 @@ func mapComponents(components *openapi.Components) (*openapiv3.Components, error
 	result.Object.Responses, err = mapResponseMap(components.Responses)
 	if err != nil {
 		return nil, fmt.Errorf("invalid responses object: %w", err)
+	}
+
+	result.Object.Parameters, err = mapParameterMap(components.Parameters)
+	if err != nil {
+		return nil, fmt.Errorf("invalid paramters object: %w", err)
+	}
+
+	result.Object.Examples, err = mapStructuredExampleMap(components.Examples)
+	if err != nil {
+		return nil, fmt.Errorf("invalid examples object: %w", err)
 	}
 
 	result.Extensions, err = mapExtensions(components.Extensions)
