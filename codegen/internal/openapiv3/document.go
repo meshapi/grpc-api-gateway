@@ -28,6 +28,8 @@ type (
 	SecurityScheme        = Extensible[SecuritySchemeCore]
 	OAuthFlows            = Extensible[OAuthFlowsCore]
 	OAuthFlow             = Extensible[OAuthFlowCore]
+	Operation             = Extensible[OperationCore]
+	Path                  = Extensible[PathCore]
 )
 
 const (
@@ -36,11 +38,11 @@ const (
 
 // DocumentCore is the OpenAPI top-level document.
 type DocumentCore struct {
-	OpenAPI       string    `json:"openapi" yaml:"openapi"`
-	Info          *Info     `json:"info" yaml:"info" validate:"required"`
-	SchemaDialect string    `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
-	Servers       []*Server `json:"servers,omitempty" yaml:"servers,omitempty"`
-	// Paths
+	OpenAPI               string                 `json:"openapi" yaml:"openapi"`
+	Info                  *Info                  `json:"info" yaml:"info" validate:"required"`
+	SchemaDialect         string                 `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
+	Servers               []*Server              `json:"servers,omitempty" yaml:"servers,omitempty"`
+	Paths                 map[string]*Path       `json:"paths,omitempty" yaml:"omitempty"`
 	Components            *Components            `json:"components,omitempty" yaml:"components"`
 	Security              map[string][]string    `json:"security,omitempty" yaml:"security,omitempty"`
 	Tags                  []Tag                  `json:"tags,omitempty" yaml:"tags,omitempty"`
