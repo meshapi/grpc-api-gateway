@@ -561,6 +561,11 @@ message Header {
 	// A map containing the representations for the parameter.
 	// The key is the media type and the value describes it. The map MUST only contain one entry.
 	map<string, MediaType> content = 11;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 12;
 }
 
 // Describes a single operation parameter.
@@ -622,6 +627,11 @@ message Parameter {
 	// A map containing the representations for the parameter.
 	// The key is the media type and the value describes it. The map MUST only contain one entry.
 	map<string, MediaType> content = 14;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 15;
 }
 
 message Response {

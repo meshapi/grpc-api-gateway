@@ -17,6 +17,12 @@ type (
 	Components            = Extensible[ComponentsCore]
 	Schema                = Extensible[SchemaCore]
 	Discriminator         = Extensible[DiscriminatorCore]
+	Response              = Extensible[ResponseCore]
+	Header                = Extensible[HeaderCore]
+	MediaType             = Extensible[MediaTypeCore]
+	Example               = Extensible[ExampleCore]
+	Encoding              = Extensible[EncodingCore]
+	Link                  = Extensible[LinkCore]
 )
 
 const (
@@ -25,10 +31,10 @@ const (
 
 // DocumentCore is the OpenAPI top-level document.
 type DocumentCore struct {
-	OpenAPI       string   `json:"openapi" yaml:"openapi"`
-	Info          *Info    `json:"info" yaml:"info" validate:"required"`
-	SchemaDialect string   `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
-	Servers       []Server `json:"servers,omitempty" yaml:"servers,omitempty"`
+	OpenAPI       string    `json:"openapi" yaml:"openapi"`
+	Info          *Info     `json:"info" yaml:"info" validate:"required"`
+	SchemaDialect string    `json:"jsonSchemaDialect,omitempty" yaml:"jsonSchemaDialect,omitempty"`
+	Servers       []*Server `json:"servers,omitempty" yaml:"servers,omitempty"`
 	// Paths
 	Components            *Components            `json:"components,omitempty" yaml:"components"`
 	Security              map[string][]string    `json:"security,omitempty" yaml:"security,omitempty"`
