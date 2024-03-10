@@ -1,10 +1,17 @@
 package openapiv3
 
 type ComponentsCore struct {
-	Schemas    map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
-	Responses  map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
-	Parameters map[string]*Ref[Parameter]         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Examples   map[string]*Ref[Example]           `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Schemas       map[string]*Extensible[SchemaCore] `json:"schemas,omitempty" yaml:"schemas,omitempty"`
+	Responses     map[string]*Ref[Response]          `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Parameters    map[string]*Ref[Parameter]         `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Examples      map[string]*Ref[Example]           `json:"examples,omitempty" yaml:"examples,omitempty"`
+	RequestBodies map[string]*Ref[RequestBody]       `json:"requestBodies,omitempty" yaml:"requestBodies,omitempty"`
+}
+
+type RequestBodyCore struct {
+	Description string                                `json:"description,omitempty" yaml:"description,omitempty"`
+	Content     map[string]*Extensible[MediaTypeCore] `json:"content,omitempty" yaml:"content,omitempty"`
+	Required    bool                                  `json:"required,omitempty" yaml:"required,omitempty"`
 }
 
 type ExampleCore struct {

@@ -565,6 +565,7 @@ func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.R
 	for key, protoHeader := range headerMap {
 		if protoHeader.Ref != nil {
 			result[key] = makeReference[openapiv3.Header](protoHeader.Ref)
+			continue
 		}
 
 		extensions, err := mapExtensions(protoHeader.Extensions)
@@ -617,6 +618,7 @@ func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*op
 	for key, paramFromProto := range parameterMap {
 		if paramFromProto.Ref != nil {
 			result[key] = makeReference[openapiv3.Parameter](paramFromProto.Ref)
+			continue
 		}
 
 		extensions, err := mapExtensions(paramFromProto.Extensions)
@@ -788,12 +790,9 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 		link := &openapiv3.Ref[openapiv3.Link]{
 			Data: openapiv3.Link{
 				Object: openapiv3.LinkCore{
-					//OperationID:  linkFromProto.Operation,
-					//OperationRef: linkFromProto.GetOperation,
 					Parameters:  mapAnyMap(linkFromProto.Parameters),
 					RequestBody: linkFromProto.RequestBody.AsInterface(),
 					Description: linkFromProto.Description,
-					//Server:      &openapiv3.Server{},
 				},
 				Extensions: extensions,
 			},
@@ -812,6 +811,58 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 		}
 
 		result[key] = link
+	}
+
+	return result, nil
+}
+
+func mapRequestBody(requestBody *openapi.RequestBody) (*openapiv3.Ref[openapiv3.RequestBody], error) {
+	if requestBody == nil {
+		return nil, nil
+	}
+
+	if requestBody.Ref != nil {
+		return makeReference[openapiv3.RequestBody](requestBody.Ref), nil
+	}
+
+	extensions, err := mapExtensions(requestBody.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &openapiv3.Ref[openapiv3.RequestBody]{
+		Data: openapiv3.RequestBody{
+			Object: openapiv3.RequestBodyCore{
+				Description: requestBody.Description,
+				Required:    requestBody.Required,
+			},
+			Extensions: extensions,
+		},
+	}
+
+	result.Data.Object.Content, err = mapMediaTypes(requestBody.Content)
+	if err != nil {
+		return nil, fmt.Errorf("invalid content object: %w", err)
+	}
+
+	return result, nil
+}
+
+func mapRequestBodyMap(
+	requestBodies map[string]*openapi.RequestBody) (map[string]*openapiv3.Ref[openapiv3.RequestBody], error) {
+
+	if requestBodies == nil {
+		return nil, nil
+	}
+
+	result := make(map[string]*openapiv3.Ref[openapiv3.RequestBody], len(requestBodies))
+	for key, requestBodyFromProto := range requestBodies {
+		requestBody, err := mapRequestBody(requestBodyFromProto)
+		if err != nil {
+			return nil, fmt.Errorf("invalid request body for %q: %w", key, err)
+		}
+
+		result[key] = requestBody
 	}
 
 	return result, nil
@@ -846,6 +897,11 @@ func mapComponents(components *openapi.Components) (*openapiv3.Components, error
 	result.Object.Examples, err = mapStructuredExampleMap(components.Examples)
 	if err != nil {
 		return nil, fmt.Errorf("invalid examples object: %w", err)
+	}
+
+	result.Object.RequestBodies, err = mapRequestBodyMap(components.RequestBodies)
+	if err != nil {
+		return nil, fmt.Errorf("invalid requestBodies object: %w", err)
 	}
 
 	result.Extensions, err = mapExtensions(components.Extensions)

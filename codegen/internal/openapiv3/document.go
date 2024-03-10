@@ -24,6 +24,7 @@ type (
 	Example               = Extensible[ExampleCore]
 	Encoding              = Extensible[EncodingCore]
 	Link                  = Extensible[LinkCore]
+	RequestBody           = Extensible[RequestBodyCore]
 )
 
 const (
