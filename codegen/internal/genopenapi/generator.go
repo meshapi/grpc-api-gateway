@@ -52,9 +52,9 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		case OutputModePerProtoFile:
 			// TODO: if the document dose not have any schema or paths that was generated,
 			// we should avoid generating the file.
-			doc, ok := g.openapiRegistry.LookupDocument(file)
-			if !ok {
-				doc = &openapiv3.Extensible[openapiv3.DocumentCore]{}
+			doc := g.openapiRegistry.LookupDocument(file)
+			if doc == nil {
+				doc = &openapiv3.Document{}
 			}
 
 			// Merge with the root document if needed.

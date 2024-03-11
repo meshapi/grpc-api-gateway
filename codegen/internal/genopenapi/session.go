@@ -40,12 +40,16 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[o
 
 	switch g.OutputFormat {
 	case OutputFormatYAML:
-		if err := yaml.NewEncoder(content).Encode(doc); err != nil {
+		encoder := yaml.NewEncoder(content)
+		encoder.SetIndent(2)
+		if err := encoder.Encode(doc); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to yaml: %w", err)
 		}
 		extension = "yaml"
 	case OutputFormatJSON:
-		if err := json.NewEncoder(content).Encode(doc); err != nil {
+		encoder := json.NewEncoder(content)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(doc); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to json: %w", err)
 		}
 		extension = "json"

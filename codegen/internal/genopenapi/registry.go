@@ -36,7 +36,20 @@ type Registry struct {
 
 	documents map[*descriptor.File]*openapiv3.Document
 
+	// messageNames holds a one to one association of message FQMN to the generated OpenAPI schema name.
+	messageNames map[string]string
+	// recognizedMessages holds a reference to the proto message and any matched configuration for it.
+	messages map[string]struct{}
+	// schemas are already processed schemas that can be readily used.
+	schemas map[string]*openapiv3.Schema
+
 	// schemas map[string]string
+	// we need to populate these schemas on a need basis.
+	// any time a look up is made, we find the proto definitions, load up the gateway file and build a
+	// ready to use and final OpenAPI schema, this schema can later be used to inject into the OpenAPI document files.
+	// another matter is that we need to already find out the name that needs to get used for this object ahead of time.
+	// regardless of whether or not it gets used or not. This is to ensure two different OpenAPI files generated do not
+	// use different names for the same object.
 }
 
 func NewRegistry(options *Options) *Registry {
@@ -62,7 +75,8 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 		// TODO: we need to process messages and services here as well.
 	}
 
-	return reg.Iterate(func(filePath string, protoFile *descriptor.File) error {
+	messages := []string{}
+	err := reg.Iterate(func(filePath string, protoFile *descriptor.File) error {
 		// first try to load the configFromFile file here.
 		configFromFile, err := r.loadConfigForFile(filePath, protoFile)
 		if err != nil {
@@ -76,8 +90,6 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 			if err != nil {
 				return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
 			}
-		} else {
-			doc = &openapiv3.Document{}
 		}
 
 		configFromProto, ok := proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
@@ -86,14 +98,29 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 			if err != nil {
 				return fmt.Errorf("invalid OpenAPI document in proto file %q: %w", filePath, err)
 			}
-			if err := mergo.Merge(doc, docFromProto); err != nil {
+
+			if doc == nil {
+				doc = docFromProto
+			} else if err := mergo.Merge(doc, docFromProto); err != nil {
 				return fmt.Errorf("failed to merge OpenAPI config and proto documents for %q: %w", filePath, err)
 			}
 		}
 
 		r.documents[protoFile] = doc
+
+		for _, message := range protoFile.Messages {
+			messages = append(messages, message.FQMN())
+		}
+
 		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	r.messageNames = r.resolveMessageNames(messages)
+	return nil
 }
 
 func (r *Registry) loadConfigForFile(protoFilePath string, file *descriptor.File) (openAPIConfig, error) {
@@ -132,9 +159,8 @@ func (r *Registry) loadConfigForFile(protoFilePath string, file *descriptor.File
 	return result, nil
 }
 
-func (r *Registry) LookupDocument(file *descriptor.File) (*openapiv3.Document, bool) {
-	doc, ok := r.documents[file]
-	return doc, ok
+func (r *Registry) LookupDocument(file *descriptor.File) *openapiv3.Document {
+	return r.documents[file]
 }
 
 func (r *Registry) loadFile(filePath string) (*api.OpenAPISpec, error) {
