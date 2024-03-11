@@ -42,9 +42,11 @@ func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
 	}
 
 	if doc.Security != nil {
-		result.Object.Security = map[string][]string{}
-		for _, security := range doc.Security {
-			result.Object.Security[security.Name] = security.Scopes
+		result.Object.Security = make([]map[string][]string, len(doc.Security))
+		for index, security := range doc.Security {
+			result.Object.Security[index] = map[string][]string{
+				security.Name: security.Scopes,
+			}
 		}
 	}
 
