@@ -15,7 +15,7 @@ type Generator struct {
 	openapiRegistry *Registry
 
 	// httpEndpointsMap is used to find duplicate HTTP specifications.
-	//httpEndpointsMap map[endpointAnnotation]struct{}
+	// httpEndpointsMap map[endpointAnnotation]struct{}
 }
 
 func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
@@ -57,16 +57,16 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				doc = &openapiv3.Document{}
 			}
 
+			err := g.addProtoMessageAndEnums(&doc.Object, file)
+			if err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			}
+
 			// Merge with the root document if needed.
 			if g.openapiRegistry.RootDocument != nil {
 				if err := mergo.Merge(doc, g.openapiRegistry.RootDocument, mergeOptions...); err != nil {
 					return nil, fmt.Errorf("failed to merge OpenAPI documents: %w", err)
 				}
-			}
-
-			err := g.addFileMessagesToDocument(&doc.Object, file)
-			if err != nil {
-				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
 			}
 
 			file, err := g.writeDocument(file.GeneratedFilenamePrefix+".openapi", doc)
@@ -98,7 +98,11 @@ func (g *Generator) addServiceToSession(doc *openapiv3.DocumentCore, service *de
 	return nil
 }
 
-func (g *Generator) addFileMessagesToDocument(doc *openapiv3.DocumentCore, file *descriptor.File) error {
+func (g *Generator) addProtoMessageAndEnums(doc *openapiv3.DocumentCore, file *descriptor.File) error {
+	if doc.Components == nil {
+		doc.Components = &openapiv3.Components{}
+	}
+
 	for _, message := range file.Messages {
 		fqmn := message.FQMN()
 		schema, err := g.openapiRegistry.getSchemaForMessage(file.GetPackage(), fqmn)
