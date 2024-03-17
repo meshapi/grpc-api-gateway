@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"dario.cat/mergo"
 	"google.golang.org/grpc/grpclog"
@@ -26,10 +27,29 @@ type openAPIConfig struct {
 	Filename string
 }
 
+type sourceInfo struct {
+	Filename     string
+	ProtoPackage string
+}
+
+type openAPIMessageConfig struct {
+	*api.OpenAPIMessageSpec
+	sourceInfo
+}
+
+type openAPISchemaConfig struct {
+	// Schema is the already mapped and processed OpenAPI schema for a proto message/enum.
+	Schema *openapiv3.Schema
+	// Dependencies is the list of enum or proto message dependencies that must be included in the same
+	// OpenAPI document.
+	Dependencies []string
+}
+
 // Registry contains references to all configuration files.
 type Registry struct {
-	// Options that are shared with the generator.
-	Options *Options
+	// options that are shared with the generator.
+	options            *Options
+	descriptorRegistry *descriptor.Registry
 
 	// RootDocument is the global and top-level document loaded from the global config.
 	RootDocument *openapiv3.Document
@@ -39,9 +59,9 @@ type Registry struct {
 	// messageNames holds a one to one association of message FQMN to the generated OpenAPI schema name.
 	messageNames map[string]string
 	// recognizedMessages holds a reference to the proto message and any matched configuration for it.
-	messages map[string]struct{}
+	messages map[string]openAPIMessageConfig
 	// schemas are already processed schemas that can be readily used.
-	schemas map[string]*openapiv3.Schema
+	schemas map[string]openAPISchemaConfig
 
 	// schemas map[string]string
 	// we need to populate these schemas on a need basis.
@@ -52,17 +72,21 @@ type Registry struct {
 	// use different names for the same object.
 }
 
-func NewRegistry(options *Options) *Registry {
+func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Registry {
 	return &Registry{
-		Options:      options,
-		RootDocument: nil,
-		documents:    map[*descriptor.File]*openapiv3.Document{},
+		options:            options,
+		descriptorRegistry: descriptorRegistry,
+		RootDocument:       nil,
+		documents:          map[*descriptor.File]*openapiv3.Document{},
+		messageNames:       map[string]string{},
+		messages:           map[string]openAPIMessageConfig{},
+		schemas:            map[string]openAPISchemaConfig{},
 	}
 }
 
-func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
-	if r.Options.GlobalOpenAPIConfigFile != "" {
-		configPath := filepath.Join(r.Options.ConfigSearchPath, r.Options.GlobalOpenAPIConfigFile)
+func (r *Registry) LoadFromDescriptorRegistry() error {
+	if r.options.GlobalOpenAPIConfigFile != "" {
+		configPath := filepath.Join(r.options.ConfigSearchPath, r.options.GlobalOpenAPIConfigFile)
 		doc, err := r.loadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("failed to load global OpenAPI config file: %w", err)
@@ -72,11 +96,16 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI document in %q: %w", configPath, err)
 		}
+
+		err = r.addMessageConfigs(doc.Messages, sourceInfo{Filename: configPath})
+		if err != nil {
+			return fmt.Errorf("failed to process message configs defined in %q: %w", configPath, err)
+		}
 		// TODO: we need to process messages and services here as well.
 	}
 
 	messages := []string{}
-	err := reg.Iterate(func(filePath string, protoFile *descriptor.File) error {
+	err := r.descriptorRegistry.Iterate(func(filePath string, protoFile *descriptor.File) error {
 		// first try to load the configFromFile file here.
 		configFromFile, err := r.loadConfigForFile(filePath, protoFile)
 		if err != nil {
@@ -89,6 +118,15 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 			doc, err = mapDocument(configFromFile.Document)
 			if err != nil {
 				return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
+			}
+
+			source := sourceInfo{
+				Filename:     configFromFile.Filename,
+				ProtoPackage: protoFile.GetPackage(),
+			}
+
+			if err := r.addMessageConfigs(configFromFile.Messages, source); err != nil {
+				return fmt.Errorf("failed to process message configs defined in %q: %w", configFromFile.Filename, err)
 			}
 		}
 
@@ -112,6 +150,10 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 			messages = append(messages, message.FQMN())
 		}
 
+		for _, enum := range protoFile.Enums {
+			messages = append(messages, enum.FQEN())
+		}
+
 		return nil
 	})
 
@@ -123,20 +165,97 @@ func (r *Registry) LoadFromDescriptorRegistry(reg *descriptor.Registry) error {
 	return nil
 }
 
-func (r *Registry) loadConfigForFile(protoFilePath string, file *descriptor.File) (openAPIConfig, error) {
-	// TODO: allow the plugin to set the config path
-	result := openAPIConfig{}
-	if r.Options.OpenAPIConfigFilePattern == "" {
+func (r *Registry) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src sourceInfo) error {
+
+	for _, messageConfig := range configs {
+		// Resolve the selector to an absolute path.
+		if strings.HasPrefix(messageConfig.Selector, ".") {
+			if src.ProtoPackage == "" {
+				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", messageConfig.Selector)
+			}
+			messageConfig.Selector = src.ProtoPackage + messageConfig.Selector
+		}
+
+		messageConfig.Selector = "." + messageConfig.Selector
+
+		// assert that selector resolves to a proto message or enum.
+		if _, err := r.descriptorRegistry.LookupMessage("", messageConfig.Selector); err != nil {
+			if _, err = r.descriptorRegistry.LookupEnum("", messageConfig.Selector); err != nil {
+				return fmt.Errorf(
+					"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
+			}
+		}
+
+		if existingConfig, alreadyExists := r.messages[messageConfig.Selector]; alreadyExists {
+			return fmt.Errorf(
+				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
+				messageConfig.Selector, existingConfig.Filename, src.Filename)
+		}
+
+		r.messages[messageConfig.Selector] = openAPIMessageConfig{
+			OpenAPIMessageSpec: messageConfig,
+			sourceInfo:         src,
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) getSchemaForEnum(protoPackage, fqen string) (*openapiv3.Schema, error) {
+	// first look up the cache
+	if result, alreadyProcessed := r.schemas[fqen]; alreadyProcessed {
+		return result.Schema, nil
+	}
+
+	enum, err := r.descriptorRegistry.LookupEnum(protoPackage, fqen)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find enum: %w", err)
+	}
+
+	result, err := r.renderEnumSchema(enum)
+	if err != nil {
+		return nil, fmt.Errorf("failed to render enum: %w", err)
+	}
+
+	r.schemas[fqen] = openAPISchemaConfig{Schema: result}
+	return result, nil
+}
+
+func (r *Registry) getSchemaForMessage(protoPackage, fqmn string) (openAPISchemaConfig, error) {
+	// first look up the cache
+	if result, alreadyProcessed := r.schemas[fqmn]; alreadyProcessed {
 		return result, nil
 	}
 
-	configPath, err := configpath.Build(protoFilePath, r.Options.OpenAPIConfigFilePattern)
+	// pull up the proto message options and configs, render the schema and then merge if needed.
+	message, err := r.descriptorRegistry.LookupMessage(protoPackage, fqmn)
+	if err != nil {
+		return openAPISchemaConfig{}, fmt.Errorf("failed to find proto message: %w", err)
+	}
+
+	result, err := r.renderMessageSchema(message)
+	if err != nil {
+		return openAPISchemaConfig{}, fmt.Errorf("failed to render message: %w", err)
+	}
+
+	r.schemas[fqmn] = result
+	return result, nil
+}
+
+func (r *Registry) loadConfigForFile(protoFilePath string, file *descriptor.File) (openAPIConfig, error) {
+	// TODO: allow the plugin to set the config path
+	result := openAPIConfig{}
+	if r.options.OpenAPIConfigFilePattern == "" {
+		return result, nil
+	}
+
+	configPath, err := configpath.Build(protoFilePath, r.options.OpenAPIConfigFilePattern)
 	if err != nil {
 		return result, fmt.Errorf("failed to determine config file path: %w", err)
 	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
-		configFilePath := filepath.Join(r.Options.ConfigSearchPath, configPath+"."+ext)
+		configFilePath := filepath.Join(r.options.ConfigSearchPath, configPath+"."+ext)
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {

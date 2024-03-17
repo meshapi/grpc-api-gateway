@@ -4,6 +4,16 @@ import (
 	"encoding/json"
 )
 
+const (
+	TypeObject  = "object"
+	TypeString  = "string"
+	TypeArray   = "array"
+	TypeNumber  = "number"
+	TypeInteger = "integer"
+	TypeBoolean = "boolean"
+	TypeNull    = "null"
+)
+
 type DiscriminatorCore struct {
 	PropertyName string            `json:"propertyName,omitempty" yaml:"propertyName,omitempty"`
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`

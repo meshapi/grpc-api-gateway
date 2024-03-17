@@ -22,7 +22,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 	return &Generator{
 		Options:         options,
 		registry:        descriptorRegistry,
-		openapiRegistry: NewRegistry(&options),
+		openapiRegistry: NewRegistry(&options, descriptorRegistry),
 	}
 }
 
@@ -35,7 +35,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		mergeOptions = append(mergeOptions, mergo.WithAppendSlice)
 	}
 
-	if err := g.openapiRegistry.LoadFromDescriptorRegistry(g.registry); err != nil {
+	if err := g.openapiRegistry.LoadFromDescriptorRegistry(); err != nil {
 		return nil, err
 	}
 
@@ -64,10 +64,10 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				}
 			}
 
-			//err := g.addFileMessagesToDocument(doc, file)
-			//if err != nil {
-			//  return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
-			//}
+			err := g.addFileMessagesToDocument(&doc.Object, file)
+			if err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			}
 
 			file, err := g.writeDocument(file.GeneratedFilenamePrefix+".openapi", doc)
 			if err != nil {
@@ -99,5 +99,36 @@ func (g *Generator) addServiceToSession(doc *openapiv3.DocumentCore, service *de
 }
 
 func (g *Generator) addFileMessagesToDocument(doc *openapiv3.DocumentCore, file *descriptor.File) error {
+	for _, message := range file.Messages {
+		fqmn := message.FQMN()
+		schema, err := g.openapiRegistry.getSchemaForMessage(file.GetPackage(), fqmn)
+		if err != nil {
+			return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
+		}
+
+		if doc.Components.Object.Schemas == nil {
+			doc.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+		}
+		name := g.openapiRegistry.messageNames[fqmn]
+		// TODO: we need to use a session here to include a metadata to the OpenAPI doc.
+		// - for instance, adding to the schema should be a method to check for the object and all that.
+		// TODO: handle the dependencies here as well.
+		doc.Components.Object.Schemas[name] = schema.Schema
+	}
+
+	for _, enum := range file.Enums {
+		fqen := enum.FQEN()
+		schema, err := g.openapiRegistry.getSchemaForEnum(file.GetPackage(), fqen)
+		if err != nil {
+			return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
+		}
+
+		if doc.Components.Object.Schemas == nil {
+			doc.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+		}
+		name := g.openapiRegistry.messageNames[fqen]
+		doc.Components.Object.Schemas[name] = schema
+	}
+
 	return nil
 }

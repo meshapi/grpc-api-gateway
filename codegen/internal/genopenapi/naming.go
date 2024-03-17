@@ -7,7 +7,7 @@ import (
 )
 
 func (r *Registry) resolveMessageNames(messages []string) map[string]string {
-	switch r.Options.SchemaNamingStrategy {
+	switch r.options.SchemaNamingStrategy {
 	case SchemaNamingStrategyFQN:
 		return resolveNamesFQN(messages)
 	case SchemaNamingStrategySimple:
