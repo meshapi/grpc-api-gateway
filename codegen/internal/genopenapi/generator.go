@@ -104,6 +104,11 @@ func (g *Generator) addProtoMessageAndEnums(doc *openapiv3.DocumentCore, file *d
 	}
 
 	for _, message := range file.Messages {
+		// Skip all messages that are generated to be used as MapEntry objects.
+		if message.IsMapEntry() {
+			continue
+		}
+
 		fqmn := message.FQMN()
 		schema, err := g.openapiRegistry.getSchemaForMessage(file.GetPackage(), fqmn)
 		if err != nil {

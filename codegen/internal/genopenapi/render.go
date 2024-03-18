@@ -53,6 +53,84 @@ func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
 	return result, nil
 }
 
+// renderFieldSchema returns
+func (r *Registry) renderFieldSchema(
+	field *descriptorpb.FieldDescriptorProto, message *descriptor.Message) (*openapiv3.Schema, string, error) {
+
+	var fieldSchema *openapiv3.Schema
+	dependency := ""
+	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+
+	switch field.GetType() {
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
+		// TODO: handle the group wire format.
+		//fieldSchema.Object = openapiv3.SchemaCore{
+		//  Type: openapiv3.TypeSet{openapiv3.TypeObject},
+		//}
+	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		msg, err := r.descriptorRegistry.LookupMessage(message.File.GetPackage(), field.GetTypeName())
+		if err != nil {
+			return nil, dependency, fmt.Errorf("failed to resolve message %q: %w", field.GetTypeName(), err)
+		}
+		if msg.IsMapEntry() {
+			fieldSchema = &openapiv3.Schema{
+				Object: openapiv3.SchemaCore{
+					Type: openapiv3.TypeSet{openapiv3.TypeObject},
+					AdditionalProperties: &openapiv3.Schema{
+						Object: openapiv3.SchemaCore{Type: openapiv3.TypeSet{openapiv3.TypeString}},
+					},
+				},
+			}
+			valueSchema, valueDependency, err := r.renderFieldSchema(msg.GetField()[1], msg)
+			if err != nil {
+				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
+			}
+			repeated = false
+			dependency = valueDependency
+			fieldSchema.Object.AdditionalProperties = valueSchema
+		} else {
+			schemaName, err := r.schemaNameForFQN(msg.FQMN())
+			if err != nil {
+				return nil, dependency, err
+			}
+			fieldSchema = r.createSchemaRef(schemaName)
+			dependency = msg.FQMN()
+		}
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		enum, err := r.descriptorRegistry.LookupEnum(message.File.GetPackage(), field.GetTypeName())
+		if err != nil {
+			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
+		}
+		schemaName, err := r.schemaNameForFQN(enum.FQEN())
+		if err != nil {
+			return nil, dependency, err
+		}
+		fieldSchema = r.createSchemaRef(schemaName)
+		dependency = enum.FQEN()
+	default:
+		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
+		fieldSchema = &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{fieldType},
+				Format: format,
+			},
+		}
+	}
+
+	if repeated {
+		fieldSchema = &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeArray},
+				Items: &openapiv3.ItemSpec{
+					Schema: fieldSchema,
+				},
+			},
+		}
+	}
+
+	return fieldSchema, dependency, nil
+}
+
 func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
 	schema := &openapiv3.Schema{
 		Object: openapiv3.SchemaCore{
@@ -65,56 +143,13 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 	schema.Object.Properties = make(map[string]*openapiv3.Schema)
 
 	for _, field := range message.DescriptorProto.Field {
-		var fieldSchema *openapiv3.Schema
-
-		repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
-
-		switch field.GetType() {
-		case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-			// TODO: handle the group wire format.
-			//fieldSchema.Object = openapiv3.SchemaCore{
-			//  Type: openapiv3.TypeSet{openapiv3.TypeObject},
-			//}
-		case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-			msg, err := r.descriptorRegistry.LookupMessage(message.File.GetPackage(), field.GetTypeName())
-			if err != nil {
-				return openAPISchemaConfig{}, fmt.Errorf("failed to resolve message %q: %w", field.GetTypeName(), err)
-			}
-			schemaName, err := r.schemaNameForFQN(msg.FQMN())
-			if err != nil {
-				return openAPISchemaConfig{}, err
-			}
-			fieldSchema = r.createSchemaRef(schemaName)
-		case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-			enum, err := r.descriptorRegistry.LookupEnum(message.File.GetPackage(), field.GetTypeName())
-			if err != nil {
-				return openAPISchemaConfig{}, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
-			}
-			schemaName, err := r.schemaNameForFQN(enum.FQEN())
-			if err != nil {
-				return openAPISchemaConfig{}, err
-			}
-			fieldSchema = r.createSchemaRef(schemaName)
-			dependencies = append(dependencies, field.GetTypeName())
-		default:
-			fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
-			fieldSchema = &openapiv3.Schema{
-				Object: openapiv3.SchemaCore{
-					Type:   openapiv3.TypeSet{fieldType},
-					Format: format,
-				},
-			}
+		fieldSchema, dependency, err := r.renderFieldSchema(field, message)
+		if err != nil {
+			return openAPISchemaConfig{}, fmt.Errorf(
+				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
 		}
-
-		if repeated {
-			fieldSchema = &openapiv3.Schema{
-				Object: openapiv3.SchemaCore{
-					Type: openapiv3.TypeSet{openapiv3.TypeArray},
-					Items: &openapiv3.ItemSpec{
-						Schema: fieldSchema,
-					},
-				},
-			}
+		if dependency != "" {
+			dependencies = append(dependencies, dependency)
 		}
 
 		switch r.options.FieldNameMode {
@@ -129,13 +164,6 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 
 	return openAPISchemaConfig{Schema: schema, Dependencies: dependencies}, nil
 }
-
-//func (r *Registry) openAPISchemaForEnum(typeName string) (*openapiv3.SchemaCore, error) {
-//  return &openapiv3.SchemaCore{
-//    Title: typeName,
-//    Type:  openapiv3.TypeSet{openapiv3.TypeString},
-//  }
-//}
 
 func openAPITypeAndFormatForScalarTypes(t descriptorpb.FieldDescriptorProto_Type) (string, string) {
 	switch t {

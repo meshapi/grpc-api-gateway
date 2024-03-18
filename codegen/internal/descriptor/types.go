@@ -115,6 +115,14 @@ func (m *Message) GoType(currentPackage string) string {
 	return fmt.Sprintf("%s.%s", m.File.Pkg(), name)
 }
 
+func (m *Message) IsMapEntry() bool {
+	if opts := m.GetOptions(); opts != nil && opts.GetMapEntry() {
+		return true
+	}
+
+	return false
+}
+
 // Enum describes a protocol buffer enum types.
 type Enum struct {
 	*descriptorpb.EnumDescriptorProto
