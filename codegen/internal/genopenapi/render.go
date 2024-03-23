@@ -10,16 +10,29 @@ import (
 )
 
 func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
+
+	comments := r.commentRegistry.LookupEnum(enum)
+
 	if r.options.UseEnumNumbers {
 		values := make([]string, len(enum.Value))
 		for index, evdp := range enum.Value {
 			values[index] = strconv.FormatInt(int64(evdp.GetNumber()), 10)
 		}
+
+		schema := openapiv3.SchemaCore{
+			Type: openapiv3.TypeSet{openapiv3.TypeInteger},
+			Enum: values,
+		}
+
+		if comments != nil {
+			schema.Description = comments.GetLeadingComments()
+			for index, sci := range comments.Values {
+				schema.Description += "\n- " + values[index] + ": " + sci.GetLeadingComments()
+			}
+		}
+
 		return &openapiv3.Schema{
-			Object: openapiv3.SchemaCore{
-				Type: openapiv3.TypeSet{openapiv3.TypeInteger},
-				Enum: values,
-			},
+			Object: schema,
 		}, nil
 	}
 
@@ -27,11 +40,21 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 	for index, evdp := range enum.Value {
 		values[index] = evdp.GetName()
 	}
+
+	schema := openapiv3.SchemaCore{
+		Type: openapiv3.TypeSet{openapiv3.TypeString},
+		Enum: values,
+	}
+
+	if comments != nil {
+		schema.Description = comments.GetLeadingComments()
+		for index, sci := range comments.Values {
+			schema.Description += "\n- " + values[index] + ": " + sci.GetLeadingComments()
+		}
+	}
+
 	return &openapiv3.Schema{
-		Object: openapiv3.SchemaCore{
-			Type: openapiv3.TypeSet{openapiv3.TypeString},
-			Enum: values,
-		},
+		Object: schema,
 	}, nil
 }
 
@@ -142,7 +165,13 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 
 	schema.Object.Properties = make(map[string]*openapiv3.Schema)
 
-	for _, field := range message.DescriptorProto.Field {
+	// handle the title, description and summary here.
+	comment := r.commentRegistry.LookupMessage(message)
+	if comment != nil {
+		schema.Object.Description = comment.GetLeadingComments()
+	}
+
+	for index, field := range message.DescriptorProto.Field {
 		fieldSchema, dependency, err := r.renderFieldSchema(field, message)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf(
@@ -152,6 +181,10 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			dependencies = append(dependencies, dependency)
 		}
 
+		if comment != nil && comment.Fields != nil {
+			fieldSchema.Object.Description = comment.Fields[int32(index)].GetLeadingComments()
+		}
+
 		switch r.options.FieldNameMode {
 		case FieldNameModeJSON:
 			schema.Object.Properties[field.GetJsonName()] = fieldSchema
@@ -159,8 +192,6 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			schema.Object.Properties[field.GetName()] = fieldSchema
 		}
 	}
-
-	// handle the title, description and summary here.
 
 	return openAPISchemaConfig{Schema: schema, Dependencies: dependencies}, nil
 }

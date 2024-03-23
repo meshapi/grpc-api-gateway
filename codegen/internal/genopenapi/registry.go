@@ -19,6 +19,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 )
 
 // openAPIConfig is a wrapper around *api.OpenAPISpec with additional filename context.
@@ -50,6 +51,7 @@ type Registry struct {
 	// options that are shared with the generator.
 	options            *Options
 	descriptorRegistry *descriptor.Registry
+	commentRegistry    *protocomment.Registry
 
 	// RootDocument is the global and top-level document loaded from the global config.
 	RootDocument *openapiv3.Document
@@ -76,6 +78,7 @@ func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Reg
 	return &Registry{
 		options:            options,
 		descriptorRegistry: descriptorRegistry,
+		commentRegistry:    protocomment.NewRegistry(descriptorRegistry),
 		RootDocument:       nil,
 		documents:          map[*descriptor.File]*openapiv3.Document{},
 		messageNames:       map[string]string{},
