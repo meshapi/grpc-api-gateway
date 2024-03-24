@@ -55,6 +55,7 @@ type SchemaCore struct {
 	WriteOnly            bool               `json:"writeOnly,omitempty" yaml:"writeOnly,omitempty"`
 	Examples             []any              `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Format               string             `json:"format,omitempty" yaml:"format,omitempty"`
+	Deprecated           bool               `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 }
 
 type TypeSet []string

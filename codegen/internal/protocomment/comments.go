@@ -19,7 +19,6 @@ type Location = descriptorpb.SourceCodeInfo_Location
 
 // File is an indexed data structure for comments.
 type File struct {
-	// Messages holds all the indexed message types.
 	Messages map[int32]*Message
 	Enums    map[int32]*Enum
 }
@@ -239,35 +238,3 @@ func (r *Registry) LookupEnum(enum *descriptor.Enum) *Enum {
 
 	return file.Enums[int32(enum.Index)]
 }
-
-//func (r *Registry) LookupField(index int32, field *descriptor.Field) *Location {
-//  file := r.evaluateOrGetFile(field.Message.File)
-//  if file == nil {
-//    return nil
-//  }
-
-//  if len(field.Message.Outers) > 0 {
-//    cursor := r.resolveOuters(field.Message.File.GetPackage(), file, field.Message.Outers)
-//    if cursor == nil {
-//      return nil
-//    }
-
-//    result, ok := cursor.Fields[index]
-//    if !ok {
-//      return nil
-//    }
-
-//    return result
-//  }
-
-//  msg, ok := file.Messages[int32(field.Message.Index)]
-//  if !ok {
-//    return nil
-//  }
-
-//  if msg.Fields == nil {
-//    return nil
-//  }
-
-//  return msg.Fields[index]
-//}

@@ -277,6 +277,7 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 			ReadOnly:         schema.ReadyOnly,
 			WriteOnly:        schema.WriteOnly,
 			Format:           schema.Format,
+			Deprecated:       schema.Deprecated,
 		},
 	}
 

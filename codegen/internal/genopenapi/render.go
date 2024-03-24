@@ -1,17 +1,59 @@
 package genopenapi
 
 import (
+	"bufio"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
+// renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
+func (r *Registry) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
+	// get leading comments.
+	leadingComments := strings.NewReader(location.GetLeadingComments())
+	trailingComments := strings.NewReader(location.GetTrailingComments())
 
+	builder := &strings.Builder{}
+
+	reader := bufio.NewScanner(leadingComments)
+	for reader.Scan() {
+		builder.WriteString(strings.TrimSpace(reader.Text()))
+		builder.WriteByte('\n')
+	}
+
+	if trailingComments.Len() > 0 {
+		builder.WriteByte('\n')
+		reader = bufio.NewScanner(trailingComments)
+		for reader.Scan() {
+			builder.WriteString(strings.TrimSpace(reader.Text()))
+			builder.WriteByte('\n')
+		}
+	}
+
+	return builder.String()
+}
+
+func (r *Registry) renderEnumComment(enum *descriptor.Enum, values []string) (string, error) {
 	comments := r.commentRegistry.LookupEnum(enum)
+	if comments == nil {
+		return "", nil
+	}
+
+	result := r.renderComment(comments.Location) + "\n"
+	for index, value := range values {
+		result += "- " + value + ": " + r.renderComment(comments.Values[int32(index)])
+	}
+
+	// TODO: handle the template doc.
+
+	return result, nil
+}
+
+func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
 
 	if r.options.UseEnumNumbers {
 		values := make([]string, len(enum.Value))
@@ -19,20 +61,18 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			values[index] = strconv.FormatInt(int64(evdp.GetNumber()), 10)
 		}
 
-		schema := openapiv3.SchemaCore{
-			Type: openapiv3.TypeSet{openapiv3.TypeInteger},
-			Enum: values,
-		}
-
-		if comments != nil {
-			schema.Description = comments.GetLeadingComments()
-			for index, sci := range comments.Values {
-				schema.Description += "\n- " + values[index] + ": " + sci.GetLeadingComments()
-			}
+		description, err := r.renderEnumComment(enum, values)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process comments: %w", err)
 		}
 
 		return &openapiv3.Schema{
-			Object: schema,
+			Object: openapiv3.SchemaCore{
+				Type:        openapiv3.TypeSet{openapiv3.TypeInteger},
+				Enum:        values,
+				Title:       enum.GetName(),
+				Description: description,
+			},
 		}, nil
 	}
 
@@ -41,20 +81,18 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 		values[index] = evdp.GetName()
 	}
 
-	schema := openapiv3.SchemaCore{
-		Type: openapiv3.TypeSet{openapiv3.TypeString},
-		Enum: values,
-	}
-
-	if comments != nil {
-		schema.Description = comments.GetLeadingComments()
-		for index, sci := range comments.Values {
-			schema.Description += "\n- " + values[index] + ": " + sci.GetLeadingComments()
-		}
+	description, err := r.renderEnumComment(enum, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process comments: %w", err)
 	}
 
 	return &openapiv3.Schema{
-		Object: schema,
+		Object: openapiv3.SchemaCore{
+			Type:        openapiv3.TypeSet{openapiv3.TypeString},
+			Enum:        values,
+			Title:       enum.GetName(),
+			Description: description,
+		},
 	}, nil
 }
 
@@ -91,6 +129,10 @@ func (r *Registry) renderFieldSchema(
 		//  Type: openapiv3.TypeSet{openapiv3.TypeObject},
 		//}
 	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		if wellKnownSchema := wellKnownTypes(field.GetTypeName()); wellKnownSchema != nil {
+			fieldSchema = wellKnownSchema
+			break
+		}
 		msg, err := r.descriptorRegistry.LookupMessage(message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve message %q: %w", field.GetTypeName(), err)
@@ -150,6 +192,7 @@ func (r *Registry) renderFieldSchema(
 			},
 		}
 	}
+	fieldSchema.Object.Deprecated = field.Options.GetDeprecated()
 
 	return fieldSchema, dependency, nil
 }
@@ -157,7 +200,8 @@ func (r *Registry) renderFieldSchema(
 func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
 	schema := &openapiv3.Schema{
 		Object: openapiv3.SchemaCore{
-			Type: openapiv3.TypeSet{openapiv3.TypeObject},
+			Title: message.GetName(),
+			Type:  openapiv3.TypeSet{openapiv3.TypeObject},
 		},
 	}
 
@@ -168,7 +212,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 	// handle the title, description and summary here.
 	comment := r.commentRegistry.LookupMessage(message)
 	if comment != nil {
-		schema.Object.Description = comment.GetLeadingComments()
+		schema.Object.Description = r.renderComment(comment.Location)
 	}
 
 	for index, field := range message.DescriptorProto.Field {
@@ -177,12 +221,13 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			return openAPISchemaConfig{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
 		}
+
 		if dependency != "" {
 			dependencies = append(dependencies, dependency)
 		}
 
 		if comment != nil && comment.Fields != nil {
-			fieldSchema.Object.Description = comment.Fields[int32(index)].GetLeadingComments()
+			fieldSchema.Object.Description = r.renderComment(comment.Fields[int32(index)])
 		}
 
 		switch r.options.FieldNameMode {
@@ -225,4 +270,118 @@ func openAPITypeAndFormatForScalarTypes(t descriptorpb.FieldDescriptorProto_Type
 	}
 
 	return "", ""
+}
+
+func wellKnownTypes(fqmn string) *openapiv3.Schema {
+	switch fqmn {
+	case ".google.protobuf.FieldMask":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeString},
+			},
+		}
+	case ".google.protobuf.Timestamp":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeString},
+				Format: "date-time",
+			},
+		}
+	case ".google.protobuf.Duration":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeString},
+			},
+		}
+	case ".google.protobuf.StringValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeString},
+			},
+		}
+	case ".google.protobuf.BytesValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeString},
+				Format: "byte",
+			},
+		}
+	case ".google.protobuf.Int32Value":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeInteger},
+				Format: "int32",
+			},
+		}
+	case ".google.protobuf.UInt32Value":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeInteger},
+				Format: "uint32",
+			},
+		}
+	case ".google.protobuf.Int64Value":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeInteger},
+				Format: "int64",
+			},
+		}
+	case ".google.protobuf.UInt64Value":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeInteger},
+				Format: "uint64",
+			},
+		}
+	case ".google.protobuf.FloatValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeNumber},
+				Format: "float",
+			},
+		}
+	case ".google.protobuf.DoubleValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeNumber},
+				Format: "double",
+			},
+		}
+	case ".google.protobuf.BoolValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeBoolean},
+			},
+		}
+	case ".google.protobuf.Empty", ".google.protobuf.Struct":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeObject},
+			},
+		}
+	case ".google.protobuf.Value":
+		return &openapiv3.Schema{}
+	case ".google.protobuf.ListValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeArray},
+				Items: &openapiv3.ItemSpec{
+					Schema: &openapiv3.Schema{
+						Object: openapiv3.SchemaCore{
+							Type: openapiv3.TypeSet{openapiv3.TypeObject},
+						},
+					},
+				},
+			},
+		}
+	case ".google.protobuf.NullValue":
+		return &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type: openapiv3.TypeSet{openapiv3.TypeNull},
+			},
+		}
+	}
+
+	return nil
 }
