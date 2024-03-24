@@ -358,6 +358,8 @@ message Schema {
 	//
 	// See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8
   string format = 40;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.3
+	bool deprecated = 41;
 }
 
 // A simple object to allow referencing other components in the OpenAPI document, internally and externally.

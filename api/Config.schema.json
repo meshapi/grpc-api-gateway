@@ -1778,6 +1778,10 @@
                 "format": {
                     "type": "string",
                     "description": "Structural validation alone may be insufficient to validate that an instance meets all the requirements of an application. The \"format\" keyword is defined to allow interoperable semantic validation for a fixed subset of values which are accurately described by authoritative resources, be they RFCs or other external specifications. See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8"
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "description": "See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.3"
                 }
             },
             "additionalProperties": false,
