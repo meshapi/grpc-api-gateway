@@ -42,8 +42,20 @@ message OpenAPIMessageSpec {
 	map<string, gateway.openapi.Schema> fields = 3;
 }
 
-// OpenAPISpec is a configuration object to control the OpenAPI v3.1 generation.
-// It uses a similar structure to OpenAPI v3.1 spec but it has differences as well.
+message OpenAPIEnumSpec {
+	// selector is dot separated protobuf enum selector.
+	//
+	// selector string can be configured to be relative if it begins with a '.' character
+	// but this is only supported when using the proto generators and only if a package
+	// can be deduced.
+	//
+	// if the selector does not begin with a '.' character, it will be treated as a
+	// fully qualified message name (FQEN).
+	string selector = 1;
+	// schema controls the OpenAPI v3.1 schema generation for this proto message.
+	gateway.openapi.Schema schema = 2;
+}
+
 message OpenAPISpec {
 	// Document is the OpenAPI v3.1 document configuration which controls how the OpenAPI documentation is generated.
 	gateway.openapi.Document document = 1;
@@ -51,6 +63,8 @@ message OpenAPISpec {
 	repeated OpenAPIServiceSpec services = 2;
 	// Used to configure OpenAPI v3.1 output for proto messages.
 	repeated OpenAPIMessageSpec messages = 3;
+	// Used to configure OpenAPI v3.1 output for proto messages.
+	repeated OpenAPIEnumSpec enums = 4;
 }
 
 // Config is the content of a configuration file.

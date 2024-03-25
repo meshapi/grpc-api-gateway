@@ -32,6 +32,10 @@ extend google.protobuf.MessageOptions {
 	gateway.openapi.Schema openapi_schema = 1143;
 }
 
+extend google.protobuf.EnumOptions {
+	gateway.openapi.Schema openapi_enum = 1143;
+}
+
 extend google.protobuf.FieldOptions {
 	gateway.openapi.Schema openapi_field = 1143;
 }

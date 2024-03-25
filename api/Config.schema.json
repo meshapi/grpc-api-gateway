@@ -233,6 +233,22 @@
             "title": "Gateway Spec",
             "description": "GatewaySpec holds gRPC gateway configurations."
         },
+        "meshapi.gateway.OpenAPIEnumSpec": {
+            "properties": {
+                "selector": {
+                    "type": "string",
+                    "description": "selector is dot separated protobuf enum selector. selector string can be configured to be relative if it begins with a '.' character but this is only supported when using the proto generators and only if a package can be deduced. if the selector does not begin with a '.' character, it will be treated as a fully qualified message name (FQEN)."
+                },
+                "schema": {
+                    "$ref": "#/definitions/meshapi.gateway.openapi.Schema",
+                    "additionalProperties": false,
+                    "description": "schema controls the OpenAPI v3.1 schema generation for this proto message."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Open API Enum Spec"
+        },
         "meshapi.gateway.OpenAPIMessageSpec": {
             "properties": {
                 "selector": {
@@ -303,12 +319,19 @@
                     "additionalProperties": false,
                     "type": "array",
                     "description": "Used to configure OpenAPI v3.1 output for proto messages."
+                },
+                "enums": {
+                    "items": {
+                        "$ref": "#/definitions/meshapi.gateway.OpenAPIEnumSpec"
+                    },
+                    "additionalProperties": false,
+                    "type": "array",
+                    "description": "Used to configure OpenAPI v3.1 output for proto messages."
                 }
             },
             "additionalProperties": false,
             "type": "object",
-            "title": "Open API Spec",
-            "description": "OpenAPISpec is a configuration object to control the OpenAPI v3.1 generation. It uses a similar structure to OpenAPI v3.1 spec but it has differences as well."
+            "title": "Open API Spec"
         },
         "meshapi.gateway.QueryParameterBinding": {
             "properties": {

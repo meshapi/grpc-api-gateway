@@ -169,8 +169,70 @@ func (x *OpenAPIMessageSpec) GetFields() map[string]*openapi.Schema {
 	return nil
 }
 
-// OpenAPISpec is a configuration object to control the OpenAPI v3.1 generation.
-// It uses a similar structure to OpenAPI v3.1 spec but it has differences as well.
+type OpenAPIEnumSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// selector is dot separated protobuf enum selector.
+	//
+	// selector string can be configured to be relative if it begins with a '.' character
+	// but this is only supported when using the proto generators and only if a package
+	// can be deduced.
+	//
+	// if the selector does not begin with a '.' character, it will be treated as a
+	// fully qualified message name (FQEN).
+	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
+	// schema controls the OpenAPI v3.1 schema generation for this proto message.
+	Schema *openapi.Schema `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
+}
+
+func (x *OpenAPIEnumSpec) Reset() {
+	*x = OpenAPIEnumSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_meshapi_gateway_config_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OpenAPIEnumSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OpenAPIEnumSpec) ProtoMessage() {}
+
+func (x *OpenAPIEnumSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_meshapi_gateway_config_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OpenAPIEnumSpec.ProtoReflect.Descriptor instead.
+func (*OpenAPIEnumSpec) Descriptor() ([]byte, []int) {
+	return file_meshapi_gateway_config_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OpenAPIEnumSpec) GetSelector() string {
+	if x != nil {
+		return x.Selector
+	}
+	return ""
+}
+
+func (x *OpenAPIEnumSpec) GetSchema() *openapi.Schema {
+	if x != nil {
+		return x.Schema
+	}
+	return nil
+}
+
 type OpenAPISpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -182,12 +244,14 @@ type OpenAPISpec struct {
 	Services []*OpenAPIServiceSpec `protobuf:"bytes,2,rep,name=services,proto3" json:"services,omitempty"`
 	// Used to configure OpenAPI v3.1 output for proto messages.
 	Messages []*OpenAPIMessageSpec `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
+	// Used to configure OpenAPI v3.1 output for proto messages.
+	Enums []*OpenAPIEnumSpec `protobuf:"bytes,4,rep,name=enums,proto3" json:"enums,omitempty"`
 }
 
 func (x *OpenAPISpec) Reset() {
 	*x = OpenAPISpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_config_proto_msgTypes[2]
+		mi := &file_meshapi_gateway_config_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -200,7 +264,7 @@ func (x *OpenAPISpec) String() string {
 func (*OpenAPISpec) ProtoMessage() {}
 
 func (x *OpenAPISpec) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_config_proto_msgTypes[2]
+	mi := &file_meshapi_gateway_config_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -213,7 +277,7 @@ func (x *OpenAPISpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OpenAPISpec.ProtoReflect.Descriptor instead.
 func (*OpenAPISpec) Descriptor() ([]byte, []int) {
-	return file_meshapi_gateway_config_proto_rawDescGZIP(), []int{2}
+	return file_meshapi_gateway_config_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *OpenAPISpec) GetDocument() *openapi.Document {
@@ -237,6 +301,13 @@ func (x *OpenAPISpec) GetMessages() []*OpenAPIMessageSpec {
 	return nil
 }
 
+func (x *OpenAPISpec) GetEnums() []*OpenAPIEnumSpec {
+	if x != nil {
+		return x.Enums
+	}
+	return nil
+}
+
 // Config is the content of a configuration file.
 type Config struct {
 	state         protoimpl.MessageState
@@ -252,7 +323,7 @@ type Config struct {
 func (x *Config) Reset() {
 	*x = Config{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_config_proto_msgTypes[3]
+		mi := &file_meshapi_gateway_config_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -265,7 +336,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_config_proto_msgTypes[3]
+	mi := &file_meshapi_gateway_config_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -278,7 +349,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_meshapi_gateway_config_proto_rawDescGZIP(), []int{3}
+	return file_meshapi_gateway_config_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Config) GetGateway() *GatewaySpec {
@@ -340,20 +411,30 @@ var file_meshapi_gateway_config_proto_rawDesc = []byte{
 	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61,
 	0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61,
 	0x70, 0x69, 0x2e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x3a, 0x02, 0x38, 0x01, 0x22, 0xce, 0x01, 0x0a, 0x0b, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49,
-	0x53, 0x70, 0x65, 0x63, 0x12, 0x3d, 0x0a, 0x08, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69,
-	0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69,
-	0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x08, 0x64, 0x6f, 0x63, 0x75, 0x6d,
-	0x65, 0x6e, 0x74, 0x12, 0x3f, 0x0a, 0x08, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x18,
-	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e,
-	0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x53,
-	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x70, 0x65, 0x63, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76,
-	0x69, 0x63, 0x65, 0x73, 0x12, 0x3f, 0x0a, 0x08, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73,
-	0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69,
-	0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49,
-	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x53, 0x70, 0x65, 0x63, 0x52, 0x08, 0x6d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x73, 0x22, 0x78, 0x0a, 0x06, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12,
+	0x3a, 0x02, 0x38, 0x01, 0x22, 0x66, 0x0a, 0x0f, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x45,
+	0x6e, 0x75, 0x6d, 0x53, 0x70, 0x65, 0x63, 0x12, 0x1a, 0x0a, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63,
+	0x74, 0x6f, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x73, 0x65, 0x6c, 0x65, 0x63,
+	0x74, 0x6f, 0x72, 0x12, 0x37, 0x0a, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61,
+	0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x63,
+	0x68, 0x65, 0x6d, 0x61, 0x52, 0x06, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x22, 0x86, 0x02, 0x0a,
+	0x0b, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x53, 0x70, 0x65, 0x63, 0x12, 0x3d, 0x0a, 0x08,
+	0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21,
+	0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e,
+	0x74, 0x52, 0x08, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x3f, 0x0a, 0x08, 0x73,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23, 0x2e,
+	0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e,
+	0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x70,
+	0x65, 0x63, 0x52, 0x08, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x12, 0x3f, 0x0a, 0x08,
+	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x23,
+	0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
+	0x2e, 0x4f, 0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x53,
+	0x70, 0x65, 0x63, 0x52, 0x08, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x12, 0x36, 0x0a,
+	0x05, 0x65, 0x6e, 0x75, 0x6d, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x6d,
+	0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x4f,
+	0x70, 0x65, 0x6e, 0x41, 0x50, 0x49, 0x45, 0x6e, 0x75, 0x6d, 0x53, 0x70, 0x65, 0x63, 0x52, 0x05,
+	0x65, 0x6e, 0x75, 0x6d, 0x73, 0x22, 0x78, 0x0a, 0x06, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12,
 	0x36, 0x0a, 0x07, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77,
 	0x61, 0x79, 0x2e, 0x47, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x53, 0x70, 0x65, 0x63, 0x52, 0x07,
@@ -379,36 +460,39 @@ func file_meshapi_gateway_config_proto_rawDescGZIP() []byte {
 	return file_meshapi_gateway_config_proto_rawDescData
 }
 
-var file_meshapi_gateway_config_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_meshapi_gateway_config_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_meshapi_gateway_config_proto_goTypes = []interface{}{
 	(*OpenAPIServiceSpec)(nil), // 0: meshapi.gateway.OpenAPIServiceSpec
 	(*OpenAPIMessageSpec)(nil), // 1: meshapi.gateway.OpenAPIMessageSpec
-	(*OpenAPISpec)(nil),        // 2: meshapi.gateway.OpenAPISpec
-	(*Config)(nil),             // 3: meshapi.gateway.Config
-	nil,                        // 4: meshapi.gateway.OpenAPIServiceSpec.MethodsEntry
-	nil,                        // 5: meshapi.gateway.OpenAPIMessageSpec.FieldsEntry
-	(*openapi.Document)(nil),   // 6: meshapi.gateway.openapi.Document
-	(*openapi.Schema)(nil),     // 7: meshapi.gateway.openapi.Schema
-	(*GatewaySpec)(nil),        // 8: meshapi.gateway.GatewaySpec
-	(*openapi.Operation)(nil),  // 9: meshapi.gateway.openapi.Operation
+	(*OpenAPIEnumSpec)(nil),    // 2: meshapi.gateway.OpenAPIEnumSpec
+	(*OpenAPISpec)(nil),        // 3: meshapi.gateway.OpenAPISpec
+	(*Config)(nil),             // 4: meshapi.gateway.Config
+	nil,                        // 5: meshapi.gateway.OpenAPIServiceSpec.MethodsEntry
+	nil,                        // 6: meshapi.gateway.OpenAPIMessageSpec.FieldsEntry
+	(*openapi.Document)(nil),   // 7: meshapi.gateway.openapi.Document
+	(*openapi.Schema)(nil),     // 8: meshapi.gateway.openapi.Schema
+	(*GatewaySpec)(nil),        // 9: meshapi.gateway.GatewaySpec
+	(*openapi.Operation)(nil),  // 10: meshapi.gateway.openapi.Operation
 }
 var file_meshapi_gateway_config_proto_depIdxs = []int32{
-	6,  // 0: meshapi.gateway.OpenAPIServiceSpec.document:type_name -> meshapi.gateway.openapi.Document
-	4,  // 1: meshapi.gateway.OpenAPIServiceSpec.methods:type_name -> meshapi.gateway.OpenAPIServiceSpec.MethodsEntry
-	7,  // 2: meshapi.gateway.OpenAPIMessageSpec.schema:type_name -> meshapi.gateway.openapi.Schema
-	5,  // 3: meshapi.gateway.OpenAPIMessageSpec.fields:type_name -> meshapi.gateway.OpenAPIMessageSpec.FieldsEntry
-	6,  // 4: meshapi.gateway.OpenAPISpec.document:type_name -> meshapi.gateway.openapi.Document
-	0,  // 5: meshapi.gateway.OpenAPISpec.services:type_name -> meshapi.gateway.OpenAPIServiceSpec
-	1,  // 6: meshapi.gateway.OpenAPISpec.messages:type_name -> meshapi.gateway.OpenAPIMessageSpec
-	8,  // 7: meshapi.gateway.Config.gateway:type_name -> meshapi.gateway.GatewaySpec
-	2,  // 8: meshapi.gateway.Config.openapi:type_name -> meshapi.gateway.OpenAPISpec
-	9,  // 9: meshapi.gateway.OpenAPIServiceSpec.MethodsEntry.value:type_name -> meshapi.gateway.openapi.Operation
-	7,  // 10: meshapi.gateway.OpenAPIMessageSpec.FieldsEntry.value:type_name -> meshapi.gateway.openapi.Schema
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	7,  // 0: meshapi.gateway.OpenAPIServiceSpec.document:type_name -> meshapi.gateway.openapi.Document
+	5,  // 1: meshapi.gateway.OpenAPIServiceSpec.methods:type_name -> meshapi.gateway.OpenAPIServiceSpec.MethodsEntry
+	8,  // 2: meshapi.gateway.OpenAPIMessageSpec.schema:type_name -> meshapi.gateway.openapi.Schema
+	6,  // 3: meshapi.gateway.OpenAPIMessageSpec.fields:type_name -> meshapi.gateway.OpenAPIMessageSpec.FieldsEntry
+	8,  // 4: meshapi.gateway.OpenAPIEnumSpec.schema:type_name -> meshapi.gateway.openapi.Schema
+	7,  // 5: meshapi.gateway.OpenAPISpec.document:type_name -> meshapi.gateway.openapi.Document
+	0,  // 6: meshapi.gateway.OpenAPISpec.services:type_name -> meshapi.gateway.OpenAPIServiceSpec
+	1,  // 7: meshapi.gateway.OpenAPISpec.messages:type_name -> meshapi.gateway.OpenAPIMessageSpec
+	2,  // 8: meshapi.gateway.OpenAPISpec.enums:type_name -> meshapi.gateway.OpenAPIEnumSpec
+	9,  // 9: meshapi.gateway.Config.gateway:type_name -> meshapi.gateway.GatewaySpec
+	3,  // 10: meshapi.gateway.Config.openapi:type_name -> meshapi.gateway.OpenAPISpec
+	10, // 11: meshapi.gateway.OpenAPIServiceSpec.MethodsEntry.value:type_name -> meshapi.gateway.openapi.Operation
+	8,  // 12: meshapi.gateway.OpenAPIMessageSpec.FieldsEntry.value:type_name -> meshapi.gateway.openapi.Schema
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_meshapi_gateway_config_proto_init() }
@@ -443,7 +527,7 @@ func file_meshapi_gateway_config_proto_init() {
 			}
 		}
 		file_meshapi_gateway_config_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OpenAPISpec); i {
+			switch v := v.(*OpenAPIEnumSpec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -455,6 +539,18 @@ func file_meshapi_gateway_config_proto_init() {
 			}
 		}
 		file_meshapi_gateway_config_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OpenAPISpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_meshapi_gateway_config_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Config); i {
 			case 0:
 				return &v.state
@@ -473,7 +569,7 @@ func file_meshapi_gateway_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_meshapi_gateway_config_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

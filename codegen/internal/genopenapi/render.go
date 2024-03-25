@@ -58,6 +58,11 @@ func (r *Registry) renderEnumComment(enum *descriptor.Enum, values []string) (st
 }
 
 func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
+	enumConfig := r.enums[enum.FQEN()]
+	schema, err := r.getCustomizedEnumSchema(enum, enumConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	if r.options.UseEnumNumbers {
 		values := make([]string, len(enum.Value))
@@ -70,14 +75,24 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			return nil, fmt.Errorf("failed to process comments: %w", err)
 		}
 
-		return &openapiv3.Schema{
+		generatedSchema := &openapiv3.Schema{
 			Object: openapiv3.SchemaCore{
 				Type:        openapiv3.TypeSet{openapiv3.TypeInteger},
 				Enum:        values,
 				Title:       enum.GetName(),
 				Description: description,
 			},
-		}, nil
+		}
+
+		if schema != nil {
+			if err := mergo.Merge(schema, generatedSchema); err != nil {
+				return nil, fmt.Errorf("failed to merge: %w", err)
+			}
+
+			return schema, nil
+		}
+
+		return generatedSchema, nil
 	}
 
 	values := make([]string, len(enum.Value))
@@ -90,14 +105,24 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 		return nil, fmt.Errorf("failed to process comments: %w", err)
 	}
 
-	return &openapiv3.Schema{
+	generatedSchema := &openapiv3.Schema{
 		Object: openapiv3.SchemaCore{
 			Type:        openapiv3.TypeSet{openapiv3.TypeString},
 			Enum:        values,
 			Title:       enum.GetName(),
 			Description: description,
 		},
-	}, nil
+	}
+
+	if schema != nil {
+		if err := mergo.Merge(schema, generatedSchema); err != nil {
+			return nil, fmt.Errorf("failed to merge: %w", err)
+		}
+
+		return schema, nil
+	}
+
+	return generatedSchema, nil
 }
 
 func (r *Registry) createSchemaRef(name string) *openapiv3.Schema {
@@ -261,6 +286,38 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 		schemaFromProto, err := mapSchema(protoSchema)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map message schema from %q: %w", message.File.GetName(), err)
+		}
+
+		if schema == nil {
+			schema = schemaFromProto
+		} else {
+			if err := mergo.Merge(schema, schemaFromProto); err != nil {
+				return nil, fmt.Errorf("failed to merge: %w", err)
+			}
+		}
+	}
+
+	return schema, nil
+}
+
+// getCustomizedEnumSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
+// schema for a proto message.
+func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAPIEnumConfig) (*openapiv3.Schema, error) {
+	var schema *openapiv3.Schema
+
+	if config != nil {
+		schemaFromConfig, err := mapSchema(config.Schema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map enum schema from %q: %w", config.Filename, err)
+		}
+
+		schema = schemaFromConfig
+	}
+
+	if protoSchema, ok := proto.GetExtension(enum.Options, api.E_OpenapiEnum).(*openapi.Schema); ok && protoSchema != nil {
+		schemaFromProto, err := mapSchema(protoSchema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map enum schema from %q: %w", enum.File.GetName(), err)
 		}
 
 		if schema == nil {
