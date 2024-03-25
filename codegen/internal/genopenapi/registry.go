@@ -61,17 +61,9 @@ type Registry struct {
 	// messageNames holds a one to one association of message FQMN to the generated OpenAPI schema name.
 	messageNames map[string]string
 	// recognizedMessages holds a reference to the proto message and any matched configuration for it.
-	messages map[string]openAPIMessageConfig
+	messages map[string]*openAPIMessageConfig
 	// schemas are already processed schemas that can be readily used.
 	schemas map[string]openAPISchemaConfig
-
-	// schemas map[string]string
-	// we need to populate these schemas on a need basis.
-	// any time a look up is made, we find the proto definitions, load up the gateway file and build a
-	// ready to use and final OpenAPI schema, this schema can later be used to inject into the OpenAPI document files.
-	// another matter is that we need to already find out the name that needs to get used for this object ahead of time.
-	// regardless of whether or not it gets used or not. This is to ensure two different OpenAPI files generated do not
-	// use different names for the same object.
 }
 
 func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Registry {
@@ -82,7 +74,7 @@ func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Reg
 		RootDocument:       nil,
 		documents:          map[*descriptor.File]*openapiv3.Document{},
 		messageNames:       map[string]string{},
-		messages:           map[string]openAPIMessageConfig{},
+		messages:           map[string]*openAPIMessageConfig{},
 		schemas:            map[string]openAPISchemaConfig{},
 	}
 }
@@ -169,7 +161,6 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 }
 
 func (r *Registry) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src sourceInfo) error {
-
 	for _, messageConfig := range configs {
 		// Resolve the selector to an absolute path.
 		if strings.HasPrefix(messageConfig.Selector, ".") {
@@ -195,7 +186,7 @@ func (r *Registry) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src sour
 				messageConfig.Selector, existingConfig.Filename, src.Filename)
 		}
 
-		r.messages[messageConfig.Selector] = openAPIMessageConfig{
+		r.messages[messageConfig.Selector] = &openAPIMessageConfig{
 			OpenAPIMessageSpec: messageConfig,
 			sourceInfo:         src,
 		}

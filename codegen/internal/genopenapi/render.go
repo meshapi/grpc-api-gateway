@@ -6,8 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	"dario.cat/mergo"
+	"github.com/meshapi/grpc-rest-gateway/api"
+	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -114,9 +118,11 @@ func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
 	return result, nil
 }
 
-// renderFieldSchema returns
+// renderFieldSchema returns OpenAPI schema for a message field.
 func (r *Registry) renderFieldSchema(
-	field *descriptorpb.FieldDescriptorProto, message *descriptor.Message) (*openapiv3.Schema, string, error) {
+	field *descriptorpb.FieldDescriptorProto,
+	message *descriptor.Message,
+	baseConfig *openapiv3.Schema) (*openapiv3.Schema, string, error) {
 
 	var fieldSchema *openapiv3.Schema
 	dependency := ""
@@ -146,7 +152,7 @@ func (r *Registry) renderFieldSchema(
 					},
 				},
 			}
-			valueSchema, valueDependency, err := r.renderFieldSchema(msg.GetField()[1], msg)
+			valueSchema, valueDependency, err := r.renderFieldSchema(msg.GetField()[1], msg, nil)
 			if err != nil {
 				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
 			}
@@ -194,15 +200,103 @@ func (r *Registry) renderFieldSchema(
 	}
 	fieldSchema.Object.Deprecated = field.Options.GetDeprecated()
 
+	if baseConfig != nil {
+		if err := mergo.Merge(baseConfig, fieldSchema); err != nil {
+			return nil, "", fmt.Errorf("failed to merge: %w", err)
+		}
+
+		return baseConfig, dependency, nil
+	}
+
 	return fieldSchema, dependency, nil
 }
 
+func (r *Registry) getCustomizedFieldSchema(field *descriptor.Field, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
+	var schema *openapiv3.Schema
+
+	if config != nil && config.Fields != nil {
+		if fieldSchema := config.Fields[field.GetName()]; fieldSchema != nil {
+			schemaFromConfig, err := mapSchema(fieldSchema)
+			if err != nil {
+				return nil, fmt.Errorf("failed to map field schema from %q: %w", config.Filename, err)
+			}
+
+			schema = schemaFromConfig
+		}
+	}
+
+	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
+		schemaFromProto, err := mapSchema(protoSchema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
+		}
+
+		if schema == nil {
+			schema = schemaFromProto
+		} else {
+			if err := mergo.Merge(schema, schemaFromProto); err != nil {
+				return nil, fmt.Errorf("failed to merge: %w", err)
+			}
+		}
+	}
+
+	return schema, nil
+}
+
+// getCustomizedMessageSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
+// schema for a proto message.
+func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
+	var schema *openapiv3.Schema
+
+	if config != nil {
+		schemaFromConfig, err := mapSchema(config.Schema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map message schema from %q: %w", config.Filename, err)
+		}
+
+		schema = schemaFromConfig
+	}
+
+	if protoSchema, ok := proto.GetExtension(message.Options, api.E_OpenapiSchema).(*openapi.Schema); ok && protoSchema != nil {
+		schemaFromProto, err := mapSchema(protoSchema)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map message schema from %q: %w", message.File.GetName(), err)
+		}
+
+		if schema == nil {
+			schema = schemaFromProto
+		} else {
+			if err := mergo.Merge(schema, schemaFromProto); err != nil {
+				return nil, fmt.Errorf("failed to merge: %w", err)
+			}
+		}
+	}
+
+	return schema, nil
+}
+
 func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
-	schema := &openapiv3.Schema{
-		Object: openapiv3.SchemaCore{
-			Title: message.GetName(),
-			Type:  openapiv3.TypeSet{openapiv3.TypeObject},
-		},
+	messageConfig := r.messages[message.FQMN()]
+	schema, err := r.getCustomizedMessageSchema(message, messageConfig)
+	if err != nil {
+		return openAPISchemaConfig{}, err
+	}
+
+	if schema == nil {
+		schema = &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Title: message.GetName(),
+				Type:  openapiv3.TypeSet{openapiv3.TypeObject},
+			},
+		}
+	} else {
+		if schema.Object.Title == "" {
+			schema.Object.Title = message.GetName()
+		}
+
+		if schema.Object.Type == nil {
+			schema.Object.Type = openapiv3.TypeSet{openapiv3.TypeObject}
+		}
 	}
 
 	var dependencies []string
@@ -215,8 +309,13 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 		schema.Object.Description = r.renderComment(comment.Location)
 	}
 
-	for index, field := range message.DescriptorProto.Field {
-		fieldSchema, dependency, err := r.renderFieldSchema(field, message)
+	for index, field := range message.Fields {
+		customFieldSchema, err := r.getCustomizedFieldSchema(field, messageConfig)
+		if err != nil {
+			return openAPISchemaConfig{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
+		}
+
+		fieldSchema, dependency, err := r.renderFieldSchema(field.FieldDescriptorProto, message, customFieldSchema)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
@@ -226,7 +325,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			dependencies = append(dependencies, dependency)
 		}
 
-		if comment != nil && comment.Fields != nil {
+		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
 			fieldSchema.Object.Description = r.renderComment(comment.Fields[int32(index)])
 		}
 
