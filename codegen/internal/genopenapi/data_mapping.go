@@ -473,7 +473,7 @@ func mapAnySlice(items []*structpb.Value) []any {
 		result[index] = item.AsInterface()
 	}
 
-	return nil
+	return result
 }
 
 func makeReference[T any](ref *openapi.Reference) *openapiv3.Ref[T] {

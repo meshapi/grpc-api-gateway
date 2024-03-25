@@ -118,5 +118,6 @@ func DefaultOptions() Options {
 		OmitEnumDefaultValue:           false,
 		VisibilitySelectors:            nil,
 		PreserveProtoOrder:             false,
+		MergeWithOverwrite:             true,
 	}
 }

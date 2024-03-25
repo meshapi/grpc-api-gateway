@@ -15,6 +15,20 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+func (r *Registry) mergeObjects(base, source any) error {
+	if r.options.MergeWithOverwrite {
+		if err := mergo.Merge(base, source); err != nil {
+			return fmt.Errorf("failed to merge: %w", err)
+		}
+	}
+
+	if err := mergo.Merge(base, source, mergo.WithAppendSlice); err != nil {
+		return fmt.Errorf("failed to merge: %w", err)
+	}
+
+	return nil
+}
+
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
 func (r *Registry) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
 	// get leading comments.
@@ -85,8 +99,8 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 		}
 
 		if schema != nil {
-			if err := mergo.Merge(schema, generatedSchema); err != nil {
-				return nil, fmt.Errorf("failed to merge: %w", err)
+			if err := r.mergeObjects(schema, generatedSchema); err != nil {
+				return nil, err
 			}
 
 			return schema, nil
@@ -115,8 +129,8 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 	}
 
 	if schema != nil {
-		if err := mergo.Merge(schema, generatedSchema); err != nil {
-			return nil, fmt.Errorf("failed to merge: %w", err)
+		if err := r.mergeObjects(schema, generatedSchema); err != nil {
+			return nil, err
 		}
 
 		return schema, nil
@@ -226,8 +240,8 @@ func (r *Registry) renderFieldSchema(
 	fieldSchema.Object.Deprecated = field.Options.GetDeprecated()
 
 	if baseConfig != nil {
-		if err := mergo.Merge(baseConfig, fieldSchema); err != nil {
-			return nil, "", fmt.Errorf("failed to merge: %w", err)
+		if err := r.mergeObjects(baseConfig, fieldSchema); err != nil {
+			return nil, "", err
 		}
 
 		return baseConfig, dependency, nil
@@ -259,8 +273,8 @@ func (r *Registry) getCustomizedFieldSchema(field *descriptor.Field, config *ope
 		if schema == nil {
 			schema = schemaFromProto
 		} else {
-			if err := mergo.Merge(schema, schemaFromProto); err != nil {
-				return nil, fmt.Errorf("failed to merge: %w", err)
+			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -291,8 +305,8 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 		if schema == nil {
 			schema = schemaFromProto
 		} else {
-			if err := mergo.Merge(schema, schemaFromProto); err != nil {
-				return nil, fmt.Errorf("failed to merge: %w", err)
+			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -323,8 +337,8 @@ func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAP
 		if schema == nil {
 			schema = schemaFromProto
 		} else {
-			if err := mergo.Merge(schema, schemaFromProto); err != nil {
-				return nil, fmt.Errorf("failed to merge: %w", err)
+			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
+				return nil, err
 			}
 		}
 	}
