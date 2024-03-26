@@ -22,6 +22,13 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 )
 
+type dependencyKind uint8
+
+const (
+	dependencyKindEnum dependencyKind = iota
+	dependencyKindMessage
+)
+
 // openAPIConfig is a wrapper around *api.OpenAPISpec with additional filename context.
 type openAPIConfig struct {
 	*api.OpenAPISpec
@@ -43,12 +50,21 @@ type openAPIEnumConfig struct {
 	sourceInfo
 }
 
+type schemaDependency struct {
+	FQN  string
+	Kind dependencyKind
+}
+
+func (s schemaDependency) IsSet() bool {
+	return s.FQN != ""
+}
+
 type openAPISchemaConfig struct {
 	// Schema is the already mapped and processed OpenAPI schema for a proto message/enum.
 	Schema *openapiv3.Schema
 	// Dependencies is the list of enum or proto message dependencies that must be included in the same
 	// OpenAPI document.
-	Dependencies []string
+	Dependencies []schemaDependency
 }
 
 // Registry contains references to all configuration files.
@@ -74,7 +90,7 @@ type Registry struct {
 }
 
 func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Registry {
-	return &Registry{
+	r := &Registry{
 		options:            options,
 		descriptorRegistry: descriptorRegistry,
 		commentRegistry:    protocomment.NewRegistry(descriptorRegistry),
@@ -85,6 +101,26 @@ func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Reg
 		enums:              map[string]*openAPIEnumConfig{},
 		schemas:            map[string]openAPISchemaConfig{},
 	}
+
+	// register well-known schemas that need to be saved in the components if they are needed.
+	r.schemas[".google.protobuf.Any"] = openAPISchemaConfig{
+		Schema: &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:        openapiv3.TypeSet{openapiv3.TypeObject},
+				Description: "Any contains an arbitrary schema along with a URL to help identify the type of the schema.",
+				Properties: map[string]*openapiv3.Schema{
+					"@type": {
+						Object: openapiv3.SchemaCore{
+							Type:        openapiv3.TypeSet{openapiv3.TypeString},
+							Description: "A URL/resource name that uniquely identifies the type of the schema.",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return r
 }
 
 func (r *Registry) LoadFromDescriptorRegistry() error {

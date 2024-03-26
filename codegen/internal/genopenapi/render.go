@@ -21,9 +21,7 @@ func (r *Registry) mergeObjects(base, source any) error {
 		if err := mergo.Merge(base, source); err != nil {
 			return fmt.Errorf("failed to merge: %w", err)
 		}
-	}
-
-	if err := mergo.Merge(base, source, mergo.WithAppendSlice); err != nil {
+	} else if err := mergo.Merge(base, source, mergo.WithAppendSlice); err != nil {
 		return fmt.Errorf("failed to merge: %w", err)
 	}
 
@@ -162,10 +160,10 @@ func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
 func (r *Registry) renderFieldSchema(
 	field *descriptorpb.FieldDescriptorProto,
 	message *descriptor.Message,
-	baseConfig *openapiv3.Schema) (*openapiv3.Schema, string, error) {
+	baseConfig *openapiv3.Schema) (*openapiv3.Schema, schemaDependency, error) {
 
 	var fieldSchema *openapiv3.Schema
-	dependency := ""
+	dependency := schemaDependency{}
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 
 	switch field.GetType() {
@@ -205,7 +203,8 @@ func (r *Registry) renderFieldSchema(
 				return nil, dependency, err
 			}
 			fieldSchema = r.createSchemaRef(schemaName)
-			dependency = msg.FQMN()
+			dependency.FQN = msg.FQMN()
+			dependency.Kind = dependencyKindMessage
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		enum, err := r.descriptorRegistry.LookupEnum(message.File.GetPackage(), field.GetTypeName())
@@ -217,7 +216,8 @@ func (r *Registry) renderFieldSchema(
 			return nil, dependency, err
 		}
 		fieldSchema = r.createSchemaRef(schemaName)
-		dependency = enum.FQEN()
+		dependency.FQN = enum.FQEN()
+		dependency.Kind = dependencyKindEnum
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		fieldSchema = &openapiv3.Schema{
@@ -242,7 +242,7 @@ func (r *Registry) renderFieldSchema(
 
 	if baseConfig != nil {
 		if err := r.mergeObjects(baseConfig, fieldSchema); err != nil {
-			return nil, "", err
+			return nil, dependency, err
 		}
 
 		return baseConfig, dependency, nil
@@ -396,7 +396,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 		}
 	}
 
-	var dependencies []string
+	var dependencies []schemaDependency
 
 	schema.Object.Properties = make(map[string]*openapiv3.Schema)
 
@@ -418,7 +418,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
 		}
 
-		if dependency != "" {
+		if dependency.IsSet() {
 			dependencies = append(dependencies, dependency)
 		}
 

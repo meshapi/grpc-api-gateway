@@ -12,10 +12,92 @@ import (
 )
 
 type Session struct {
-	Document *openapiv3.Extensible[openapiv3.DocumentCore]
+	Document *openapiv3.Document
+
+	generator       *Generator
+	includedSchemas map[string]struct{}
 }
 
-func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Extensible[openapiv3.DocumentCore]) (*descriptor.ResponseFile, error) {
+func (g *Generator) newSession(doc *openapiv3.Document) *Session {
+	return &Session{
+		Document:        doc,
+		generator:       g,
+		includedSchemas: make(map[string]struct{}),
+	}
+}
+
+func (s *Session) includeMessage(location, fqmn string) error {
+	// TODO: we may need to do less object nesting here.
+
+	// TODO: we may need to build the full FQMN here.
+	// if schema is already added, skip processing it.
+	if _, ok := s.includedSchemas[fqmn]; ok {
+		return nil
+	}
+
+	schema, err := s.generator.openapiRegistry.getSchemaForMessage(location, fqmn)
+	if err != nil {
+		return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
+	}
+
+	if s.Document.Object.Components.Object.Schemas == nil {
+		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+	}
+
+	name, ok := s.generator.openapiRegistry.messageNames[fqmn]
+	if !ok {
+		return fmt.Errorf("unrecognized message: %s", fqmn)
+	}
+
+	s.includedSchemas[fqmn] = struct{}{}
+	s.Document.Object.Components.Object.Schemas[name] = schema.Schema
+
+	for _, dependency := range schema.Dependencies {
+		switch dependency.Kind {
+		case dependencyKindMessage:
+			if err := s.includeMessage(location, dependency.FQN); err != nil {
+				return fmt.Errorf("failed to include message dependency %q: %w", dependency.FQN, err)
+			}
+		case dependencyKindEnum:
+			if err := s.includeEnum(location, dependency.FQN); err != nil {
+				return fmt.Errorf("failed to include enum dependency %q: %w", dependency.FQN, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *Session) includeEnum(location, fqen string) error {
+	// TODO: we may need to do less object nesting here.
+
+	// TODO: we may need to build the full FQMN here.
+	// if schema is already added, skip processing it.
+	if _, ok := s.includedSchemas[fqen]; ok {
+		return nil
+	}
+
+	schema, err := s.generator.openapiRegistry.getSchemaForEnum(location, fqen)
+	if err != nil {
+		return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
+	}
+
+	if s.Document.Object.Components.Object.Schemas == nil {
+		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+	}
+
+	name, ok := s.generator.openapiRegistry.messageNames[fqen]
+	if !ok {
+		return fmt.Errorf("unrecognized message: %s", fqen)
+	}
+
+	s.includedSchemas[fqen] = struct{}{}
+	s.Document.Object.Components.Object.Schemas[name] = schema
+
+	return nil
+}
+
+func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
 	}
