@@ -84,19 +84,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	return files, nil
 }
 
-func (g *Generator) addServiceToSession(doc *openapiv3.DocumentCore, service *descriptor.Service) error {
-	// we would in theory merge them but here we just want to prepare the files.
-
-	// create a session here.
-	//session := &Session{
-	//  generator: g,
-	//  document:  g.openapiRegistry.RootDocument,
-	//}
-
-	//if err := session.WriteDocument(); err != nil {
-	//  return nil, fmt.Errorf("failed to write OpenAPI document: %w", err)
-	//}
-
+func (g *Generator) addServiceToSession(session *Session, service *descriptor.Service) error {
 	return nil
 }
 
@@ -115,36 +103,12 @@ func (g *Generator) addProtoMessageAndEnums(session *Session, file *descriptor.F
 		if err := session.includeMessage(file.GetPackage(), message.FQMN()); err != nil {
 			return fmt.Errorf("failed to process message %q: %w", message.FQMN(), err)
 		}
-		//schema, err := g.openapiRegistry.getSchemaForMessage(file.GetPackage(), fqmn)
-		//if err != nil {
-		//  return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
-		//}
-
-		//if doc.Components.Object.Schemas == nil {
-		//  doc.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
-		//}
-		//name := g.openapiRegistry.messageNames[fqmn]
-		//// TODO: we need to use a session here to include a metadata to the OpenAPI doc.
-		//// - for instance, adding to the schema should be a method to check for the object and all that.
-		//// TODO: handle the dependencies here as well.
-		//doc.Components.Object.Schemas[name] = schema.Schema
 	}
 
 	for _, enum := range file.Enums {
 		if err := session.includeEnum(file.GetPackage(), enum.FQEN()); err != nil {
 			return fmt.Errorf("failed to process enum %q: %w", enum.FQEN(), err)
 		}
-		//fqen := enum.FQEN()
-		//schema, err := g.openapiRegistry.getSchemaForEnum(file.GetPackage(), fqen)
-		//if err != nil {
-		//  return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
-		//}
-
-		//if doc.Components.Object.Schemas == nil {
-		//  doc.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
-		//}
-		//name := g.openapiRegistry.messageNames[fqen]
-		//doc.Components.Object.Schemas[name] = schema
 	}
 
 	return nil

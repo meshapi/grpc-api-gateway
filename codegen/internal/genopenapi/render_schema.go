@@ -148,7 +148,7 @@ func (r *Registry) createSchemaRef(name string) *openapiv3.Schema {
 
 // schemaNameForFQN returns OpenAPI schema name for any enum or message proto FQN.
 func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
-	result, ok := r.messageNames[fqn]
+	result, ok := r.schemaNames[fqn]
 	if !ok {
 		return "", fmt.Errorf("failed to find OpenAPI name for %q", fqn)
 	}

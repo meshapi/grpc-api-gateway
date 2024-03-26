@@ -45,6 +45,11 @@ type openAPIMessageConfig struct {
 	sourceInfo
 }
 
+type openAPIServiceConfig struct {
+	*api.OpenAPIServiceSpec
+	sourceInfo
+}
+
 type openAPIEnumConfig struct {
 	*api.OpenAPIEnumSpec
 	sourceInfo
@@ -79,14 +84,16 @@ type Registry struct {
 
 	documents map[*descriptor.File]*openapiv3.Document
 
-	// messageNames holds a one to one association of message FQMN to the generated OpenAPI schema name.
-	messageNames map[string]string
-	// messages holds a reference to the proto message and any matched configuration for it.
+	// schemaNames holds a one to one association of message/enum FQNs to the generated OpenAPI schema name.
+	schemaNames map[string]string
+	// messages holds a map of message FQMNs to parsed configuration.
 	messages map[string]*openAPIMessageConfig
-	// enums holds a reference to the proto enum and any matched configuration for it.
+	// enums holds a map of enum FQENs to parsed configuration.
 	enums map[string]*openAPIEnumConfig
 	// schemas are already processed schemas that can be readily used.
 	schemas map[string]openAPISchemaConfig
+	// services holds a reference to the service and any matched configuration for it.
+	services map[string]*openAPIServiceConfig
 }
 
 func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Registry {
@@ -96,7 +103,7 @@ func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Reg
 		commentRegistry:    protocomment.NewRegistry(descriptorRegistry),
 		RootDocument:       nil,
 		documents:          map[*descriptor.File]*openapiv3.Document{},
-		messageNames:       map[string]string{},
+		schemaNames:        map[string]string{},
 		messages:           map[string]*openAPIMessageConfig{},
 		enums:              map[string]*openAPIEnumConfig{},
 		schemas:            map[string]openAPISchemaConfig{},
@@ -145,7 +152,11 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 		if err != nil {
 			return fmt.Errorf("failed to process enum configs defined in %q: %w", configPath, err)
 		}
-		// TODO: we need to process messages and services here as well.
+
+		err = r.addServiceConfigs(doc.Services, sourceInfo{Filename: configPath})
+		if err != nil {
+			return fmt.Errorf("failed to process service configs defined in %q: %w", configPath, err)
+		}
 	}
 
 	messages := []string{}
@@ -174,6 +185,9 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 			}
 			if err := r.addEnumConfigs(configFromFile.Enums, source); err != nil {
 				return fmt.Errorf("failed to process enum configs defined in %q: %w", configFromFile.Filename, err)
+			}
+			if err := r.addServiceConfigs(configFromFile.Services, source); err != nil {
+				return fmt.Errorf("failed to process service configs defined in %q: %w", configFromFile.Filename, err)
 			}
 		}
 
@@ -208,7 +222,7 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 		return err
 	}
 
-	r.messageNames = r.resolveMessageNames(messages)
+	r.schemaNames = r.resolveMessageNames(messages)
 	return nil
 }
 
@@ -224,7 +238,7 @@ func (r *Registry) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src sour
 
 		messageConfig.Selector = "." + messageConfig.Selector
 
-		// assert that selector resolves to a proto message or enum.
+		// assert that selector resolves to a proto message.
 		if _, err := r.descriptorRegistry.LookupMessage("", messageConfig.Selector); err != nil {
 			return fmt.Errorf(
 				"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
@@ -257,7 +271,7 @@ func (r *Registry) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src sourceInfo
 
 		enumConfig.Selector = "." + enumConfig.Selector
 
-		// assert that selector resolves to a proto message or enum.
+		// assert that selector resolves to a proto enum.
 		if _, err := r.descriptorRegistry.LookupEnum("", enumConfig.Selector); err != nil {
 			return fmt.Errorf(
 				"could not find proto enum %q referenced in file: %s", enumConfig.Selector, src.Filename)
@@ -272,6 +286,33 @@ func (r *Registry) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src sourceInfo
 		r.enums[enumConfig.Selector] = &openAPIEnumConfig{
 			OpenAPIEnumSpec: enumConfig,
 			sourceInfo:      src,
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) addServiceConfigs(configs []*api.OpenAPIServiceSpec, src sourceInfo) error {
+	for _, serviceConfig := range configs {
+		// Resolve the selector to an absolute path.
+		if strings.HasPrefix(serviceConfig.Selector, ".") {
+			if src.ProtoPackage == "" {
+				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", serviceConfig.Selector)
+			}
+			serviceConfig.Selector = src.ProtoPackage + serviceConfig.Selector
+		}
+
+		serviceConfig.Selector = "." + serviceConfig.Selector
+
+		if existingConfig, alreadyExists := r.services[serviceConfig.Selector]; alreadyExists {
+			return fmt.Errorf(
+				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
+				serviceConfig.Selector, existingConfig.Filename, src.Filename)
+		}
+
+		r.services[serviceConfig.Selector] = &openAPIServiceConfig{
+			OpenAPIServiceSpec: serviceConfig,
+			sourceInfo:         src,
 		}
 	}
 
