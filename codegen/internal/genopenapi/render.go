@@ -11,6 +11,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -250,6 +251,31 @@ func (r *Registry) renderFieldSchema(
 	return fieldSchema, dependency, nil
 }
 
+func (r *Registry) setFieldAnnotations(field *descriptor.Field, schema, parent *openapiv3.Schema) {
+	items, ok := proto.GetExtension(field.Options, annotations.E_FieldBehavior).([]annotations.FieldBehavior)
+	if !ok || len(items) == 0 {
+		return
+	}
+
+	for _, item := range items {
+		switch item {
+		case annotations.FieldBehavior_REQUIRED:
+			if parent != nil {
+				switch r.options.FieldNameMode {
+				case FieldNameModeProto:
+					parent.Object.Required = append(parent.Object.Required, field.GetName())
+				case FieldNameModeJSON:
+					parent.Object.Required = append(parent.Object.Required, field.GetJsonName())
+				}
+			}
+		case annotations.FieldBehavior_OUTPUT_ONLY:
+			schema.Object.ReadOnly = true
+		case annotations.FieldBehavior_INPUT_ONLY:
+			schema.Object.WriteOnly = true
+		}
+	}
+}
+
 func (r *Registry) getCustomizedFieldSchema(field *descriptor.Field, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
 	var schema *openapiv3.Schema
 
@@ -399,6 +425,8 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
 			fieldSchema.Object.Description = r.renderComment(comment.Fields[int32(index)])
 		}
+
+		r.setFieldAnnotations(field, fieldSchema, schema)
 
 		switch r.options.FieldNameMode {
 		case FieldNameModeJSON:
