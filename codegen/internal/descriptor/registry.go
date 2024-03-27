@@ -189,13 +189,14 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 }
 
 func (r *Registry) loadServices(file *File) error {
-	for _, protoService := range file.GetService() {
+	for index, protoService := range file.GetService() {
 		service := &Service{
 			ServiceDescriptorProto: protoService,
 			File:                   file,
 			Methods:                []*Method{},
+			Index:                  index,
 		}
-		for _, protoMethod := range service.GetMethod() {
+		for index, protoMethod := range service.GetMethod() {
 			fqmn := service.FQSN() + "." + protoMethod.GetName()
 			binding, ok := r.httpSpecRegistry.LookupBinding(fqmn)
 			if !ok {
@@ -219,7 +220,7 @@ func (r *Registry) loadServices(file *File) error {
 				}
 			}
 
-			if err := r.addMethodToService(service, protoMethod, binding); err != nil {
+			if err := r.addMethodToService(service, index, protoMethod, binding); err != nil {
 				return fmt.Errorf("failed to process method '%s': %w", protoMethod.GetName(), err)
 			}
 		}
@@ -235,7 +236,7 @@ func (r *Registry) loadServices(file *File) error {
 }
 
 func (r *Registry) addMethodToService(
-	service *Service, protoMethod *descriptorpb.MethodDescriptorProto, binding httpspec.EndpointSpec) error {
+	service *Service, index int, protoMethod *descriptorpb.MethodDescriptorProto, binding httpspec.EndpointSpec) error {
 
 	requestType, err := r.LookupMessage(service.File.GetPackage(), protoMethod.GetInputType())
 	if err != nil {
@@ -252,6 +253,7 @@ func (r *Registry) addMethodToService(
 		Service:               service,
 		RequestType:           requestType,
 		ResponseType:          responseType,
+		Index:                 index,
 	}
 
 	method.Bindings, err = r.mapBindings(method, binding)

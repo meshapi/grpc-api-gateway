@@ -171,6 +171,8 @@ type Service struct {
 	Methods []*Method
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// Index is the index of the service in the proto file.
+	Index int
 }
 
 // FQSN returns the fully qualified service name of this service.
@@ -402,6 +404,8 @@ type Method struct {
 	ResponseType *Message
 	// Bindings are the HTTP endpoint bindings.
 	Bindings []*Binding
+	// Index is the index of the method in the service.
+	Index int
 }
 
 // FQMN returns a fully qualified rpc method name of this method.

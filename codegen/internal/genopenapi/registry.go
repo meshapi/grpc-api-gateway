@@ -96,11 +96,15 @@ type Registry struct {
 	services map[string]*openAPIServiceConfig
 }
 
-func NewRegistry(options *Options, descriptorRegistry *descriptor.Registry) *Registry {
+func NewRegistry(
+	options *Options,
+	descriptorRegistry *descriptor.Registry,
+	commentRegistry *protocomment.Registry) *Registry {
+
 	r := &Registry{
 		options:            options,
 		descriptorRegistry: descriptorRegistry,
-		commentRegistry:    protocomment.NewRegistry(descriptorRegistry),
+		commentRegistry:    commentRegistry,
 		RootDocument:       nil,
 		documents:          map[*descriptor.File]*openapiv3.Document{},
 		schemaNames:        map[string]string{},

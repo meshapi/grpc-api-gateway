@@ -29,7 +29,7 @@ func (r *Registry) mergeObjects(base, source any) error {
 }
 
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
-func (r *Registry) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
+func renderComment(options *Options, location *descriptorpb.SourceCodeInfo_Location) string {
 	// get leading comments.
 	leadingComments := strings.NewReader(location.GetLeadingComments())
 	trailingComments := strings.NewReader(location.GetTrailingComments())
@@ -38,7 +38,13 @@ func (r *Registry) renderComment(location *descriptorpb.SourceCodeInfo_Location)
 
 	reader := bufio.NewScanner(leadingComments)
 	for reader.Scan() {
-		builder.WriteString(strings.TrimSpace(reader.Text()))
+		line := strings.TrimSpace(reader.Text())
+		if options.RemoveInternalComments {
+			if strings.HasPrefix(line, "(--") && strings.HasSuffix(line, "--)") {
+				continue
+			}
+		}
+		builder.WriteString(line)
 		builder.WriteByte('\n')
 	}
 
@@ -60,9 +66,9 @@ func (r *Registry) renderEnumComment(enum *descriptor.Enum, values []string) (st
 		return "", nil
 	}
 
-	result := r.renderComment(comments.Location) + "\n"
+	result := renderComment(r.options, comments.Location) + "\n"
 	for index, value := range values {
-		result += "- " + value + ": " + r.renderComment(comments.Values[int32(index)])
+		result += "- " + value + ": " + renderComment(r.options, comments.Values[int32(index)])
 	}
 
 	// TODO: handle the template doc.
@@ -79,8 +85,12 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 
 	if r.options.UseEnumNumbers {
 		values := make([]string, len(enum.Value))
+		hasDefault := false
 		for index, evdp := range enum.Value {
 			values[index] = strconv.FormatInt(int64(evdp.GetNumber()), 10)
+			if evdp.GetNumber() == 0 {
+				hasDefault = true
+			}
 		}
 
 		description, err := r.renderEnumComment(enum, values)
@@ -97,6 +107,10 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			},
 		}
 
+		if !r.options.OmitEnumDefaultValue && hasDefault {
+			generatedSchema.Object.Default = 0
+		}
+
 		if schema != nil {
 			if err := r.mergeObjects(schema, generatedSchema); err != nil {
 				return nil, err
@@ -109,8 +123,12 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 	}
 
 	values := make([]string, len(enum.Value))
+	defaultIndex := -1
 	for index, evdp := range enum.Value {
 		values[index] = evdp.GetName()
+		if evdp.GetNumber() == 0 {
+			defaultIndex = index
+		}
 	}
 
 	description, err := r.renderEnumComment(enum, values)
@@ -125,6 +143,10 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			Title:       enum.GetName(),
 			Description: description,
 		},
+	}
+
+	if !r.options.OmitEnumDefaultValue && defaultIndex != -1 {
+		generatedSchema.Object.Default = values[defaultIndex]
 	}
 
 	if schema != nil {
@@ -403,7 +425,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 	// handle the title, description and summary here.
 	comment := r.commentRegistry.LookupMessage(message)
 	if comment != nil {
-		schema.Object.Description = r.renderComment(comment.Location)
+		schema.Object.Description = renderComment(r.options, comment.Location)
 	}
 
 	for index, field := range message.Fields {
@@ -423,7 +445,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 		}
 
 		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
-			fieldSchema.Object.Description = r.renderComment(comment.Fields[int32(index)])
+			fieldSchema.Object.Description = renderComment(r.options, comment.Fields[int32(index)])
 		}
 
 		r.setFieldAnnotations(field, fieldSchema, schema)

@@ -7,12 +7,14 @@ import (
 
 const (
 	// TypeMessage is the number of the message type index in the FileDescriptorProto.
-	TypeMessage      = 4
-	TypeNestedType   = 3
-	TypeNestedEnum   = 4
-	TypeEnum         = 5
-	TypeEnumValue    = 2
-	TypeMessageField = 2
+	TypeMessage       = 4
+	TypeNestedType    = 3
+	TypeNestedEnum    = 4
+	TypeEnum          = 5
+	TypeEnumValue     = 2
+	TypeMessageField  = 2
+	TypeService       = 6
+	TypeServiceMethod = 2
 )
 
 type Location = descriptorpb.SourceCodeInfo_Location
@@ -21,6 +23,7 @@ type Location = descriptorpb.SourceCodeInfo_Location
 type File struct {
 	Messages map[int32]*Message
 	Enums    map[int32]*Enum
+	Services map[int32]*Service
 }
 
 type Enum struct {
@@ -35,6 +38,12 @@ type Message struct {
 	NestedTypes map[int32]*Message
 	NestedEnums map[int32]*Enum
 	Fields      map[int32]*Location
+}
+
+type Service struct {
+	*Location
+
+	Methods map[int32]*Location
 }
 
 // Registry holds indexed files that hold comments and locations for various proto types for quick lookups.
@@ -106,6 +115,24 @@ func (r *Registry) processEnumPath(index int, enum *Enum, location *descriptorpb
 	}
 }
 
+func (r *Registry) processServicePath(index int, service *Service, location *descriptorpb.SourceCodeInfo_Location) {
+	if index >= len(location.Path) {
+		service.Location = location
+		return
+	}
+
+	switch location.Path[index] {
+	case TypeServiceMethod:
+		if index+2 < len(location.Path) {
+			return
+		}
+		if service.Methods == nil {
+			service.Methods = make(map[int32]*Location)
+		}
+		service.Methods[location.Path[index+1]] = location
+	}
+}
+
 func (r *Registry) evaluateOrGetFile(file *descriptor.File) *File {
 	if indexedFile, ok := r.files[file]; ok {
 		return indexedFile
@@ -156,6 +183,22 @@ func (r *Registry) evaluateOrGetFile(file *descriptor.File) *File {
 			}
 
 			r.processEnumPath(2, enum, sci)
+		case TypeService:
+			if len(sci.Path)%2 != 0 {
+				continue
+			}
+
+			if indexedFile.Services == nil {
+				indexedFile.Services = make(map[int32]*Service)
+			}
+
+			service, ok := indexedFile.Services[sci.Path[1]]
+			if !ok {
+				service = &Service{}
+				indexedFile.Services[sci.Path[1]] = service
+			}
+
+			r.processServicePath(2, service, sci)
 		}
 	}
 
@@ -237,4 +280,13 @@ func (r *Registry) LookupEnum(enum *descriptor.Enum) *Enum {
 	}
 
 	return file.Enums[int32(enum.Index)]
+}
+
+func (r *Registry) LookupService(service *descriptor.Service) *Service {
+	file := r.evaluateOrGetFile(service.File)
+	if file == nil {
+		return nil
+	}
+
+	return file.Services[int32(service.Index)]
 }

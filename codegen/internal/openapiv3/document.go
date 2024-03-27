@@ -37,8 +37,6 @@ const (
 )
 
 // DocumentCore is the OpenAPI top-level document.
-//
-// TODO: security MUST be a list, not a dictionary.
 type DocumentCore struct {
 	OpenAPI               string                 `json:"openapi" yaml:"openapi"`
 	Info                  *Info                  `json:"info" yaml:"info" validate:"required"`
