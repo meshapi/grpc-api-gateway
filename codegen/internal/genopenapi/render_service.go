@@ -59,11 +59,11 @@ func (g *Generator) renderPathParameter(
 
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		if wellKnownSchema := wellKnownTypes(field.GetTypeName()); wellKnownSchema != nil {
+		if descriptor.IsWellKnownType(field.GetTypeName()) {
 			if repeated {
 				return nil, dependency, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
 			}
-			schema = wellKnownSchema
+			schema = wellKnownTypes(field.GetTypeName())
 			break
 		}
 		return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
@@ -89,10 +89,15 @@ func (g *Generator) renderPathParameter(
 		}
 	}
 
-	paramName := param.String()
-	if config := g.openapiRegistry.lookUpFieldConfig(field); config != nil {
-		if config.PathParamName != "" {
-			paramName = config.PathParamName
+	var paramName string
+	if config := g.openapiRegistry.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
+		paramName = config.PathParamName
+	} else {
+		switch g.Options.FieldNameMode {
+		case FieldNameModeJSON:
+			paramName = camelLowerCaseFieldPath(param.FieldPath)
+		case FieldNameModeProto:
+			paramName = param.String()
 		}
 	}
 
@@ -132,6 +137,18 @@ func (g *Generator) renderPathParameter(
 	}
 
 	return parameter, dependency, nil
+}
+
+func camelLowerCaseFieldPath(fieldPath descriptor.FieldPath) string {
+	builder := &strings.Builder{}
+	for index, part := range fieldPath {
+		if index != 0 {
+			builder.WriteByte('.')
+		}
+		builder.WriteString(part.Target.GetJsonName())
+	}
+
+	return builder.String()
 }
 
 func renderPath(binding *descriptor.Binding) string {
