@@ -660,10 +660,11 @@ func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages [
 			Outers:          outerPath,
 			Index:           index,
 		}
-		for _, protoField := range protoMessage.GetField() {
+		for index, protoField := range protoMessage.GetField() {
 			message.Fields = append(message.Fields, &Field{
 				FieldDescriptorProto: protoField,
 				Message:              message,
+				Index:                index,
 			})
 		}
 

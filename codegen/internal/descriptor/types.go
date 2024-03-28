@@ -423,6 +423,8 @@ type Field struct {
 	Message *Message
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// Index is the index of the field in the message proto descriptor.
+	Index int
 }
 
 // FQFN returns a fully qualified field name of this field.

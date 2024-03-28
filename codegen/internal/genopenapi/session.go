@@ -52,17 +52,8 @@ func (s *Session) includeMessage(location, fqmn string) error {
 	s.includedSchemas[fqmn] = struct{}{}
 	s.Document.Object.Components.Object.Schemas[name] = schema.Schema
 
-	for _, dependency := range schema.Dependencies {
-		switch dependency.Kind {
-		case dependencyKindMessage:
-			if err := s.includeMessage(location, dependency.FQN); err != nil {
-				return fmt.Errorf("failed to include message dependency %q: %w", dependency.FQN, err)
-			}
-		case dependencyKindEnum:
-			if err := s.includeEnum(location, dependency.FQN); err != nil {
-				return fmt.Errorf("failed to include enum dependency %q: %w", dependency.FQN, err)
-			}
-		}
+	if err := s.includeDependencies(location, schema.Dependencies); err != nil {
+		return err
 	}
 
 	return nil
@@ -93,6 +84,23 @@ func (s *Session) includeEnum(location, fqen string) error {
 
 	s.includedSchemas[fqen] = struct{}{}
 	s.Document.Object.Components.Object.Schemas[name] = schema
+
+	return nil
+}
+
+func (s *Session) includeDependencies(location string, dependencies []schemaDependency) error {
+	for _, dependency := range dependencies {
+		switch dependency.Kind {
+		case dependencyKindMessage:
+			if err := s.includeMessage(location, dependency.FQN); err != nil {
+				return fmt.Errorf("failed to include message dependency %q: %w", dependency.FQN, err)
+			}
+		case dependencyKindEnum:
+			if err := s.includeEnum(location, dependency.FQN); err != nil {
+				return fmt.Errorf("failed to include enum dependency %q: %w", dependency.FQN, err)
+			}
+		}
+	}
 
 	return nil
 }

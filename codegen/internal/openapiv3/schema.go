@@ -14,6 +14,18 @@ const (
 	TypeNull    = "null"
 )
 
+const (
+	ParameterInPath  = "path"
+	ParameterInQuery = "query"
+)
+
+const (
+	ParameterStyleSimple         = "simple"
+	ParameterStyleSpaceDelimited = "spaceDelimited"
+	ParameterStylePipeDelimited  = "pipeDelimited"
+	ParameterStyleTabDelimited   = "tabDelimited"
+)
+
 type DiscriminatorCore struct {
 	PropertyName string            `json:"propertyName,omitempty" yaml:"propertyName,omitempty"`
 	Mapping      map[string]string `json:"mapping,omitempty" yaml:"mapping,omitempty"`

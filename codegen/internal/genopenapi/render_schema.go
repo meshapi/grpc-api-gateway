@@ -180,8 +180,7 @@ func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
 
 // renderFieldSchema returns OpenAPI schema for a message field.
 func (r *Registry) renderFieldSchema(
-	field *descriptorpb.FieldDescriptorProto,
-	message *descriptor.Message,
+	field *descriptor.Field,
 	baseConfig *openapiv3.Schema) (*openapiv3.Schema, schemaDependency, error) {
 
 	var fieldSchema *openapiv3.Schema
@@ -199,7 +198,7 @@ func (r *Registry) renderFieldSchema(
 			fieldSchema = wellKnownSchema
 			break
 		}
-		msg, err := r.descriptorRegistry.LookupMessage(message.File.GetPackage(), field.GetTypeName())
+		msg, err := r.descriptorRegistry.LookupMessage(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve message %q: %w", field.GetTypeName(), err)
 		}
@@ -212,7 +211,7 @@ func (r *Registry) renderFieldSchema(
 					},
 				},
 			}
-			valueSchema, valueDependency, err := r.renderFieldSchema(msg.GetField()[1], msg, nil)
+			valueSchema, valueDependency, err := r.renderFieldSchema(msg.Fields[1], nil)
 			if err != nil {
 				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
 			}
@@ -229,7 +228,7 @@ func (r *Registry) renderFieldSchema(
 			dependency.Kind = dependencyKindMessage
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		enum, err := r.descriptorRegistry.LookupEnum(message.File.GetPackage(), field.GetTypeName())
+		enum, err := r.descriptorRegistry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
@@ -434,7 +433,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			return openAPISchemaConfig{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
-		fieldSchema, dependency, err := r.renderFieldSchema(field.FieldDescriptorProto, message, customFieldSchema)
+		fieldSchema, dependency, err := r.renderFieldSchema(field, customFieldSchema)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)

@@ -99,9 +99,6 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 	}
 
 	comments := g.openapiRegistry.commentRegistry.LookupService(service)
-	//if comments != nil {
-	//  operation.Description = r.renderComment(comments.Location)
-	//}
 
 	for _, method := range service.Methods {
 		summary, description := "", ""
@@ -120,12 +117,11 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 		}
 
 		for _, binding := range method.Bindings {
-			path := g.openapiRegistry.renderPath(binding)
+			path := renderPath(binding)
 
 			pathObject, exists := session.Document.Object.Paths[path]
 			if !exists {
 				pathObject = &openapiv3.Path{}
-				session.Document.Object.Paths[path] = pathObject
 			}
 
 			var operationPtr **openapiv3.OperationCore
@@ -151,9 +147,20 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 				continue
 			}
 
-			operation, err := g.renderOperation(binding)
+			if !exists {
+				// add this only when the operation is using an HTTP endpoint that can be recorded in
+				// the OpenAPI document.
+				session.Document.Object.Paths[path] = pathObject
+			}
+
+			operation, dependencies, err := g.renderOperation(binding)
 			if err != nil {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
+			}
+
+			location := binding.Method.Service.File.GetPackage()
+			if err := session.includeDependencies(location, dependencies); err != nil {
+				return fmt.Errorf("error adding dependencies: %w", err)
 			}
 
 			operation.Summary = summary

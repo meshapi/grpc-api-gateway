@@ -259,6 +259,20 @@ func (r *Registry) LookupMessage(message *descriptor.Message) *Message {
 	return file.Messages[int32(message.Index)]
 }
 
+// LookupField looks up comments for a field.
+//
+// NOTE: Avoid using this method unless an arbitrary field access is needed.
+// A more efficient way when iterating over fields of a message is to use the Message object
+// directly.
+func (r *Registry) LookupField(field *descriptor.Field) *Location {
+	comments := r.LookupMessage(field.Message)
+	if comments == nil || comments.Fields == nil {
+		return nil
+	}
+
+	return comments.Fields[int32(field.Index)]
+}
+
 func (r *Registry) LookupEnum(enum *descriptor.Enum) *Enum {
 	file := r.evaluateOrGetFile(enum.File)
 	if file == nil {
