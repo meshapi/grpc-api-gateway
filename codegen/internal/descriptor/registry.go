@@ -348,13 +348,15 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 					FieldPath(fields))
 			} else {
 				name := queryParam.Name
+				customName := true
 				if name == "" {
 					name = FieldPath(fields).String()
+					customName = false
 				}
 
 				binding.QueryParameterCustomization.Aliases = append(
 					binding.QueryParameterCustomization.Aliases,
-					QueryParamAlias{Name: name, FieldPath: FieldPath(fields)})
+					QueryParamAlias{Name: name, FieldPath: FieldPath(fields), CustomName: customName})
 			}
 		}
 
@@ -447,8 +449,9 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 
 	for _, alias := range b.QueryParameterCustomization.Aliases {
 		queryParams = append(queryParams, QueryParameter{
-			Name:      alias.Name,
-			FieldPath: alias.FieldPath,
+			Name:        alias.Name,
+			FieldPath:   alias.FieldPath,
+			NameIsAlias: alias.CustomName,
 		})
 	}
 

@@ -274,6 +274,8 @@ func (b Body) AssignableExprPrep(msgExpr string, currentPackage string) string {
 type QueryParamAlias struct {
 	// Name is the name that will be read from the query parameters.
 	Name string
+	// CustomName indicates the name is a custom and user-specified name, not a generated name.
+	CustomName bool
 	// FieldPath is a path to a proto field which this parameter is mapped to.
 	FieldPath FieldPath
 }
@@ -382,6 +384,13 @@ type QueryParameter struct {
 
 	// Name is the name of the query parameter.
 	Name string
+
+	// NameIsAlias indicates whether or not the name is a custom alias.
+	NameIsAlias bool
+}
+
+func (q QueryParameter) Target() *Field {
+	return q.FieldPath[len(q.FieldPath)-1].Target
 }
 
 func (q QueryParameter) String() string {
