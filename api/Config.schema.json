@@ -795,6 +795,10 @@
                 "path_param_name": {
                     "type": "string",
                     "description": "Alternative parameter name when used as path parameter. If set, this will be used as the complete parameter name when this field is used as a path parameter. Use this to avoid having auto generated path parameter names for overlapping paths."
+                },
+                "required": {
+                    "type": "boolean",
+                    "description": "requried marks this field as required."
                 }
             },
             "additionalProperties": false,

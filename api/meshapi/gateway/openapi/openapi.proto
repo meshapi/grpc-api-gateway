@@ -191,6 +191,9 @@ message FieldConfiguration {
 	// parameter. Use this to avoid having auto generated path parameter names
 	// for overlapping paths.
 	string path_param_name = 1;
+
+	// requried marks this field as required.
+	bool required = 2;
 }
 
 // Schema is a representation of OpenAPI v3.1 specification's Schema object.
