@@ -16,6 +16,14 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+type fieldSchemaCustomization struct {
+	Schema        *openapiv3.Schema
+	PathParamName *string
+	Required      bool
+	ReadOnly      bool
+	WriteOnly     bool
+}
+
 func (r *Registry) mergeObjects(base, source any) error {
 	if r.options.MergeWithOverwrite {
 		if err := mergo.Merge(base, source); err != nil {
@@ -26,6 +34,56 @@ func (r *Registry) mergeObjects(base, source any) error {
 	}
 
 	return nil
+}
+
+func (r *Registry) getCustomizedFieldSchema(
+	field *descriptor.Field, config *openAPIMessageConfig) (fieldSchemaCustomization, error) {
+	result := fieldSchemaCustomization{}
+
+	if config != nil && config.Fields != nil {
+		if fieldSchema := config.Fields[field.GetName()]; fieldSchema != nil {
+			schemaFromConfig, err := mapSchema(fieldSchema)
+			if err != nil {
+				return result, fmt.Errorf("failed to map field schema from %q: %w", config.Filename, err)
+			}
+
+			result.Schema = schemaFromConfig
+			if fieldSchema.Config != nil {
+				result.Required = fieldSchema.Config.Required
+				if fieldSchema.Config.PathParamName != "" {
+					result.PathParamName = &fieldSchema.Config.PathParamName
+				}
+			}
+		}
+	}
+
+	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
+		schemaFromProto, err := mapSchema(protoSchema)
+		if err != nil {
+			return result, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
+		}
+
+		if result.Schema == nil {
+			result.Schema = schemaFromProto
+		} else {
+			if err := r.mergeObjects(result.Schema, schemaFromProto); err != nil {
+				return result, err
+			}
+		}
+
+		if protoSchema.Config != nil {
+			if protoSchema.Config.PathParamName != "" && result.PathParamName == nil {
+				result.PathParamName = &protoSchema.Config.PathParamName
+			}
+
+			if protoSchema.Config.Required {
+				result.Required = true
+			}
+		}
+	}
+
+	setFieldAnnotations(field, &result)
+	return result, nil
 }
 
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
@@ -272,7 +330,7 @@ func (r *Registry) renderFieldSchema(
 	return fieldSchema, dependency, nil
 }
 
-func (r *Registry) setFieldAnnotations(field *descriptor.Field, schema, parent *openapiv3.Schema) {
+func setFieldAnnotations(field *descriptor.Field, customizationObject *fieldSchemaCustomization) {
 	items, ok := proto.GetExtension(field.Options, annotations.E_FieldBehavior).([]annotations.FieldBehavior)
 	if !ok || len(items) == 0 {
 		return
@@ -281,52 +339,13 @@ func (r *Registry) setFieldAnnotations(field *descriptor.Field, schema, parent *
 	for _, item := range items {
 		switch item {
 		case annotations.FieldBehavior_REQUIRED:
-			if parent != nil {
-				switch r.options.FieldNameMode {
-				case FieldNameModeProto:
-					parent.Object.Required = append(parent.Object.Required, field.GetName())
-				case FieldNameModeJSON:
-					parent.Object.Required = append(parent.Object.Required, field.GetJsonName())
-				}
-			}
+			customizationObject.Required = true
 		case annotations.FieldBehavior_OUTPUT_ONLY:
-			schema.Object.ReadOnly = true
+			customizationObject.ReadOnly = true
 		case annotations.FieldBehavior_INPUT_ONLY:
-			schema.Object.WriteOnly = true
+			customizationObject.WriteOnly = true
 		}
 	}
-}
-
-func (r *Registry) getCustomizedFieldSchema(field *descriptor.Field, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
-	var schema *openapiv3.Schema
-
-	if config != nil && config.Fields != nil {
-		if fieldSchema := config.Fields[field.GetName()]; fieldSchema != nil {
-			schemaFromConfig, err := mapSchema(fieldSchema)
-			if err != nil {
-				return nil, fmt.Errorf("failed to map field schema from %q: %w", config.Filename, err)
-			}
-
-			schema = schemaFromConfig
-		}
-	}
-
-	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
-		schemaFromProto, err := mapSchema(protoSchema)
-		if err != nil {
-			return nil, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
-		}
-
-		if schema == nil {
-			schema = schemaFromProto
-		} else {
-			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return schema, nil
 }
 
 // getCustomizedMessageSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
@@ -433,7 +452,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			return openAPISchemaConfig{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
-		fieldSchema, dependency, err := r.renderFieldSchema(field, customFieldSchema)
+		fieldSchema, dependency, err := r.renderFieldSchema(field, customFieldSchema.Schema)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
@@ -447,13 +466,25 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			fieldSchema.Object.Description = renderComment(r.options, comment.Fields[int32(index)])
 		}
 
-		r.setFieldAnnotations(field, fieldSchema, schema)
+		if customFieldSchema.WriteOnly {
+			fieldSchema.Object.WriteOnly = true
+		}
+
+		if customFieldSchema.ReadOnly {
+			fieldSchema.Object.ReadOnly = true
+		}
 
 		switch r.options.FieldNameMode {
 		case FieldNameModeJSON:
 			schema.Object.Properties[field.GetJsonName()] = fieldSchema
+			if customFieldSchema.Required {
+				schema.Object.Required = append(schema.Object.Required, field.GetJsonName())
+			}
 		case FieldNameModeProto:
 			schema.Object.Properties[field.GetName()] = fieldSchema
+			if customFieldSchema.Required {
+				schema.Object.Required = append(schema.Object.Required, field.GetName())
+			}
 		}
 	}
 

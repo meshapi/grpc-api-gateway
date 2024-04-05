@@ -29,7 +29,7 @@ func (g *Generator) renderOperation(
 
 	// handle path parameters
 	for _, pathParam := range binding.PathParameters {
-		parameter, dependency, err := g.renderPathParameter(&pathParam, nil)
+		parameter, dependency, err := g.renderPathParameter(&pathParam)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to render path parameter: %w", err)
 		}
@@ -63,8 +63,7 @@ func (g *Generator) renderOperation(
 }
 
 func (g *Generator) renderPathParameter(
-	param *descriptor.Parameter,
-	baseConfig *openapiv3.Schema) (*openapiv3.Parameter, schemaDependency, error) {
+	param *descriptor.Parameter) (*openapiv3.Parameter, schemaDependency, error) {
 
 	field := param.Target
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
@@ -146,6 +145,19 @@ func (g *Generator) renderPathParameter(
 		}
 	}
 
+	fieldCustomization, err := g.openapiRegistry.getCustomizedFieldSchema(
+		field, g.openapiRegistry.messages[field.Message.FQMN()])
+	if err != nil {
+		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
+	}
+	if fieldCustomization.Schema != nil {
+		if err := g.openapiRegistry.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+			return nil, dependency, err
+		}
+
+		parameter.Object.Schema = fieldCustomization.Schema
+	}
+
 	if comments := g.commentRegistry.LookupField(param.Target); comments != nil {
 		parameter.Object.Description = renderComment(&g.Options, comments)
 	}
@@ -219,11 +231,6 @@ func (g *Generator) renderQueryParameter(
 		},
 	}
 
-	// TODO:
-	// 1. Perhaps have the annotations to return whether or not we have a required field or not.
-	// that way, here we can set the query parameter as required and elsewhere handle required array.
-	// 2. also make it a function instead of a method.
-
 	if repeated {
 		// handle the repeated attributes here.
 		parameter.Object.Schema = &openapiv3.Schema{
@@ -244,6 +251,23 @@ func (g *Generator) renderQueryParameter(
 		case descriptor.PathParameterSeparatorPipes:
 			parameter.Object.Style = openapiv3.ParameterStylePipeDelimited
 		}
+	}
+
+	fieldCustomization, err := g.openapiRegistry.getCustomizedFieldSchema(
+		field, g.openapiRegistry.messages[field.Message.FQMN()])
+	if err != nil {
+		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
+	}
+	if fieldCustomization.Schema != nil {
+		if err := g.openapiRegistry.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+			return nil, dependency, err
+		}
+
+		parameter.Object.Schema = fieldCustomization.Schema
+	}
+
+	if fieldCustomization.Required {
+		parameter.Object.Required = true
 	}
 
 	if comments := g.commentRegistry.LookupField(field); comments != nil {
