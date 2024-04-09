@@ -451,6 +451,14 @@ func (f *Field) IsScalarType() bool {
 	return true
 }
 
+// HasRepeatedLabel returns whether or not this field has repeated label on it.
+//
+// NOTE: This is not an indication that this field is necessarily an array since
+// the underlying type can be a map entry.
+func (f *Field) HasRepeatedLabel() bool {
+	return f.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+}
+
 // FieldPath is a path to a field from a request message.
 type FieldPath []FieldPathComponent
 

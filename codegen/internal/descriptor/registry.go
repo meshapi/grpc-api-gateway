@@ -448,6 +448,27 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	var queryParams []QueryParameter
 
 	for _, alias := range b.QueryParameterCustomization.Aliases {
+		field := alias.FieldPath[len(alias.FieldPath)-1].Target
+
+		repeated := field.HasRepeatedLabel()
+		if !field.IsScalarType() {
+			if repeated {
+				return nil, fmt.Errorf(
+					"invalid query param %q: only primitive and enum types can be used with a repeated label in query params",
+					alias.Name)
+			}
+
+			message, err := registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
+			if err != nil {
+				return nil, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+			}
+			// if the map entry's value type is not scalar, it cannot be parsed in query parameters.
+			if message.IsMapEntry() && !message.Fields[1].IsScalarType() {
+				return nil, fmt.Errorf(
+					"invalid query param %q: only primitive and enum types can be used in map values", alias.Name)
+			}
+		}
+
 		queryParams = append(queryParams, QueryParameter{
 			Name:        alias.Name,
 			FieldPath:   alias.FieldPath,
@@ -477,6 +498,8 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 				continue
 			}
 
+			repeated := field.HasRepeatedLabel()
+
 			if !field.IsScalarType() {
 				// go deep inside.
 				message, err := registry.LookupMessage(item.Message.FQMN(), field.GetTypeName())
@@ -486,11 +509,17 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 
 				// if message is a map entry, treat it as a scalar type.
 				if !message.IsMapEntry() {
+					if repeated {
+						continue
+					}
+
 					queue = append(queue, Item{
 						Message:   message,
 						Parts:     append(item.Parts, field.GetName()),
 						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
 					})
+					continue
+				} else if !message.Fields[1].IsScalarType() {
 					continue
 				}
 			}

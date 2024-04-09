@@ -49,9 +49,6 @@ func (g *Generator) renderOperation(
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
 		}
-		if parameter == nil { // if parameter is not produced, skip it.
-			continue
-		}
 
 		if dependency.IsSet() {
 			dependencies = append(dependencies, dependency)
@@ -215,9 +212,9 @@ func (g *Generator) renderQueryParameter(
 		}
 		if message.IsMapEntry() {
 			// NOTE: If the map entry has any type other than scalar types, it cannot be parsed in query parameters.
-			// TODO: We might want to write a warning as an option or return an error if the query is not auto-mapped.
 			if !message.Fields[1].IsScalarType() {
-				return nil, dependency, nil
+				return nil, dependency, fmt.Errorf(
+					"only primitive and enum types can be used as map values, received type %q", message.Fields[1].GetTypeName())
 			}
 			repeated = false
 			parameter.Object.Schema = &openapiv3.Schema{
