@@ -484,12 +484,15 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 					return nil, fmt.Errorf("failed to look up nested message type %q: %s", field.GetTypeName(), err)
 				}
 
-				queue = append(queue, Item{
-					Message:   message,
-					Parts:     append(item.Parts, field.GetName()),
-					FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
-				})
-				continue
+				// if message is a map entry, treat it as a scalar type.
+				if !message.IsMapEntry() {
+					queue = append(queue, Item{
+						Message:   message,
+						Parts:     append(item.Parts, field.GetName()),
+						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+					})
+					continue
+				}
 			}
 
 			queryParams = append(queryParams, QueryParameter{

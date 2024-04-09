@@ -31,7 +31,7 @@ func (g *Generator) renderOperation(
 	for _, pathParam := range binding.PathParameters {
 		parameter, dependency, err := g.renderPathParameter(&pathParam)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to render path parameter: %w", err)
+			return nil, nil, fmt.Errorf("failed to render path parameter %q: %w", pathParam.FieldPath.String(), err)
 		}
 
 		if dependency.IsSet() {
@@ -47,7 +47,7 @@ func (g *Generator) renderOperation(
 	for _, queryParam := range binding.QueryParameters {
 		parameter, dependency, err := g.renderQueryParameter(&queryParam, nil)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to render path parameter: %w", err)
+			return nil, nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
 		}
 
 		if dependency.IsSet() {
@@ -171,40 +171,7 @@ func (g *Generator) renderQueryParameter(
 
 	field := param.Target()
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
-	var schema *openapiv3.Schema
 	var dependency schemaDependency
-
-	switch field.GetType() {
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		if descriptor.IsWellKnownType(field.GetTypeName()) {
-			if repeated {
-				return nil, dependency, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
-			}
-			schema = wellKnownTypes(field.GetTypeName())
-			break
-		}
-		return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
-	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
-		if err != nil {
-			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
-		}
-		schemaName, err := g.openapiRegistry.schemaNameForFQN(enum.FQEN())
-		if err != nil {
-			return nil, dependency, err
-		}
-		schema = g.openapiRegistry.createSchemaRef(schemaName)
-		dependency.FQN = enum.FQEN()
-		dependency.Kind = dependencyKindEnum
-	default:
-		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
-		schema = &openapiv3.Schema{
-			Object: openapiv3.SchemaCore{
-				Type:   openapiv3.TypeSet{fieldType},
-				Format: format,
-			},
-		}
-	}
 
 	var paramName string
 	if config := g.openapiRegistry.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
@@ -224,11 +191,62 @@ func (g *Generator) renderQueryParameter(
 
 	parameter := &openapiv3.Parameter{
 		Object: openapiv3.ParameterCore{
-			Name:     paramName,
-			Schema:   schema,
-			In:       openapiv3.ParameterInQuery,
-			Required: false, // only if the schema says it is required.
+			Name:       paramName,
+			In:         openapiv3.ParameterInQuery,
+			Deprecated: field.GetOptions().GetDeprecated(),
 		},
+	}
+
+	switch field.GetType() {
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+		if descriptor.IsWellKnownType(field.GetTypeName()) {
+			if repeated {
+				return nil, dependency, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
+			}
+			parameter.Object.Schema = wellKnownTypes(field.GetTypeName())
+			break
+		}
+		message, err := g.registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
+		if err != nil {
+			return nil, dependency, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+		}
+		if message.IsMapEntry() {
+			if !message.Fields[1].IsScalarType() {
+				return nil, dependency, fmt.Errorf("only primitive-type and enum types are allowed in map values")
+			}
+			repeated = false
+			parameter.Object.Schema = &openapiv3.Schema{
+				Object: openapiv3.SchemaCore{
+					Type:   openapiv3.TypeSet{openapiv3.TypeString},
+					Format: "map",
+				},
+			}
+			parameter.Object.Description = `This is a request variable of the map type.` +
+				` The query format is "map_name[key]=value", e.g. If the map name is Age, the key type is string,` +
+				` and the value type is integer, the query parameter is expressed as Age["bob"]=18`
+		} else {
+			return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
+		}
+	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
+		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
+		if err != nil {
+			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
+		}
+		schemaName, err := g.openapiRegistry.schemaNameForFQN(enum.FQEN())
+		if err != nil {
+			return nil, dependency, err
+		}
+		parameter.Object.Schema = g.openapiRegistry.createSchemaRef(schemaName)
+		dependency.FQN = enum.FQEN()
+		dependency.Kind = dependencyKindEnum
+	default:
+		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
+		parameter.Object.Schema = &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{fieldType},
+				Format: format,
+			},
+		}
 	}
 
 	if repeated {
