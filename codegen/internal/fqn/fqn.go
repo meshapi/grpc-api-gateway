@@ -10,6 +10,19 @@ type Instance struct {
 	parts []int
 }
 
+func (i Instance) Index(index int) string {
+	start := 0
+	if index > 0 {
+		start = i.parts[index-1] + 1
+	}
+
+	if index > len(i.parts)-1 {
+		return (*i.ref)[start:]
+	}
+
+	return (*i.ref)[start:i.parts[index]]
+}
+
 func (i Instance) Parts() []string {
 	l := len(i.parts)
 	result := make([]string, l+1)
@@ -46,6 +59,10 @@ func (i Instance) PartsAtDepth(d int) []string {
 // MaxDepth returns the maximum depth this FQN has. Note that this depth is the largest depth index, not the count.
 func (i Instance) MaxDepth() int {
 	return len(i.parts)
+}
+
+func (i Instance) Len() int {
+	return len(i.parts) + 1
 }
 
 // StringAtDepth returns the string at a certain depth from the right side.

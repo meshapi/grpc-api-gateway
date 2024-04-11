@@ -32,6 +32,12 @@ func TestFQN(t *testing.T) {
 				t.Fatalf("expected %+v, received %+v", stringParts, fqnParts)
 			}
 
+			for index, part := range stringParts {
+				if result := item.Index(index); result != part {
+					t.Fatalf("expected[index=%d] %+v, received %+v", index, part, result)
+				}
+			}
+
 			expectedMaxDepth := strings.Count(tt.Input, ".")
 			if item.MaxDepth() != expectedMaxDepth {
 				t.Fatalf("expected max depth %d, received: %d", expectedMaxDepth, item.MaxDepth())
@@ -56,5 +62,18 @@ func TestFQN(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func BenchmarkSplitAdd(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = strings.Split("a.b.c.d.e.f", ".")[1]
+	}
+}
+
+func BenchmarkParts(b *testing.B) {
+	str := "a.b.c.d.e.f"
+	for i := 0; i < b.N; i++ {
+		fqn.Parse(&str).Index(1)
 	}
 }
