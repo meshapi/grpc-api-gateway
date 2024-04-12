@@ -39,7 +39,7 @@ func (g *Generator) mergeObjects(base, source any) error {
 }
 
 func (g *Generator) getCustomizedFieldSchema(
-	field *descriptor.Field, config *openAPIMessageConfig) (fieldSchemaCustomization, error) {
+	field *descriptor.Field, config *internal.OpenAPIMessageSpec) (fieldSchemaCustomization, error) {
 	result := fieldSchemaCustomization{}
 
 	if config != nil && config.Fields != nil {
@@ -348,7 +348,8 @@ func setFieldAnnotations(field *descriptor.Field, customizationObject *fieldSche
 
 // getCustomizedMessageSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
 // schema for a proto message.
-func (g *Generator) getCustomizedMessageSchema(message *descriptor.Message, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
+func (g *Generator) getCustomizedMessageSchema(
+	message *descriptor.Message, config *internal.OpenAPIMessageSpec) (*openapiv3.Schema, error) {
 	var schema *openapiv3.Schema
 
 	if config != nil {
@@ -380,7 +381,7 @@ func (g *Generator) getCustomizedMessageSchema(message *descriptor.Message, conf
 
 // getCustomizedEnumSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
 // schema for a proto message.
-func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAPIEnumConfig) (*openapiv3.Schema, error) {
+func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *internal.OpenAPIEnumSpec) (*openapiv3.Schema, error) {
 	var schema *openapiv3.Schema
 
 	if config != nil {
@@ -410,11 +411,11 @@ func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *openA
 	return schema, nil
 }
 
-func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
+func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.OpenAPISchema, error) {
 	messageConfig := g.messages[message.FQMN()]
 	schema, err := g.getCustomizedMessageSchema(message, messageConfig)
 	if err != nil {
-		return openAPISchemaConfig{}, err
+		return internal.OpenAPISchema{}, err
 	}
 
 	if schema == nil {
@@ -447,12 +448,12 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISch
 	for index, field := range message.Fields {
 		customFieldSchema, err := g.getCustomizedFieldSchema(field, messageConfig)
 		if err != nil {
-			return openAPISchemaConfig{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
+			return internal.OpenAPISchema{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
 		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema.Schema)
 		if err != nil {
-			return openAPISchemaConfig{}, fmt.Errorf(
+			return internal.OpenAPISchema{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
 		}
 
@@ -479,7 +480,7 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISch
 		}
 	}
 
-	return openAPISchemaConfig{Schema: schema, Dependencies: dependencies}, nil
+	return internal.OpenAPISchema{Schema: schema, Dependencies: dependencies}, nil
 }
 
 func openAPITypeAndFormatForScalarTypes(t descriptorpb.FieldDescriptorProto_Type) (string, string) {

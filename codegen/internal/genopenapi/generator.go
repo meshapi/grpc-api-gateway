@@ -7,6 +7,7 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 )
@@ -24,13 +25,13 @@ type Generator struct {
 	// schemaNames holds a one to one association of message/enum FQNs to the generated OpenAPI schema name.
 	schemaNames map[string]string
 	// messages holds a map of message FQMNs to parsed configuration.
-	messages map[string]*openAPIMessageConfig
+	messages map[string]*internal.OpenAPIMessageSpec
 	// enums holds a map of enum FQENs to parsed configuration.
-	enums map[string]*openAPIEnumConfig
+	enums map[string]*internal.OpenAPIEnumSpec
 	// schemas are already processed schemas that can be readily used.
-	schemas map[string]openAPISchemaConfig
+	schemas map[string]internal.OpenAPISchema
 	// services holds a reference to the service and any matched configuration for it.
-	services map[string]*openAPIServiceConfig
+	services map[string]*internal.OpenAPIServiceSpec
 }
 
 func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
@@ -42,12 +43,12 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		rootDocument:    nil,
 		documents:       map[*descriptor.File]*openapiv3.Document{},
 		schemaNames:     map[string]string{},
-		messages:        map[string]*openAPIMessageConfig{},
-		enums:           map[string]*openAPIEnumConfig{},
-		schemas:         map[string]openAPISchemaConfig{},
+		messages:        map[string]*internal.OpenAPIMessageSpec{},
+		enums:           map[string]*internal.OpenAPIEnumSpec{},
+		schemas:         map[string]internal.OpenAPISchema{},
 	}
 
-	generator.schemas[".google.protobuf.Any"] = openAPISchemaConfig{
+	generator.schemas[".google.protobuf.Any"] = internal.OpenAPISchema{
 		Schema: &openapiv3.Schema{
 			Object: openapiv3.SchemaCore{
 				Type:        openapiv3.TypeSet{openapiv3.TypeObject},
@@ -76,7 +77,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		mergeOptions = append(mergeOptions, mergo.WithAppendSlice)
 	}
 
-	if err := g.LoadFromDescriptorRegistry(); err != nil {
+	if err := g.loadFromDescriptorRegistry(); err != nil {
 		return nil, err
 	}
 

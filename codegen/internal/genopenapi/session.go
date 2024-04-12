@@ -163,16 +163,16 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 // renderMessageSchemaWithFilter is similar to renderMessageSchema but it removes fields from the pathfilter and
 // renders schemas with modified fields. Fields that do not match remain unaffected.
 func (g *Generator) renderMessageSchemaWithFilter(
-	message *descriptor.Message, filter *pathfilter.Instance) (openAPISchemaConfig, error) {
+	message *descriptor.Message, filter *pathfilter.Instance) (internal.OpenAPISchema, error) {
 
 	originalSchema, err := g.getSchemaForMessage("", message.FQMN())
 	if err != nil {
-		return openAPISchemaConfig{}, fmt.Errorf("failed to get schema for %q: %w", message.FQMN(), err)
+		return internal.OpenAPISchema{}, fmt.Errorf("failed to get schema for %q: %w", message.FQMN(), err)
 	}
 
 	schemaCopy := *originalSchema.Schema
 	schemaCopy.Object.Properties = make(map[string]*openapiv3.Schema)
-	result := openAPISchemaConfig{
+	result := internal.OpenAPISchema{
 		Schema:       &schemaCopy,
 		Dependencies: originalSchema.Dependencies.Copy(),
 	}
@@ -192,18 +192,18 @@ func (g *Generator) renderMessageSchemaWithFilter(
 			if field.GetType() == descriptorpb.FieldDescriptorProto_TYPE_ENUM {
 				enum, err := g.registry.LookupEnum(message.FQMN(), field.GetTypeName())
 				if err != nil {
-					return openAPISchemaConfig{}, fmt.Errorf("failed to find enum %q: %w", field.GetTypeName(), err)
+					return internal.OpenAPISchema{}, fmt.Errorf("failed to find enum %q: %w", field.GetTypeName(), err)
 				}
 				result.Dependencies.Drop(enum.FQEN())
 			}
 		default:
 			underlyingMessage, err := g.registry.LookupMessage(message.FQMN(), field.GetTypeName())
 			if err != nil {
-				return openAPISchemaConfig{}, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+				return internal.OpenAPISchema{}, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
 			}
 			modifiedSchema, err := g.renderMessageSchemaWithFilter(underlyingMessage, instance)
 			if err != nil {
-				return openAPISchemaConfig{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
+				return internal.OpenAPISchema{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
 			}
 			result.Schema.Object.Properties[g.fieldName(field)] = modifiedSchema.Schema
 			result.Dependencies.Drop(underlyingMessage.FQMN())
