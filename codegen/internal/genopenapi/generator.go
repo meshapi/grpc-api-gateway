@@ -15,18 +15,56 @@ type Generator struct {
 	Options
 
 	registry        *descriptor.Registry
-	openapiRegistry *Registry
 	commentRegistry *protocomment.Registry
+
+	// rootDocument is the global and top-level document loaded from the global config.
+	rootDocument *openapiv3.Document
+	// documents are the mapped documents from for each proto file.
+	documents map[*descriptor.File]*openapiv3.Document
+	// schemaNames holds a one to one association of message/enum FQNs to the generated OpenAPI schema name.
+	schemaNames map[string]string
+	// messages holds a map of message FQMNs to parsed configuration.
+	messages map[string]*openAPIMessageConfig
+	// enums holds a map of enum FQENs to parsed configuration.
+	enums map[string]*openAPIEnumConfig
+	// schemas are already processed schemas that can be readily used.
+	schemas map[string]openAPISchemaConfig
+	// services holds a reference to the service and any matched configuration for it.
+	services map[string]*openAPIServiceConfig
 }
 
 func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 	commentRegistry := protocomment.NewRegistry(descriptorRegistry)
-	return &Generator{
+	generator := &Generator{
 		Options:         options,
 		registry:        descriptorRegistry,
 		commentRegistry: commentRegistry,
-		openapiRegistry: NewRegistry(&options, descriptorRegistry, commentRegistry),
+		rootDocument:    nil,
+		documents:       map[*descriptor.File]*openapiv3.Document{},
+		schemaNames:     map[string]string{},
+		messages:        map[string]*openAPIMessageConfig{},
+		enums:           map[string]*openAPIEnumConfig{},
+		schemas:         map[string]openAPISchemaConfig{},
 	}
+
+	generator.schemas[".google.protobuf.Any"] = openAPISchemaConfig{
+		Schema: &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:        openapiv3.TypeSet{openapiv3.TypeObject},
+				Description: "Any contains an arbitrary schema along with a URL to help identify the type of the schema.",
+				Properties: map[string]*openapiv3.Schema{
+					"@type": {
+						Object: openapiv3.SchemaCore{
+							Type:        openapiv3.TypeSet{openapiv3.TypeString},
+							Description: "A URL/resource name that uniquely identifies the type of the schema.",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return generator
 }
 
 func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
@@ -38,7 +76,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		mergeOptions = append(mergeOptions, mergo.WithAppendSlice)
 	}
 
-	if err := g.openapiRegistry.LoadFromDescriptorRegistry(); err != nil {
+	if err := g.LoadFromDescriptorRegistry(); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +93,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		case OutputModePerProtoFile:
 			// TODO: if the document dose not have any schema or paths that was generated,
 			// we should avoid generating the file.
-			doc := g.openapiRegistry.LookupDocument(file)
+			doc := g.LookupDocument(file)
 			if doc == nil {
 				doc = &openapiv3.Document{}
 			}
@@ -74,8 +112,8 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			}
 
 			// Merge with the root document if needed.
-			if g.openapiRegistry.RootDocument != nil {
-				if err := mergo.Merge(doc, g.openapiRegistry.RootDocument, mergeOptions...); err != nil {
+			if g.rootDocument != nil {
+				if err := mergo.Merge(doc, g.rootDocument, mergeOptions...); err != nil {
 					return nil, fmt.Errorf("failed to merge OpenAPI documents: %w", err)
 				}
 			}
@@ -98,7 +136,7 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 		session.Document.Object.Paths = make(map[string]*openapiv3.Path)
 	}
 
-	comments := g.openapiRegistry.commentRegistry.LookupService(service)
+	comments := g.commentRegistry.LookupService(service)
 
 	for _, method := range service.Methods {
 		summary, description := "", ""

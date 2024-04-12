@@ -36,7 +36,7 @@ func (s *Session) includeMessage(location, fqmn string) error {
 		return nil
 	}
 
-	schema, err := s.generator.openapiRegistry.getSchemaForMessage(location, fqmn)
+	schema, err := s.generator.getSchemaForMessage(location, fqmn)
 	if err != nil {
 		return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
 	}
@@ -45,7 +45,7 @@ func (s *Session) includeMessage(location, fqmn string) error {
 		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
 	}
 
-	name, ok := s.generator.openapiRegistry.schemaNames[fqmn]
+	name, ok := s.generator.schemaNames[fqmn]
 	if !ok {
 		return fmt.Errorf("unrecognized message: %s", fqmn)
 	}
@@ -69,7 +69,7 @@ func (s *Session) includeEnum(location, fqen string) error {
 		return nil
 	}
 
-	schema, err := s.generator.openapiRegistry.getSchemaForEnum(location, fqen)
+	schema, err := s.generator.getSchemaForEnum(location, fqen)
 	if err != nil {
 		return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
 	}
@@ -78,7 +78,7 @@ func (s *Session) includeEnum(location, fqen string) error {
 		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
 	}
 
-	name, ok := s.generator.openapiRegistry.schemaNames[fqen]
+	name, ok := s.generator.schemaNames[fqen]
 	if !ok {
 		return fmt.Errorf("unrecognized message: %s", fqen)
 	}
@@ -163,7 +163,7 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 func (g *Generator) renderMessageSchemaWithFilter(
 	message *descriptor.Message, filter *pathfilter.Instance) (openAPISchemaConfig, error) {
 
-	originalSchema, err := g.openapiRegistry.getSchemaForMessage("", message.FQMN())
+	originalSchema, err := g.getSchemaForMessage("", message.FQMN())
 	if err != nil {
 		return openAPISchemaConfig{}, fmt.Errorf("failed to get schema for %q: %w", message.FQMN(), err)
 	}

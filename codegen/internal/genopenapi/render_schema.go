@@ -25,8 +25,8 @@ type fieldSchemaCustomization struct {
 	WriteOnly     bool
 }
 
-func (r *Registry) mergeObjects(base, source any) error {
-	if r.options.MergeWithOverwrite {
+func (g *Generator) mergeObjects(base, source any) error {
+	if g.MergeWithOverwrite {
 		if err := mergo.Merge(base, source); err != nil {
 			return fmt.Errorf("failed to merge: %w", err)
 		}
@@ -37,7 +37,7 @@ func (r *Registry) mergeObjects(base, source any) error {
 	return nil
 }
 
-func (r *Registry) getCustomizedFieldSchema(
+func (g *Generator) getCustomizedFieldSchema(
 	field *descriptor.Field, config *openAPIMessageConfig) (fieldSchemaCustomization, error) {
 	result := fieldSchemaCustomization{}
 
@@ -67,7 +67,7 @@ func (r *Registry) getCustomizedFieldSchema(
 		if result.Schema == nil {
 			result.Schema = schemaFromProto
 		} else {
-			if err := r.mergeObjects(result.Schema, schemaFromProto); err != nil {
+			if err := g.mergeObjects(result.Schema, schemaFromProto); err != nil {
 				return result, err
 			}
 		}
@@ -119,15 +119,15 @@ func renderComment(options *Options, location *descriptorpb.SourceCodeInfo_Locat
 	return builder.String()
 }
 
-func (r *Registry) renderEnumComment(enum *descriptor.Enum, values []string) (string, error) {
-	comments := r.commentRegistry.LookupEnum(enum)
+func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (string, error) {
+	comments := g.commentRegistry.LookupEnum(enum)
 	if comments == nil {
 		return "", nil
 	}
 
-	result := renderComment(r.options, comments.Location) + "\n"
+	result := renderComment(&g.Options, comments.Location) + "\n"
 	for index, value := range values {
-		result += "- " + value + ": " + renderComment(r.options, comments.Values[int32(index)])
+		result += "- " + value + ": " + renderComment(&g.Options, comments.Values[int32(index)])
 	}
 
 	// TODO: handle the template doc.
@@ -135,14 +135,14 @@ func (r *Registry) renderEnumComment(enum *descriptor.Enum, values []string) (st
 	return result, nil
 }
 
-func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
-	enumConfig := r.enums[enum.FQEN()]
-	schema, err := r.getCustomizedEnumSchema(enum, enumConfig)
+func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
+	enumConfig := g.enums[enum.FQEN()]
+	schema, err := g.getCustomizedEnumSchema(enum, enumConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	if r.options.UseEnumNumbers {
+	if g.UseEnumNumbers {
 		values := make([]string, len(enum.Value))
 		hasDefault := false
 		for index, evdp := range enum.Value {
@@ -152,7 +152,7 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			}
 		}
 
-		description, err := r.renderEnumComment(enum, values)
+		description, err := g.renderEnumComment(enum, values)
 		if err != nil {
 			return nil, fmt.Errorf("failed to process comments: %w", err)
 		}
@@ -166,12 +166,12 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 			},
 		}
 
-		if !r.options.OmitEnumDefaultValue && hasDefault {
+		if !g.OmitEnumDefaultValue && hasDefault {
 			generatedSchema.Object.Default = 0
 		}
 
 		if schema != nil {
-			if err := r.mergeObjects(schema, generatedSchema); err != nil {
+			if err := g.mergeObjects(schema, generatedSchema); err != nil {
 				return nil, err
 			}
 
@@ -190,7 +190,7 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 		}
 	}
 
-	description, err := r.renderEnumComment(enum, values)
+	description, err := g.renderEnumComment(enum, values)
 	if err != nil {
 		return nil, fmt.Errorf("failed to process comments: %w", err)
 	}
@@ -204,12 +204,12 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 		},
 	}
 
-	if !r.options.OmitEnumDefaultValue && defaultIndex != -1 {
+	if !g.OmitEnumDefaultValue && defaultIndex != -1 {
 		generatedSchema.Object.Default = values[defaultIndex]
 	}
 
 	if schema != nil {
-		if err := r.mergeObjects(schema, generatedSchema); err != nil {
+		if err := g.mergeObjects(schema, generatedSchema); err != nil {
 			return nil, err
 		}
 
@@ -219,7 +219,7 @@ func (r *Registry) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, e
 	return generatedSchema, nil
 }
 
-func (r *Registry) createSchemaRef(name string) *openapiv3.Schema {
+func (g *Generator) createSchemaRef(name string) *openapiv3.Schema {
 	return &openapiv3.Schema{
 		Object: openapiv3.SchemaCore{
 			Ref: "#/components/schemas/" + name,
@@ -228,8 +228,8 @@ func (r *Registry) createSchemaRef(name string) *openapiv3.Schema {
 }
 
 // schemaNameForFQN returns OpenAPI schema name for any enum or message proto FQN.
-func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
-	result, ok := r.schemaNames[fqn]
+func (g *Generator) schemaNameForFQN(fqn string) (string, error) {
+	result, ok := g.schemaNames[fqn]
 	if !ok {
 		return "", fmt.Errorf("failed to find OpenAPI name for %q", fqn)
 	}
@@ -238,7 +238,7 @@ func (r *Registry) schemaNameForFQN(fqn string) (string, error) {
 }
 
 // renderFieldSchema returns OpenAPI schema for a message field.
-func (r *Registry) renderFieldSchema(
+func (g *Generator) renderFieldSchema(
 	field *descriptor.Field,
 	baseConfig *openapiv3.Schema) (*openapiv3.Schema, schemaDependency, error) {
 
@@ -257,7 +257,7 @@ func (r *Registry) renderFieldSchema(
 			fieldSchema = wellKnownSchema
 			break
 		}
-		msg, err := r.descriptorRegistry.LookupMessage(field.Message.File.GetPackage(), field.GetTypeName())
+		msg, err := g.registry.LookupMessage(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve message %q: %w", field.GetTypeName(), err)
 		}
@@ -270,7 +270,7 @@ func (r *Registry) renderFieldSchema(
 					},
 				},
 			}
-			valueSchema, valueDependency, err := r.renderFieldSchema(msg.Fields[1], nil)
+			valueSchema, valueDependency, err := g.renderFieldSchema(msg.Fields[1], nil)
 			if err != nil {
 				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
 			}
@@ -278,24 +278,24 @@ func (r *Registry) renderFieldSchema(
 			dependency = valueDependency
 			fieldSchema.Object.AdditionalProperties = valueSchema
 		} else {
-			schemaName, err := r.schemaNameForFQN(msg.FQMN())
+			schemaName, err := g.schemaNameForFQN(msg.FQMN())
 			if err != nil {
 				return nil, dependency, err
 			}
-			fieldSchema = r.createSchemaRef(schemaName)
+			fieldSchema = g.createSchemaRef(schemaName)
 			dependency.FQN = msg.FQMN()
 			dependency.Kind = dependencyKindMessage
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		enum, err := r.descriptorRegistry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
+		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
-		schemaName, err := r.schemaNameForFQN(enum.FQEN())
+		schemaName, err := g.schemaNameForFQN(enum.FQEN())
 		if err != nil {
 			return nil, dependency, err
 		}
-		fieldSchema = r.createSchemaRef(schemaName)
+		fieldSchema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
 		dependency.Kind = dependencyKindEnum
 	default:
@@ -321,7 +321,7 @@ func (r *Registry) renderFieldSchema(
 	fieldSchema.Object.Deprecated = field.Options.GetDeprecated()
 
 	if baseConfig != nil {
-		if err := r.mergeObjects(baseConfig, fieldSchema); err != nil {
+		if err := g.mergeObjects(baseConfig, fieldSchema); err != nil {
 			return nil, dependency, err
 		}
 
@@ -351,7 +351,7 @@ func setFieldAnnotations(field *descriptor.Field, customizationObject *fieldSche
 
 // getCustomizedMessageSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
 // schema for a proto message.
-func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
+func (g *Generator) getCustomizedMessageSchema(message *descriptor.Message, config *openAPIMessageConfig) (*openapiv3.Schema, error) {
 	var schema *openapiv3.Schema
 
 	if config != nil {
@@ -372,7 +372,7 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 		if schema == nil {
 			schema = schemaFromProto
 		} else {
-			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
+			if err := g.mergeObjects(schema, schemaFromProto); err != nil {
 				return nil, err
 			}
 		}
@@ -383,7 +383,7 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 
 // getCustomizedEnumSchema looks up config files and the proto extensions to prepare the customized OpenAPI v3
 // schema for a proto message.
-func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAPIEnumConfig) (*openapiv3.Schema, error) {
+func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAPIEnumConfig) (*openapiv3.Schema, error) {
 	var schema *openapiv3.Schema
 
 	if config != nil {
@@ -404,7 +404,7 @@ func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAP
 		if schema == nil {
 			schema = schemaFromProto
 		} else {
-			if err := r.mergeObjects(schema, schemaFromProto); err != nil {
+			if err := g.mergeObjects(schema, schemaFromProto); err != nil {
 				return nil, err
 			}
 		}
@@ -413,9 +413,9 @@ func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAP
 	return schema, nil
 }
 
-func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
-	messageConfig := r.messages[message.FQMN()]
-	schema, err := r.getCustomizedMessageSchema(message, messageConfig)
+func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISchemaConfig, error) {
+	messageConfig := g.messages[message.FQMN()]
+	schema, err := g.getCustomizedMessageSchema(message, messageConfig)
 	if err != nil {
 		return openAPISchemaConfig{}, err
 	}
@@ -442,18 +442,18 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 	schema.Object.Properties = make(map[string]*openapiv3.Schema)
 
 	// handle the title, description and summary here.
-	comment := r.commentRegistry.LookupMessage(message)
+	comment := g.commentRegistry.LookupMessage(message)
 	if comment != nil {
-		schema.Object.Description = renderComment(r.options, comment.Location)
+		schema.Object.Description = renderComment(&g.Options, comment.Location)
 	}
 
 	for index, field := range message.Fields {
-		customFieldSchema, err := r.getCustomizedFieldSchema(field, messageConfig)
+		customFieldSchema, err := g.getCustomizedFieldSchema(field, messageConfig)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
-		fieldSchema, dependency, err := r.renderFieldSchema(field, customFieldSchema.Schema)
+		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema.Schema)
 		if err != nil {
 			return openAPISchemaConfig{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
@@ -464,7 +464,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 		}
 
 		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
-			fieldSchema.Object.Description = renderComment(r.options, comment.Fields[int32(index)])
+			fieldSchema.Object.Description = renderComment(&g.Options, comment.Fields[int32(index)])
 		}
 
 		if customFieldSchema.WriteOnly {
@@ -475,7 +475,7 @@ func (r *Registry) renderMessageSchema(message *descriptor.Message) (openAPISche
 			fieldSchema.Object.ReadOnly = true
 		}
 
-		switch r.options.FieldNameMode {
+		switch g.FieldNameMode {
 		case FieldNameModeJSON:
 			schema.Object.Properties[field.GetJsonName()] = fieldSchema
 			if customFieldSchema.Required {

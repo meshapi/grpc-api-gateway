@@ -100,12 +100,12 @@ func (g *Generator) renderOperation(
 			schema = filteredSchema.Schema
 			dependencies = append(dependencies, filteredSchema.Dependencies...)
 		} else {
-			schemaName, err := g.openapiRegistry.schemaNameForFQN(binding.Method.RequestType.FQMN())
+			schemaName, err := g.schemaNameForFQN(binding.Method.RequestType.FQMN())
 			if err != nil {
 				return nil, dependencies, fmt.Errorf(
 					"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
 			}
-			schema = g.openapiRegistry.createSchemaRef(schemaName)
+			schema = g.createSchemaRef(schemaName)
 			dependencies = append(dependencies, schemaDependency{FQN: binding.Method.RequestType.FQMN(), Kind: dependencyKindMessage})
 		}
 
@@ -151,11 +151,11 @@ func (g *Generator) renderPathParameter(
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
-		schemaName, err := g.openapiRegistry.schemaNameForFQN(enum.FQEN())
+		schemaName, err := g.schemaNameForFQN(enum.FQEN())
 		if err != nil {
 			return nil, dependency, err
 		}
-		schema = g.openapiRegistry.createSchemaRef(schemaName)
+		schema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
 		dependency.Kind = dependencyKindEnum
 	default:
@@ -169,7 +169,7 @@ func (g *Generator) renderPathParameter(
 	}
 
 	var paramName string
-	if config := g.openapiRegistry.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
+	if config := g.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
 		paramName = config.PathParamName
 	} else {
 		switch g.Options.FieldNameMode {
@@ -211,13 +211,13 @@ func (g *Generator) renderPathParameter(
 		}
 	}
 
-	fieldCustomization, err := g.openapiRegistry.getCustomizedFieldSchema(
-		field, g.openapiRegistry.messages[field.Message.FQMN()])
+	fieldCustomization, err := g.getCustomizedFieldSchema(
+		field, g.messages[field.Message.FQMN()])
 	if err != nil {
 		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
-		if err := g.openapiRegistry.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+		if err := g.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
 			return nil, dependency, err
 		}
 
@@ -240,7 +240,7 @@ func (g *Generator) renderQueryParameter(
 	var dependency schemaDependency
 
 	var paramName string
-	if config := g.openapiRegistry.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
+	if config := g.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
 		paramName = config.PathParamName
 	} else {
 		switch g.Options.FieldNameMode {
@@ -300,11 +300,11 @@ func (g *Generator) renderQueryParameter(
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
-		schemaName, err := g.openapiRegistry.schemaNameForFQN(enum.FQEN())
+		schemaName, err := g.schemaNameForFQN(enum.FQEN())
 		if err != nil {
 			return nil, dependency, err
 		}
-		parameter.Object.Schema = g.openapiRegistry.createSchemaRef(schemaName)
+		parameter.Object.Schema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
 		dependency.Kind = dependencyKindEnum
 	default:
@@ -339,13 +339,13 @@ func (g *Generator) renderQueryParameter(
 		}
 	}
 
-	fieldCustomization, err := g.openapiRegistry.getCustomizedFieldSchema(
-		field, g.openapiRegistry.messages[field.Message.FQMN()])
+	fieldCustomization, err := g.getCustomizedFieldSchema(
+		field, g.messages[field.Message.FQMN()])
 	if err != nil {
 		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
-		if err := g.openapiRegistry.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+		if err := g.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
 			return nil, dependency, err
 		}
 

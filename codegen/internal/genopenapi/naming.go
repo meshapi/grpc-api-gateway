@@ -6,8 +6,8 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
 )
 
-func (r *Registry) resolveMessageNames(messages []string) map[string]string {
-	switch r.options.SchemaNamingStrategy {
+func (g *Generator) resolveMessageNames(messages []string) map[string]string {
+	switch g.SchemaNamingStrategy {
 	case SchemaNamingStrategyFQN:
 		return resolveNamesFQN(messages)
 	case SchemaNamingStrategySimple:
