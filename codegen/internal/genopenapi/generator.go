@@ -36,7 +36,7 @@ type Generator struct {
 
 func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 	commentRegistry := protocomment.NewRegistry(descriptorRegistry)
-	generator := &Generator{
+	return &Generator{
 		Options:         options,
 		registry:        descriptorRegistry,
 		commentRegistry: commentRegistry,
@@ -45,27 +45,10 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		schemaNames:     map[string]string{},
 		messages:        map[string]*internal.OpenAPIMessageSpec{},
 		enums:           map[string]*internal.OpenAPIEnumSpec{},
-		schemas:         map[string]internal.OpenAPISchema{},
-	}
-
-	generator.schemas[".google.protobuf.Any"] = internal.OpenAPISchema{
-		Schema: &openapiv3.Schema{
-			Object: openapiv3.SchemaCore{
-				Type:        openapiv3.TypeSet{openapiv3.TypeObject},
-				Description: "Any contains an arbitrary schema along with a URL to help identify the type of the schema.",
-				Properties: map[string]*openapiv3.Schema{
-					"@type": {
-						Object: openapiv3.SchemaCore{
-							Type:        openapiv3.TypeSet{openapiv3.TypeString},
-							Description: "A URL/resource name that uniquely identifies the type of the schema.",
-						},
-					},
-				},
-			},
+		schemas: map[string]internal.OpenAPISchema{
+			".google.protobuf.Any": internal.AnySchema(),
 		},
 	}
-
-	return generator
 }
 
 func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
