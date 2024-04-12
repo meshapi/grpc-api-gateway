@@ -5,6 +5,9 @@
 package pathfilter
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
 )
 
@@ -59,4 +62,13 @@ func (i *Instance) Has(key fqn.Instance) (bool, *Instance) {
 	}
 
 	return true, cursor
+}
+
+func (i *Instance) String() string {
+	builder := &strings.Builder{}
+	fmt.Fprintf(builder, "Excluded: %v - ", i.Excluded)
+	for k, i2 := range i.children {
+		fmt.Fprintf(builder, "%s -> [%s]", k, i2)
+	}
+	return builder.String()
 }

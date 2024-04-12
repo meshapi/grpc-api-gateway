@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/protobuf/types/pluginpb"
 	"gopkg.in/yaml.v3"
@@ -155,4 +156,63 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 			Content: &data,
 		},
 	}, nil
+}
+
+// renderMessageSchemaWithFilter is similar to renderMessageSchema but it removes fields from the pathfilter and
+// renders schemas with modified fields. Fields that do not match remain unaffected.
+func (g *Generator) renderMessageSchemaWithFilter(
+	message *descriptor.Message, filter *pathfilter.Instance) (openAPISchemaConfig, error) {
+
+	originalSchema, err := g.openapiRegistry.getSchemaForMessage("", message.FQMN())
+	if err != nil {
+		return openAPISchemaConfig{}, fmt.Errorf("failed to get schema for %q: %w", message.FQMN(), err)
+	}
+
+	schemaCopy := *originalSchema.Schema
+	schemaCopy.Object.Properties = make(map[string]*openapiv3.Schema)
+	result := openAPISchemaConfig{
+		Schema:       &schemaCopy,
+		Dependencies: originalSchema.Dependencies,
+	}
+
+	// TODO: Update dependencies so they are a map.
+	// TODO: need to update required list as well.
+	for _, field := range message.Fields {
+		impacted, instance := filter.HasString(field.GetName())
+
+		switch {
+		case !impacted:
+			// If unimpacted, just use the same value.
+			switch g.Options.FieldNameMode {
+			case FieldNameModeJSON:
+				result.Schema.Object.Properties[field.GetJsonName()] = originalSchema.Schema.Object.Properties[field.GetJsonName()]
+			case FieldNameModeProto:
+				result.Schema.Object.Properties[field.GetName()] = originalSchema.Schema.Object.Properties[field.GetName()]
+			}
+		case instance.Excluded:
+			// if the field needs to get excluded.
+			// TODO: remove the dropped required field.
+			//if len(result.Schema.Object.Required) > 0 {
+			//}
+		default:
+			underlyingMessage, err := g.registry.LookupMessage(message.FQMN(), field.GetTypeName())
+			if err != nil {
+				return openAPISchemaConfig{}, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+			}
+			modifiedSchema, err := g.renderMessageSchemaWithFilter(underlyingMessage, instance)
+			if err != nil {
+				return openAPISchemaConfig{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
+			}
+			// If unimpacted, just use the same value.
+			switch g.Options.FieldNameMode {
+			case FieldNameModeJSON:
+				result.Schema.Object.Properties[field.GetJsonName()] = modifiedSchema.Schema
+			case FieldNameModeProto:
+				result.Schema.Object.Properties[field.GetName()] = modifiedSchema.Schema
+			}
+			// TODO: deal with the dependencies here.
+		}
+	}
+
+	return result, nil
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -57,6 +58,71 @@ func (g *Generator) renderOperation(
 		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
 			Data: *parameter,
 		})
+	}
+
+	if binding.Body != nil {
+		var bodyFilter *pathfilter.Instance
+		if len(binding.PathParameters) > 0 {
+			bodyFilter = pathfilter.New()
+			for _, param := range binding.PathParameters {
+				bodyFilter.PutString(param.FieldPath.String())
+			}
+
+			if len(binding.Body.FieldPath) > 0 {
+				_, bodyFilter = bodyFilter.HasString(binding.Body.FieldPath.String())
+			}
+		}
+
+		// pull the description, though we likely want to render these operations in a for loop so we can use the same
+		// description.
+
+		// we also might want to use the session here so we don't have to add extra values in the slice.
+		// TODO: if the target is not a message/group type then we just check exclusion and render field.
+
+		// if the target is indeed a message/group, then we look it up and move on.
+
+		var schema *openapiv3.Schema
+		if bodyFilter != nil {
+			// render schema with filter.
+			requestBody := binding.Method.RequestType
+			if len(binding.Body.FieldPath) > 0 {
+				fieldPathMessageType := binding.Body.FieldPath[len(binding.Body.FieldPath)-1].Target.GetTypeName()
+				nestedBody, err := g.registry.LookupMessage(requestBody.FQMN(), fieldPathMessageType)
+				if err != nil {
+					return operation, dependencies, fmt.Errorf("failed to look up %q: %w", fieldPathMessageType, err)
+				}
+				requestBody = nestedBody
+			}
+			filteredSchema, err := g.renderMessageSchemaWithFilter(requestBody, bodyFilter)
+			if err != nil {
+				return operation, dependencies, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
+			}
+			schema = filteredSchema.Schema
+			dependencies = append(dependencies, filteredSchema.Dependencies...)
+		} else {
+			schemaName, err := g.openapiRegistry.schemaNameForFQN(binding.Method.RequestType.FQMN())
+			if err != nil {
+				return nil, dependencies, fmt.Errorf(
+					"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
+			}
+			schema = g.openapiRegistry.createSchemaRef(schemaName)
+			dependencies = append(dependencies, schemaDependency{FQN: binding.Method.RequestType.FQMN(), Kind: dependencyKindMessage})
+		}
+
+		operation.RequestBody = &openapiv3.Ref[openapiv3.RequestBody]{
+			Data: openapiv3.RequestBody{
+				Object: openapiv3.RequestBodyCore{
+					Content: map[string]*openapiv3.MediaType{
+						"application/json": {
+							Object: openapiv3.MediaTypeCore{
+								Schema: schema,
+							},
+						},
+					},
+					Required: true,
+				},
+			},
+		}
 	}
 
 	return operation, dependencies, nil
