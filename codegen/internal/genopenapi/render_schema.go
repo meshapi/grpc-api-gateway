@@ -472,17 +472,10 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISch
 			fieldSchema.Object.ReadOnly = true
 		}
 
-		switch g.FieldNameMode {
-		case FieldNameModeJSON:
-			schema.Object.Properties[field.GetJsonName()] = fieldSchema
-			if customFieldSchema.Required {
-				schema.Object.Required = append(schema.Object.Required, field.GetJsonName())
-			}
-		case FieldNameModeProto:
-			schema.Object.Properties[field.GetName()] = fieldSchema
-			if customFieldSchema.Required {
-				schema.Object.Required = append(schema.Object.Required, field.GetName())
-			}
+		fieldName := g.fieldName(field)
+		schema.Object.Properties[fieldName] = fieldSchema
+		if customFieldSchema.Required {
+			schema.Object.Required = append(schema.Object.Required, fieldName)
 		}
 	}
 

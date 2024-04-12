@@ -3,8 +3,19 @@ package genopenapi
 import (
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
 )
+
+func (g *Generator) fieldName(field *descriptor.Field) string {
+	switch g.FieldNameMode {
+	case FieldNameModeJSON:
+		return field.GetJsonName()
+	case FieldNameModeProto:
+		return field.GetName()
+	}
+	panic("unsupported field type " + g.FieldNameMode.String() + " received")
+}
 
 func (g *Generator) resolveMessageNames(messages []string) map[string]string {
 	switch g.SchemaNamingStrategy {

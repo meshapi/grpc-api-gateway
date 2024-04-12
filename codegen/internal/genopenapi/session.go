@@ -9,6 +9,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 	"gopkg.in/yaml.v3"
 )
@@ -173,10 +174,9 @@ func (g *Generator) renderMessageSchemaWithFilter(
 	schemaCopy.Object.Properties = make(map[string]*openapiv3.Schema)
 	result := openAPISchemaConfig{
 		Schema:       &schemaCopy,
-		Dependencies: originalSchema.Dependencies,
+		Dependencies: originalSchema.Dependencies.Copy(),
 	}
 
-	// TODO: Update dependencies so they are a map.
 	// TODO: need to update required list as well.
 	for _, field := range message.Fields {
 		impacted, instance := filter.HasString(field.GetName())
@@ -184,17 +184,18 @@ func (g *Generator) renderMessageSchemaWithFilter(
 		switch {
 		case !impacted:
 			// If unimpacted, just use the same value.
-			switch g.Options.FieldNameMode {
-			case FieldNameModeJSON:
-				result.Schema.Object.Properties[field.GetJsonName()] = originalSchema.Schema.Object.Properties[field.GetJsonName()]
-			case FieldNameModeProto:
-				result.Schema.Object.Properties[field.GetName()] = originalSchema.Schema.Object.Properties[field.GetName()]
-			}
+			fieldName := g.fieldName(field)
+			result.Schema.Object.Properties[fieldName] = originalSchema.Schema.Object.Properties[fieldName]
 		case instance.Excluded:
-			// if the field needs to get excluded.
-			// TODO: remove the dropped required field.
-			//if len(result.Schema.Object.Required) > 0 {
-			//}
+			// path parameter cannot be excluded and be a non-scalar type so there is only one scenario in which dependencies
+			// need to get updated, if the type is an enum type.
+			if field.GetType() == descriptorpb.FieldDescriptorProto_TYPE_ENUM {
+				enum, err := g.registry.LookupEnum(message.FQMN(), field.GetTypeName())
+				if err != nil {
+					return openAPISchemaConfig{}, fmt.Errorf("failed to find enum %q: %w", field.GetTypeName(), err)
+				}
+				result.Dependencies.Drop(enum.FQEN())
+			}
 		default:
 			underlyingMessage, err := g.registry.LookupMessage(message.FQMN(), field.GetTypeName())
 			if err != nil {
@@ -204,14 +205,8 @@ func (g *Generator) renderMessageSchemaWithFilter(
 			if err != nil {
 				return openAPISchemaConfig{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
 			}
-			// If unimpacted, just use the same value.
-			switch g.Options.FieldNameMode {
-			case FieldNameModeJSON:
-				result.Schema.Object.Properties[field.GetJsonName()] = modifiedSchema.Schema
-			case FieldNameModeProto:
-				result.Schema.Object.Properties[field.GetName()] = modifiedSchema.Schema
-			}
-			// TODO: deal with the dependencies here.
+			result.Schema.Object.Properties[g.fieldName(field)] = modifiedSchema.Schema
+			result.Dependencies.Drop(underlyingMessage.FQMN())
 		}
 	}
 
