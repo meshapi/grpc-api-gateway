@@ -46,7 +46,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		messages:        map[string]*internal.OpenAPIMessageSpec{},
 		enums:           map[string]*internal.OpenAPIEnumSpec{},
 		schemas: map[string]internal.OpenAPISchema{
-			".google.protobuf.Any": internal.AnySchema(),
+			fqmnAny: internal.AnySchema(),
 		},
 	}
 }
@@ -102,7 +102,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				}
 			}
 
-			file, err := g.writeDocument(file.GeneratedFilenamePrefix+".openapi", doc)
+			file, err := g.writeDocument(file.GeneratedFilenamePrefix+openAPIOutputSuffix, doc)
 			if err != nil {
 				return nil, fmt.Errorf("failed to write OpenAPI doc: %w", err)
 			}

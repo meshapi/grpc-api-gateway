@@ -138,14 +138,14 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 		if err := encoder.Encode(doc); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to yaml: %w", err)
 		}
-		extension = "yaml"
+		extension = extYAML
 	case OutputFormatJSON:
 		encoder := json.NewEncoder(content)
 		encoder.SetIndent("", "  ")
 		if err := encoder.Encode(doc); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to json: %w", err)
 		}
-		extension = "json"
+		extension = extJSON
 	default:
 		return nil, fmt.Errorf("unexpected output format: %v", g.OutputFormat)
 	}

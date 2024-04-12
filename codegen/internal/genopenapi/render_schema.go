@@ -100,7 +100,7 @@ func renderComment(options *Options, location *descriptorpb.SourceCodeInfo_Locat
 	for reader.Scan() {
 		line := strings.TrimSpace(reader.Text())
 		if options.RemoveInternalComments {
-			if strings.HasPrefix(line, "(--") && strings.HasSuffix(line, "--)") {
+			if strings.HasPrefix(line, commentInternalOpen) && strings.HasSuffix(line, commentInternalClose) {
 				continue
 			}
 		}
@@ -223,7 +223,7 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 func (g *Generator) createSchemaRef(name string) *openapiv3.Schema {
 	return &openapiv3.Schema{
 		Object: openapiv3.SchemaCore{
-			Ref: "#/components/schemas/" + name,
+			Ref: refPrefix + name,
 		},
 	}
 }
