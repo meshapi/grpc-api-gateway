@@ -1,4 +1,5 @@
-package genopenapi
+// Package openapimap provides code to map openapi config from the proto messages to openapiv3 types.
+package openapimap
 
 import (
 	"fmt"
@@ -9,17 +10,17 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
+func Document(doc *openapi.Document) (*openapiv3.Document, error) {
 	if doc == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(doc.Extensions)
+	extensions, err := Extensions(doc.Extensions)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := mapInfo(doc.Info)
+	info, err := Info(doc.Info)
 	if err != nil {
 		return nil, fmt.Errorf("invalid info object: %w", err)
 	}
@@ -31,12 +32,12 @@ func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
 		Extensions: extensions,
 	}
 
-	result.Object.ExternalDocumentation, err = mapExternalDoc(doc.ExternalDocs)
+	result.Object.ExternalDocumentation, err = ExternalDoc(doc.ExternalDocs)
 	if err != nil {
 		return nil, fmt.Errorf("invalid external doc: %w", err)
 	}
 
-	result.Object.Servers, err = mapServers(doc.Servers)
+	result.Object.Servers, err = Servers(doc.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("invalid servers list: %w", err)
 	}
@@ -50,12 +51,12 @@ func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
 		}
 	}
 
-	result.Object.Tags, err = mapTags(doc.Tags)
+	result.Object.Tags, err = Tags(doc.Tags)
 	if err != nil {
 		return nil, fmt.Errorf("invalid tags list: %w", err)
 	}
 
-	result.Object.Components, err = mapComponents(doc.Components)
+	result.Object.Components, err = Components(doc.Components)
 	if err != nil {
 		return nil, fmt.Errorf("invalid components object: %w", err)
 	}
@@ -63,12 +64,12 @@ func mapDocument(doc *openapi.Document) (*openapiv3.Document, error) {
 	return result, nil
 }
 
-func mapExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExternalDocumentation, error) {
+func ExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExternalDocumentation, error) {
 	if doc == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(doc.Extensions)
+	extensions, err := Extensions(doc.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func mapExternalDoc(doc *openapi.ExternalDocumentation) (*openapiv3.ExternalDocu
 	}, nil
 }
 
-func mapExtensions(table map[string]*structpb.Value) (map[string]any, error) {
+func Extensions(table map[string]*structpb.Value) (map[string]any, error) {
 	if table == nil {
 		return nil, nil
 	}
@@ -98,12 +99,12 @@ func mapExtensions(table map[string]*structpb.Value) (map[string]any, error) {
 	return result, nil
 }
 
-func mapInfo(info *openapi.Info) (*openapiv3.Info, error) {
+func Info(info *openapi.Info) (*openapiv3.Info, error) {
 	if info == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(info.Extensions)
+	extensions, err := Extensions(info.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +121,7 @@ func mapInfo(info *openapi.Info) (*openapiv3.Info, error) {
 	}
 
 	if info.Contact != nil {
-		extensions, err = mapExtensions(info.Contact.Extensions)
+		extensions, err = Extensions(info.Contact.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid contact object: %w", err)
 		}
@@ -136,7 +137,7 @@ func mapInfo(info *openapi.Info) (*openapiv3.Info, error) {
 	}
 
 	if info.License != nil {
-		extensions, err = mapExtensions(info.License.Extensions)
+		extensions, err = Extensions(info.License.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid contact object: %w", err)
 		}
@@ -154,7 +155,7 @@ func mapInfo(info *openapi.Info) (*openapiv3.Info, error) {
 	return result, nil
 }
 
-func mapTags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
+func Tags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 	if len(tags) == 0 {
 		return nil, nil
 	}
@@ -166,12 +167,12 @@ func mapTags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 
 	result := make([]openapiv3.Tag, len(tags))
 	for index, tag := range tags {
-		extensions, err = mapExtensions(tag.Extensions)
+		extensions, err = Extensions(tag.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid tag at index %d: %w", index, err)
 		}
 
-		externalDocs, err = mapExternalDoc(tag.ExternalDocs)
+		externalDocs, err = ExternalDoc(tag.ExternalDocs)
 		if err != nil {
 			return nil, fmt.Errorf("invalid external doc in tag at index %d: %w", index, err)
 		}
@@ -189,12 +190,12 @@ func mapTags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 	return result, nil
 }
 
-func mapServer(server *openapi.Server) (*openapiv3.Server, error) {
+func Server(server *openapi.Server) (*openapiv3.Server, error) {
 	if server == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(server.Extensions)
+	extensions, err := Extensions(server.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +204,7 @@ func mapServer(server *openapi.Server) (*openapiv3.Server, error) {
 	if server.Variables != nil {
 		vars = map[string]openapiv3.ServerVariable{}
 		for name, serverVariable := range server.Variables {
-			serverVarExtensions, err := mapExtensions(serverVariable.Extensions)
+			serverVarExtensions, err := Extensions(serverVariable.Extensions)
 			if err != nil {
 				return nil, fmt.Errorf("invalid server variable %q: %w", name, err)
 			}
@@ -229,14 +230,14 @@ func mapServer(server *openapi.Server) (*openapiv3.Server, error) {
 	}, nil
 }
 
-func mapServers(servers []*openapi.Server) ([]*openapiv3.Server, error) {
+func Servers(servers []*openapi.Server) ([]*openapiv3.Server, error) {
 	if len(servers) == 0 {
 		return nil, nil
 	}
 
 	result := make([]*openapiv3.Server, len(servers))
 	for index, serverFromProto := range servers {
-		server, err := mapServer(serverFromProto)
+		server, err := Server(serverFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid server object at index %d: %w", index, err)
 		}
@@ -246,7 +247,7 @@ func mapServers(servers []*openapi.Server) ([]*openapiv3.Server, error) {
 	return result, nil
 }
 
-func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
+func Schema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 	if schema == nil {
 		return nil, nil
 	}
@@ -271,7 +272,7 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 			UniqueItems:      schema.UniqueItems,
 			MaxProperties:    schema.MaxProperties,
 			MinProperties:    schema.MinProperties,
-			Type:             mapType(schema.Types),
+			Type:             Type(schema.Types),
 			Description:      schema.Description,
 			Default:          schema.Default.AsInterface(),
 			ReadOnly:         schema.ReadyOnly,
@@ -283,52 +284,52 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 
 	var err error
 
-	result.Object.ExternalDocumentation, err = mapExternalDoc(schema.ExternalDocs)
+	result.Object.ExternalDocumentation, err = ExternalDoc(schema.ExternalDocs)
 	if err != nil {
 		return nil, fmt.Errorf("invalid external doc object: %w", err)
 	}
 
-	result.Object.Items, err = mapSchemaItemSpec(schema.Items)
+	result.Object.Items, err = SchemaItemSpec(schema.Items)
 	if err != nil {
 		return nil, fmt.Errorf("invalid schema items list: %w", err)
 	}
 
-	result.Object.Properties, err = mapSchemaMap(schema.Properties)
+	result.Object.Properties, err = SchemaMap(schema.Properties)
 	if err != nil {
 		return nil, fmt.Errorf("invalid properties object: %w", err)
 	}
 
-	result.Object.AdditionalProperties, err = mapSchema(schema.AdditionalProperties)
+	result.Object.AdditionalProperties, err = Schema(schema.AdditionalProperties)
 	if err != nil {
 		return nil, fmt.Errorf("invalid additionalProperties object: %w", err)
 	}
 
-	result.Object.AllOf, err = mapSchemaList(schema.AllOf)
+	result.Object.AllOf, err = SchemaList(schema.AllOf)
 	if err != nil {
 		return nil, fmt.Errorf("invalid allOf object: %w", err)
 	}
 
-	result.Object.AnyOf, err = mapSchemaList(schema.AnyOf)
+	result.Object.AnyOf, err = SchemaList(schema.AnyOf)
 	if err != nil {
 		return nil, fmt.Errorf("invalid anyOf object: %w", err)
 	}
 
-	result.Object.OneOf, err = mapSchemaList(schema.OneOf)
+	result.Object.OneOf, err = SchemaList(schema.OneOf)
 	if err != nil {
 		return nil, fmt.Errorf("invalid oneOf object: %w", err)
 	}
 
-	result.Object.Not, err = mapSchema(schema.Not)
+	result.Object.Not, err = Schema(schema.Not)
 	if err != nil {
 		return nil, fmt.Errorf("invalid not object: %w", err)
 	}
 
-	result.Object.Discriminator, err = mapDiscrimnator(schema.Discriminator)
+	result.Object.Discriminator, err = Discriminator(schema.Discriminator)
 	if err != nil {
 		return nil, fmt.Errorf("invalid discriminator object: %w", err)
 	}
 
-	result.Object.Examples = mapAnySlice(schema.Examples)
+	result.Object.Examples = AnySlice(schema.Examples)
 
 	// Add extra keys, note that in this specific case 'x-' prefix is not necessary.
 	if schema.Extra != nil {
@@ -341,12 +342,12 @@ func mapSchema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 	return result, nil
 }
 
-func mapDiscrimnator(value *openapi.Discriminator) (*openapiv3.Discriminator, error) {
+func Discriminator(value *openapi.Discriminator) (*openapiv3.Discriminator, error) {
 	if value == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(value.Extensions)
+	extensions, err := Extensions(value.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +361,7 @@ func mapDiscrimnator(value *openapi.Discriminator) (*openapiv3.Discriminator, er
 	}, nil
 }
 
-func mapType(types []openapi.SchemaDataType) openapiv3.TypeSet {
+func Type(types []openapi.SchemaDataType) openapiv3.TypeSet {
 	if len(types) == 0 {
 		return nil
 	}
@@ -386,7 +387,7 @@ func mapType(types []openapi.SchemaDataType) openapiv3.TypeSet {
 	return result
 }
 
-func mapSchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
+func SchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
 	if spec == nil {
 		return nil, nil
 	}
@@ -397,7 +398,7 @@ func mapSchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
 			return nil, nil
 		}
 
-		schemas, err := mapSchemaList(spec.List.Items)
+		schemas, err := SchemaList(spec.List.Items)
 		if err != nil {
 			return nil, err
 		}
@@ -405,7 +406,7 @@ func mapSchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
 		return &openapiv3.ItemSpec{Items: schemas}, nil
 
 	case *openapi.Schema_Item_Schema:
-		schema, err := mapSchema(spec.Schema)
+		schema, err := Schema(spec.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema: %w", err)
 		}
@@ -415,14 +416,14 @@ func mapSchemaItemSpec(spec *openapi.Schema_Item) (*openapiv3.ItemSpec, error) {
 	return nil, nil
 }
 
-func mapSchemaList(schemas []*openapi.Schema) ([]*openapiv3.Schema, error) {
+func SchemaList(schemas []*openapi.Schema) ([]*openapiv3.Schema, error) {
 	if len(schemas) == 0 {
 		return nil, nil
 	}
 
 	result := make([]*openapiv3.Schema, len(schemas))
 	for index, schemaFromProto := range schemas {
-		schema, err := mapSchema(schemaFromProto)
+		schema, err := Schema(schemaFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema at index %d: %w", index, err)
 		}
@@ -432,7 +433,7 @@ func mapSchemaList(schemas []*openapi.Schema) ([]*openapiv3.Schema, error) {
 	return result, nil
 }
 
-func mapSchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.Schema, error) {
+func SchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.Schema, error) {
 	if spec == nil {
 		return nil, nil
 	}
@@ -440,7 +441,7 @@ func mapSchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.Schema
 	result := map[string]*openapiv3.Schema{}
 
 	for key, schemaFromProto := range spec {
-		schema, err := mapSchema(schemaFromProto)
+		schema, err := Schema(schemaFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema object for key %q: %w", key, err)
 		}
@@ -450,7 +451,7 @@ func mapSchemaMap(spec map[string]*openapi.Schema) (map[string]*openapiv3.Schema
 	return result, nil
 }
 
-func mapAnyMap(items map[string]*structpb.Value) map[string]any {
+func AnyMap(items map[string]*structpb.Value) map[string]any {
 	if items == nil {
 		return nil
 	}
@@ -463,7 +464,7 @@ func mapAnyMap(items map[string]*structpb.Value) map[string]any {
 	return result
 }
 
-func mapAnySlice(items []*structpb.Value) []any {
+func AnySlice(items []*structpb.Value) []any {
 	if items == nil {
 		return nil
 	}
@@ -476,7 +477,7 @@ func mapAnySlice(items []*structpb.Value) []any {
 	return result
 }
 
-func makeReference[T any](ref *openapi.Reference) *openapiv3.Ref[T] {
+func MakeReference[T any](ref *openapi.Reference) *openapiv3.Ref[T] {
 	return &openapiv3.Ref[T]{
 		Reference: &openapiv3.Reference{
 			Ref:         ref.Uri,
@@ -486,14 +487,14 @@ func makeReference[T any](ref *openapi.Reference) *openapiv3.Ref[T] {
 	}
 }
 
-func mapEncodingMap(encodings map[string]*openapi.Encoding) (map[string]*openapiv3.Encoding, error) {
+func EncodingMap(encodings map[string]*openapi.Encoding) (map[string]*openapiv3.Encoding, error) {
 	if encodings == nil {
 		return nil, nil
 	}
 
 	result := make(map[string]*openapiv3.Encoding, len(encodings))
 	for key, encodingFromProto := range encodings {
-		extensions, err := mapExtensions(encodingFromProto.Extensions)
+		extensions, err := Extensions(encodingFromProto.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid encoding for %q: %w", key, err)
 		}
@@ -508,7 +509,7 @@ func mapEncodingMap(encodings map[string]*openapi.Encoding) (map[string]*openapi
 			Extensions: extensions,
 		}
 
-		encoding.Object.Headers, err = mapHeaderMap(encodingFromProto.Headers)
+		encoding.Object.Headers, err = HeaderMap(encodingFromProto.Headers)
 		if err != nil {
 			return nil, fmt.Errorf("invalid headers object for %q: %w", key, err)
 		}
@@ -519,14 +520,14 @@ func mapEncodingMap(encodings map[string]*openapi.Encoding) (map[string]*openapi
 	return result, nil
 }
 
-func mapMediaTypes(mediaTypes map[string]*openapi.MediaType) (map[string]*openapiv3.MediaType, error) {
+func MediaTypes(mediaTypes map[string]*openapi.MediaType) (map[string]*openapiv3.MediaType, error) {
 	if mediaTypes == nil {
 		return nil, nil
 	}
 
 	result := make(map[string]*openapiv3.MediaType, len(mediaTypes))
 	for key, mediaTypeFromProto := range mediaTypes {
-		extensions, err := mapExtensions(mediaTypeFromProto.Extensions)
+		extensions, err := Extensions(mediaTypeFromProto.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid media type object for %q: %w", key, err)
 		}
@@ -538,17 +539,17 @@ func mapMediaTypes(mediaTypes map[string]*openapi.MediaType) (map[string]*openap
 			Extensions: extensions,
 		}
 
-		mediaType.Object.Schema, err = mapSchema(mediaTypeFromProto.Schema)
+		mediaType.Object.Schema, err = Schema(mediaTypeFromProto.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema object for %q: %w", key, err)
 		}
 
-		mediaType.Object.Examples, err = mapStructuredExampleMap(mediaTypeFromProto.Examples)
+		mediaType.Object.Examples, err = StructuredExampleMap(mediaTypeFromProto.Examples)
 		if err != nil {
 			return nil, fmt.Errorf("invalid examples list for %q: %w", key, err)
 		}
 
-		mediaType.Object.Encoding, err = mapEncodingMap(mediaTypeFromProto.Encoding)
+		mediaType.Object.Encoding, err = EncodingMap(mediaTypeFromProto.Encoding)
 		if err != nil {
 			return nil, fmt.Errorf("invalid encoding object for %q: %w", key, err)
 		}
@@ -559,7 +560,7 @@ func mapMediaTypes(mediaTypes map[string]*openapi.MediaType) (map[string]*openap
 	return result, nil
 }
 
-func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.Ref[openapiv3.Header], error) {
+func HeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.Ref[openapiv3.Header], error) {
 	if headerMap == nil {
 		return nil, nil
 	}
@@ -567,11 +568,11 @@ func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.R
 	result := make(map[string]*openapiv3.Ref[openapiv3.Header], len(headerMap))
 	for key, protoHeader := range headerMap {
 		if protoHeader.Ref != nil {
-			result[key] = makeReference[openapiv3.Header](protoHeader.Ref)
+			result[key] = MakeReference[openapiv3.Header](protoHeader.Ref)
 			continue
 		}
 
-		extensions, err := mapExtensions(protoHeader.Extensions)
+		extensions, err := Extensions(protoHeader.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid header for %q: %w", key, err)
 		}
@@ -591,17 +592,17 @@ func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.R
 			},
 		}
 
-		header.Data.Object.Schema, err = mapSchema(protoHeader.Schema)
+		header.Data.Object.Schema, err = Schema(protoHeader.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema for %q: %w", key, err)
 		}
 
-		header.Data.Object.Examples, err = mapStructuredExampleMap(protoHeader.Examples)
+		header.Data.Object.Examples, err = StructuredExampleMap(protoHeader.Examples)
 		if err != nil {
 			return nil, fmt.Errorf("invalid examples list: %w", err)
 		}
 
-		header.Data.Object.Content, err = mapMediaTypes(protoHeader.Content)
+		header.Data.Object.Content, err = MediaTypes(protoHeader.Content)
 		if err != nil {
 			return nil, fmt.Errorf("invalid media types object: %w", err)
 		}
@@ -612,7 +613,7 @@ func mapHeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.R
 	return result, nil
 }
 
-func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*openapiv3.Ref[openapiv3.Parameter], error) {
+func ParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*openapiv3.Ref[openapiv3.Parameter], error) {
 	if parameterMap == nil {
 		return nil, nil
 	}
@@ -620,11 +621,11 @@ func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*op
 	result := make(map[string]*openapiv3.Ref[openapiv3.Parameter], len(parameterMap))
 	for key, paramFromProto := range parameterMap {
 		if paramFromProto.Ref != nil {
-			result[key] = makeReference[openapiv3.Parameter](paramFromProto.Ref)
+			result[key] = MakeReference[openapiv3.Parameter](paramFromProto.Ref)
 			continue
 		}
 
-		extensions, err := mapExtensions(paramFromProto.Extensions)
+		extensions, err := Extensions(paramFromProto.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid parameter for %q: %w", key, err)
 		}
@@ -647,17 +648,17 @@ func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*op
 			},
 		}
 
-		header.Data.Object.Schema, err = mapSchema(paramFromProto.Schema)
+		header.Data.Object.Schema, err = Schema(paramFromProto.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("invalid schema for %q: %w", key, err)
 		}
 
-		header.Data.Object.Examples, err = mapStructuredExampleMap(paramFromProto.Examples)
+		header.Data.Object.Examples, err = StructuredExampleMap(paramFromProto.Examples)
 		if err != nil {
 			return nil, fmt.Errorf("invalid examples list: %w", err)
 		}
 
-		header.Data.Object.Content, err = mapMediaTypes(paramFromProto.Content)
+		header.Data.Object.Content, err = MediaTypes(paramFromProto.Content)
 		if err != nil {
 			return nil, fmt.Errorf("invalid media types object: %w", err)
 		}
@@ -668,14 +669,14 @@ func mapParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*op
 	return result, nil
 }
 
-func mapStructuredExampleMap(examples map[string]*openapi.Example) (map[string]*openapiv3.Ref[openapiv3.Example], error) {
+func StructuredExampleMap(examples map[string]*openapi.Example) (map[string]*openapiv3.Ref[openapiv3.Example], error) {
 	if examples == nil {
 		return nil, nil
 	}
 
 	result := make(map[string]*openapiv3.Ref[openapiv3.Example], len(examples))
 	for key, exampleFromProto := range examples {
-		example, err := mapStructuredExample(exampleFromProto)
+		example, err := StructuredExample(exampleFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid example at %q: %w", key, err)
 		}
@@ -686,16 +687,16 @@ func mapStructuredExampleMap(examples map[string]*openapi.Example) (map[string]*
 	return result, nil
 }
 
-func mapStructuredExample(example *openapi.Example) (*openapiv3.Ref[openapiv3.Example], error) {
+func StructuredExample(example *openapi.Example) (*openapiv3.Ref[openapiv3.Example], error) {
 	if example == nil {
 		return nil, nil
 	}
 
 	if example.Ref != nil {
-		return makeReference[openapiv3.Example](example.Ref), nil
+		return MakeReference[openapiv3.Example](example.Ref), nil
 	}
 
-	extensions, err := mapExtensions(example.Extensions)
+	extensions, err := Extensions(example.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -715,16 +716,16 @@ func mapStructuredExample(example *openapi.Example) (*openapiv3.Ref[openapiv3.Ex
 	return result, nil
 }
 
-func mapResponse(response *openapi.Response) (*openapiv3.Ref[openapiv3.Response], error) {
+func Response(response *openapi.Response) (*openapiv3.Ref[openapiv3.Response], error) {
 	if response == nil {
 		return nil, nil
 	}
 
 	if response.Ref != nil {
-		return makeReference[openapiv3.Response](response.Ref), nil
+		return MakeReference[openapiv3.Response](response.Ref), nil
 	}
 
-	extensions, err := mapExtensions(response.Extensions)
+	extensions, err := Extensions(response.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -738,17 +739,17 @@ func mapResponse(response *openapi.Response) (*openapiv3.Ref[openapiv3.Response]
 		},
 	}
 
-	result.Data.Object.Headers, err = mapHeaderMap(response.Headers)
+	result.Data.Object.Headers, err = HeaderMap(response.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("invalid headers object: %w", err)
 	}
 
-	result.Data.Object.Content, err = mapMediaTypes(response.Content)
+	result.Data.Object.Content, err = MediaTypes(response.Content)
 	if err != nil {
 		return nil, fmt.Errorf("invalid content object: %w", err)
 	}
 
-	result.Data.Object.Links, err = mapLinksMap(response.Links)
+	result.Data.Object.Links, err = LinksMap(response.Links)
 	if err != nil {
 		return nil, fmt.Errorf("invalid links object: %w", err)
 	}
@@ -756,14 +757,14 @@ func mapResponse(response *openapi.Response) (*openapiv3.Ref[openapiv3.Response]
 	return result, nil
 }
 
-func mapResponseMap(responses map[string]*openapi.Response) (map[string]*openapiv3.Ref[openapiv3.Response], error) {
+func ResponseMap(responses map[string]*openapi.Response) (map[string]*openapiv3.Ref[openapiv3.Response], error) {
 	if responses == nil {
 		return nil, nil
 	}
 
 	result := make(map[string]*openapiv3.Ref[openapiv3.Response], len(responses))
 	for key, responseFromProto := range responses {
-		response, err := mapResponse(responseFromProto)
+		response, err := Response(responseFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid response for %q: %w", key, err)
 		}
@@ -773,7 +774,7 @@ func mapResponseMap(responses map[string]*openapi.Response) (map[string]*openapi
 	return result, nil
 }
 
-func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[openapiv3.Link], error) {
+func LinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[openapiv3.Link], error) {
 	if links == nil {
 		return nil, nil
 	}
@@ -781,11 +782,11 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 	result := make(map[string]*openapiv3.Ref[openapiv3.Link], len(links))
 	for key, linkFromProto := range links {
 		if linkFromProto.Ref != nil {
-			result[key] = makeReference[openapiv3.Link](linkFromProto.Ref)
+			result[key] = MakeReference[openapiv3.Link](linkFromProto.Ref)
 			continue
 		}
 
-		extensions, err := mapExtensions(linkFromProto.Extensions)
+		extensions, err := Extensions(linkFromProto.Extensions)
 		if err != nil {
 			return nil, fmt.Errorf("invalid link for %q: %w", key, err)
 		}
@@ -793,7 +794,7 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 		link := &openapiv3.Ref[openapiv3.Link]{
 			Data: openapiv3.Link{
 				Object: openapiv3.LinkCore{
-					Parameters:  mapAnyMap(linkFromProto.Parameters),
+					Parameters:  AnyMap(linkFromProto.Parameters),
 					RequestBody: linkFromProto.RequestBody.AsInterface(),
 					Description: linkFromProto.Description,
 				},
@@ -808,7 +809,7 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 			link.Data.Object.OperationRef = operation.OperationRef
 		}
 
-		link.Data.Object.Server, err = mapServer(linkFromProto.Server)
+		link.Data.Object.Server, err = Server(linkFromProto.Server)
 		if err != nil {
 			return nil, fmt.Errorf("invalid server object for %q: %w", key, err)
 		}
@@ -819,16 +820,16 @@ func mapLinksMap(links map[string]*openapi.Link) (map[string]*openapiv3.Ref[open
 	return result, nil
 }
 
-func mapRequestBody(requestBody *openapi.RequestBody) (*openapiv3.Ref[openapiv3.RequestBody], error) {
+func RequestBody(requestBody *openapi.RequestBody) (*openapiv3.Ref[openapiv3.RequestBody], error) {
 	if requestBody == nil {
 		return nil, nil
 	}
 
 	if requestBody.Ref != nil {
-		return makeReference[openapiv3.RequestBody](requestBody.Ref), nil
+		return MakeReference[openapiv3.RequestBody](requestBody.Ref), nil
 	}
 
-	extensions, err := mapExtensions(requestBody.Extensions)
+	extensions, err := Extensions(requestBody.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -843,7 +844,7 @@ func mapRequestBody(requestBody *openapi.RequestBody) (*openapiv3.Ref[openapiv3.
 		},
 	}
 
-	result.Data.Object.Content, err = mapMediaTypes(requestBody.Content)
+	result.Data.Object.Content, err = MediaTypes(requestBody.Content)
 	if err != nil {
 		return nil, fmt.Errorf("invalid content object: %w", err)
 	}
@@ -851,7 +852,7 @@ func mapRequestBody(requestBody *openapi.RequestBody) (*openapiv3.Ref[openapiv3.
 	return result, nil
 }
 
-func mapRequestBodyMap(
+func RequestBodyMap(
 	requestBodies map[string]*openapi.RequestBody) (map[string]*openapiv3.Ref[openapiv3.RequestBody], error) {
 
 	if requestBodies == nil {
@@ -860,7 +861,7 @@ func mapRequestBodyMap(
 
 	result := make(map[string]*openapiv3.Ref[openapiv3.RequestBody], len(requestBodies))
 	for key, requestBodyFromProto := range requestBodies {
-		requestBody, err := mapRequestBody(requestBodyFromProto)
+		requestBody, err := RequestBody(requestBodyFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid request body for %q: %w", key, err)
 		}
@@ -871,12 +872,12 @@ func mapRequestBodyMap(
 	return result, nil
 }
 
-func mapOAuthFlow(flow *openapi.SecurityScheme_OAuthFlow) (*openapiv3.OAuthFlow, error) {
+func OAuthFlow(flow *openapi.SecurityScheme_OAuthFlow) (*openapiv3.OAuthFlow, error) {
 	if flow == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(flow.Extensions)
+	extensions, err := Extensions(flow.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -892,12 +893,12 @@ func mapOAuthFlow(flow *openapi.SecurityScheme_OAuthFlow) (*openapiv3.OAuthFlow,
 	}, nil
 }
 
-func mapOAuthFlows(flows *openapi.SecurityScheme_OAuthFlows) (*openapiv3.OAuthFlows, error) {
+func OAuthFlows(flows *openapi.SecurityScheme_OAuthFlows) (*openapiv3.OAuthFlows, error) {
 	if flows == nil {
 		return nil, nil
 	}
 
-	extensions, err := mapExtensions(flows.Extensions)
+	extensions, err := Extensions(flows.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -907,22 +908,22 @@ func mapOAuthFlows(flows *openapi.SecurityScheme_OAuthFlows) (*openapiv3.OAuthFl
 		Extensions: extensions,
 	}
 
-	result.Object.Implicit, err = mapOAuthFlow(flows.Implicit)
+	result.Object.Implicit, err = OAuthFlow(flows.Implicit)
 	if err != nil {
 		return nil, fmt.Errorf("invalid implicit oauth flow: %w", err)
 	}
 
-	result.Object.Password, err = mapOAuthFlow(flows.Password)
+	result.Object.Password, err = OAuthFlow(flows.Password)
 	if err != nil {
 		return nil, fmt.Errorf("invalid password oauth flow: %w", err)
 	}
 
-	result.Object.AuthorizationCode, err = mapOAuthFlow(flows.AuthorizationCode)
+	result.Object.AuthorizationCode, err = OAuthFlow(flows.AuthorizationCode)
 	if err != nil {
 		return nil, fmt.Errorf("invalid authorizationCode oauth flow: %w", err)
 	}
 
-	result.Object.ClientCredentials, err = mapOAuthFlow(flows.ClientCredentials)
+	result.Object.ClientCredentials, err = OAuthFlow(flows.ClientCredentials)
 	if err != nil {
 		return nil, fmt.Errorf("invalid clientCredentials oauth flow: %w", err)
 	}
@@ -930,16 +931,16 @@ func mapOAuthFlows(flows *openapi.SecurityScheme_OAuthFlows) (*openapiv3.OAuthFl
 	return result, nil
 }
 
-func mapSecurityScheme(scheme *openapi.SecurityScheme) (*openapiv3.Ref[openapiv3.SecurityScheme], error) {
+func SecurityScheme(scheme *openapi.SecurityScheme) (*openapiv3.Ref[openapiv3.SecurityScheme], error) {
 	if scheme == nil {
 		return nil, nil
 	}
 
 	if scheme.Ref != nil {
-		return makeReference[openapiv3.SecurityScheme](scheme.Ref), nil
+		return MakeReference[openapiv3.SecurityScheme](scheme.Ref), nil
 	}
 
-	extensions, err := mapExtensions(scheme.Extensions)
+	extensions, err := Extensions(scheme.Extensions)
 	if err != nil {
 		return nil, err
 	}
@@ -959,7 +960,7 @@ func mapSecurityScheme(scheme *openapi.SecurityScheme) (*openapiv3.Ref[openapiv3
 		},
 	}
 
-	result.Data.Object.Flows, err = mapOAuthFlows(scheme.Flows)
+	result.Data.Object.Flows, err = OAuthFlows(scheme.Flows)
 	if err != nil {
 		return nil, fmt.Errorf("invalid flows object: %w", err)
 	}
@@ -967,7 +968,7 @@ func mapSecurityScheme(scheme *openapi.SecurityScheme) (*openapiv3.Ref[openapiv3
 	return result, nil
 }
 
-func mapSecuritySchemeMap(
+func SecuritySchemeMap(
 	securitySchemes map[string]*openapi.SecurityScheme) (map[string]*openapiv3.Ref[openapiv3.SecurityScheme], error) {
 	if securitySchemes == nil {
 		return nil, nil
@@ -975,7 +976,7 @@ func mapSecuritySchemeMap(
 
 	result := make(map[string]*openapiv3.Ref[openapiv3.SecurityScheme], len(securitySchemes))
 	for key, securitySchemeFromProto := range securitySchemes {
-		securityScheme, err := mapSecurityScheme(securitySchemeFromProto)
+		securityScheme, err := SecurityScheme(securitySchemeFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid securityScheme for %q: %w", key, err)
 		}
@@ -986,7 +987,7 @@ func mapSecuritySchemeMap(
 	return result, nil
 }
 
-func mapComponents(components *openapi.Components) (*openapiv3.Components, error) {
+func Components(components *openapi.Components) (*openapiv3.Components, error) {
 	if components == nil {
 		return nil, nil
 	}
@@ -997,47 +998,47 @@ func mapComponents(components *openapi.Components) (*openapiv3.Components, error
 		Object: openapiv3.ComponentsCore{},
 	}
 
-	result.Object.Schemas, err = mapSchemaMap(components.Schemas)
+	result.Object.Schemas, err = SchemaMap(components.Schemas)
 	if err != nil {
 		return nil, fmt.Errorf("invalid schemas object: %w", err)
 	}
 
-	result.Object.Responses, err = mapResponseMap(components.Responses)
+	result.Object.Responses, err = ResponseMap(components.Responses)
 	if err != nil {
 		return nil, fmt.Errorf("invalid responses object: %w", err)
 	}
 
-	result.Object.Parameters, err = mapParameterMap(components.Parameters)
+	result.Object.Parameters, err = ParameterMap(components.Parameters)
 	if err != nil {
 		return nil, fmt.Errorf("invalid paramters object: %w", err)
 	}
 
-	result.Object.Examples, err = mapStructuredExampleMap(components.Examples)
+	result.Object.Examples, err = StructuredExampleMap(components.Examples)
 	if err != nil {
 		return nil, fmt.Errorf("invalid examples object: %w", err)
 	}
 
-	result.Object.RequestBodies, err = mapRequestBodyMap(components.RequestBodies)
+	result.Object.RequestBodies, err = RequestBodyMap(components.RequestBodies)
 	if err != nil {
 		return nil, fmt.Errorf("invalid requestBodies object: %w", err)
 	}
 
-	result.Object.Headers, err = mapHeaderMap(components.Headers)
+	result.Object.Headers, err = HeaderMap(components.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("invalid headers object: %w", err)
 	}
 
-	result.Object.SecuritySchemes, err = mapSecuritySchemeMap(components.SecuritySchemes)
+	result.Object.SecuritySchemes, err = SecuritySchemeMap(components.SecuritySchemes)
 	if err != nil {
 		return nil, fmt.Errorf("invalid securitySchemes object: %w", err)
 	}
 
-	result.Object.Links, err = mapLinksMap(components.Links)
+	result.Object.Links, err = LinksMap(components.Links)
 	if err != nil {
 		return nil, fmt.Errorf("invalid links object: %w", err)
 	}
 
-	result.Extensions, err = mapExtensions(components.Extensions)
+	result.Extensions, err = Extensions(components.Extensions)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
@@ -42,7 +43,7 @@ func (r *Registry) getCustomizedFieldSchema(
 
 	if config != nil && config.Fields != nil {
 		if fieldSchema := config.Fields[field.GetName()]; fieldSchema != nil {
-			schemaFromConfig, err := mapSchema(fieldSchema)
+			schemaFromConfig, err := openapimap.Schema(fieldSchema)
 			if err != nil {
 				return result, fmt.Errorf("failed to map field schema from %q: %w", config.Filename, err)
 			}
@@ -58,7 +59,7 @@ func (r *Registry) getCustomizedFieldSchema(
 	}
 
 	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
-		schemaFromProto, err := mapSchema(protoSchema)
+		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
 			return result, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
 		}
@@ -354,7 +355,7 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 	var schema *openapiv3.Schema
 
 	if config != nil {
-		schemaFromConfig, err := mapSchema(config.Schema)
+		schemaFromConfig, err := openapimap.Schema(config.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map message schema from %q: %w", config.Filename, err)
 		}
@@ -363,7 +364,7 @@ func (r *Registry) getCustomizedMessageSchema(message *descriptor.Message, confi
 	}
 
 	if protoSchema, ok := proto.GetExtension(message.Options, api.E_OpenapiSchema).(*openapi.Schema); ok && protoSchema != nil {
-		schemaFromProto, err := mapSchema(protoSchema)
+		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map message schema from %q: %w", message.File.GetName(), err)
 		}
@@ -386,7 +387,7 @@ func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAP
 	var schema *openapiv3.Schema
 
 	if config != nil {
-		schemaFromConfig, err := mapSchema(config.Schema)
+		schemaFromConfig, err := openapimap.Schema(config.Schema)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map enum schema from %q: %w", config.Filename, err)
 		}
@@ -395,7 +396,7 @@ func (r *Registry) getCustomizedEnumSchema(enum *descriptor.Enum, config *openAP
 	}
 
 	if protoSchema, ok := proto.GetExtension(enum.Options, api.E_OpenapiEnum).(*openapi.Schema); ok && protoSchema != nil {
-		schemaFromProto, err := mapSchema(protoSchema)
+		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map enum schema from %q: %w", enum.File.GetName(), err)
 		}

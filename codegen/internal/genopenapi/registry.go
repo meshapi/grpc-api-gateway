@@ -18,6 +18,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 )
@@ -142,7 +143,7 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 			return fmt.Errorf("failed to load global OpenAPI config file: %w", err)
 		}
 
-		r.RootDocument, err = mapDocument(doc.Document)
+		r.RootDocument, err = openapimap.Document(doc.Document)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI document in %q: %w", configPath, err)
 		}
@@ -174,7 +175,7 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 		var doc *openapiv3.Document
 
 		if configFromFile.OpenAPISpec != nil && configFromFile.Document != nil {
-			doc, err = mapDocument(configFromFile.Document)
+			doc, err = openapimap.Document(configFromFile.Document)
 			if err != nil {
 				return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
 			}
@@ -197,7 +198,7 @@ func (r *Registry) LoadFromDescriptorRegistry() error {
 
 		configFromProto, ok := proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
 		if ok && configFromProto != nil {
-			docFromProto, err := mapDocument(configFromProto)
+			docFromProto, err := openapimap.Document(configFromProto)
 			if err != nil {
 				return fmt.Errorf("invalid OpenAPI document in proto file %q: %w", filePath, err)
 			}
