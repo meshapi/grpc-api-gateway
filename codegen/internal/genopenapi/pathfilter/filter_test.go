@@ -18,26 +18,32 @@ func TestFilter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		Prefix      string
-		Has         bool
-		ChildPrefix string
-		ChildHas    bool
+		Prefix        string
+		Has           bool
+		Excluded      bool
+		ChildPrefix   string
+		ChildHas      bool
+		ChildExcluded bool
 	}{
 		{
-			Prefix:      "a",
-			Has:         true,
-			ChildPrefix: "b.c",
-			ChildHas:    true,
+			Prefix:        "a",
+			Excluded:      false,
+			Has:           true,
+			ChildPrefix:   "b.c",
+			ChildHas:      true,
+			ChildExcluded: true,
 		},
 		{
 			Prefix:      "a.b.c",
 			Has:         true,
+			Excluded:    true,
 			ChildPrefix: "x",
 			ChildHas:    false,
 		},
 		{
 			Prefix:      "a",
 			Has:         true,
+			Excluded:    false,
 			ChildPrefix: "d",
 			ChildHas:    false,
 		},
@@ -46,8 +52,9 @@ func TestFilter(t *testing.T) {
 			Has:    false,
 		},
 		{
-			Prefix: "x.y.z",
-			Has:    true,
+			Prefix:   "x.y.z",
+			Has:      true,
+			Excluded: true,
 		},
 	}
 
@@ -64,6 +71,11 @@ func TestFilter(t *testing.T) {
 			if tt.ChildHas && child == nil {
 				t.Fatal("child instance is not available")
 			}
+
+			if tt.Excluded != child.Excluded {
+				t.Fatalf("expected excluded %v, received %v", tt.Excluded, child.Excluded)
+			}
+
 			if has, _ := child.HasString(tt.ChildPrefix); has != tt.ChildHas {
 				t.Fatalf("expected child %v, received %v", tt.ChildHas, !tt.ChildHas)
 			}

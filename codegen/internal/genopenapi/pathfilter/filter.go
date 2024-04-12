@@ -10,10 +10,11 @@ import (
 
 type Instance struct {
 	children map[string]*Instance
+	Excluded bool
 }
 
-func New() Instance {
-	return Instance{}
+func New() *Instance {
+	return &Instance{}
 }
 
 func (i *Instance) PutString(key string) {
@@ -35,6 +36,7 @@ func (i *Instance) Put(key fqn.Instance) {
 			cursor = instance
 		}
 	}
+	cursor.Excluded = true
 }
 
 func (i *Instance) HasString(key string) (bool, *Instance) {
