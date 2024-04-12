@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/protobuf/types/pluginpb"
@@ -89,16 +90,16 @@ func (s *Session) includeEnum(location, fqen string) error {
 	return nil
 }
 
-func (s *Session) includeDependencies(location string, dependencies []schemaDependency) error {
-	for _, dependency := range dependencies {
+func (s *Session) includeDependencies(location string, dependencies internal.SchemaDependencyStore) error {
+	for fqn, dependency := range dependencies {
 		switch dependency.Kind {
-		case dependencyKindMessage:
-			if err := s.includeMessage(location, dependency.FQN); err != nil {
-				return fmt.Errorf("failed to include message dependency %q: %w", dependency.FQN, err)
+		case internal.DependencyKindMessage:
+			if err := s.includeMessage(location, fqn); err != nil {
+				return fmt.Errorf("failed to include message dependency %q: %w", fqn, err)
 			}
-		case dependencyKindEnum:
-			if err := s.includeEnum(location, dependency.FQN); err != nil {
-				return fmt.Errorf("failed to include enum dependency %q: %w", dependency.FQN, err)
+		case internal.DependencyKindEnum:
+			if err := s.includeEnum(location, fqn); err != nil {
+				return fmt.Errorf("failed to include enum dependency %q: %w", fqn, err)
 			}
 		}
 	}

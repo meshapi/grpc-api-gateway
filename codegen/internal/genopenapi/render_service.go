@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
@@ -12,10 +13,10 @@ import (
 )
 
 func (g *Generator) renderOperation(
-	binding *descriptor.Binding) (*openapiv3.OperationCore, []schemaDependency, error) {
+	binding *descriptor.Binding) (*openapiv3.OperationCore, internal.SchemaDependencyStore, error) {
 	operation := &openapiv3.OperationCore{}
 
-	var dependencies []schemaDependency
+	var dependencies internal.SchemaDependencyStore
 
 	if !g.DisableServiceTags {
 		tag := binding.Method.Service.GetName()
@@ -36,7 +37,7 @@ func (g *Generator) renderOperation(
 		}
 
 		if dependency.IsSet() {
-			dependencies = append(dependencies, dependency)
+			dependencies = internal.AddDependency(dependencies, dependency)
 		}
 
 		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
@@ -52,7 +53,7 @@ func (g *Generator) renderOperation(
 		}
 
 		if dependency.IsSet() {
-			dependencies = append(dependencies, dependency)
+			dependencies = internal.AddDependency(dependencies, dependency)
 		}
 
 		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
@@ -98,7 +99,7 @@ func (g *Generator) renderOperation(
 				return operation, dependencies, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
 			}
 			schema = filteredSchema.Schema
-			dependencies = append(dependencies, filteredSchema.Dependencies...)
+			dependencies = internal.AddDependencies(dependencies, filteredSchema.Dependencies)
 		} else {
 			schemaName, err := g.schemaNameForFQN(binding.Method.RequestType.FQMN())
 			if err != nil {
@@ -106,7 +107,10 @@ func (g *Generator) renderOperation(
 					"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
 			}
 			schema = g.createSchemaRef(schemaName)
-			dependencies = append(dependencies, schemaDependency{FQN: binding.Method.RequestType.FQMN(), Kind: dependencyKindMessage})
+			dependencies = internal.AddDependency(dependencies, internal.SchemaDependency{
+				FQN:  binding.Method.RequestType.FQMN(),
+				Kind: internal.DependencyKindMessage,
+			})
 		}
 
 		operation.RequestBody = &openapiv3.Ref[openapiv3.RequestBody]{
@@ -129,12 +133,12 @@ func (g *Generator) renderOperation(
 }
 
 func (g *Generator) renderPathParameter(
-	param *descriptor.Parameter) (*openapiv3.Parameter, schemaDependency, error) {
+	param *descriptor.Parameter) (*openapiv3.Parameter, internal.SchemaDependency, error) {
 
 	field := param.Target
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 	var schema *openapiv3.Schema
-	var dependency schemaDependency
+	var dependency internal.SchemaDependency
 
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
@@ -157,7 +161,7 @@ func (g *Generator) renderPathParameter(
 		}
 		schema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
-		dependency.Kind = dependencyKindEnum
+		dependency.Kind = internal.DependencyKindEnum
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		schema = &openapiv3.Schema{
@@ -233,11 +237,11 @@ func (g *Generator) renderPathParameter(
 
 func (g *Generator) renderQueryParameter(
 	param *descriptor.QueryParameter,
-	baseConfig *openapiv3.Schema) (*openapiv3.Parameter, schemaDependency, error) {
+	baseConfig *openapiv3.Schema) (*openapiv3.Parameter, internal.SchemaDependency, error) {
 
 	field := param.Target()
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
-	var dependency schemaDependency
+	var dependency internal.SchemaDependency
 
 	var paramName string
 	if config := g.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
@@ -306,7 +310,7 @@ func (g *Generator) renderQueryParameter(
 		}
 		parameter.Object.Schema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
-		dependency.Kind = dependencyKindEnum
+		dependency.Kind = internal.DependencyKindEnum
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		parameter.Object.Schema = &openapiv3.Schema{

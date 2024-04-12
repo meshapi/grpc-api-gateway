@@ -18,15 +18,9 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
-)
-
-type dependencyKind uint8
-
-const (
-	dependencyKindEnum dependencyKind = iota
-	dependencyKindMessage
 )
 
 // openAPIConfig is a wrapper around *api.OpenAPISpec with additional filename context.
@@ -55,21 +49,12 @@ type openAPIEnumConfig struct {
 	sourceInfo
 }
 
-type schemaDependency struct {
-	FQN  string
-	Kind dependencyKind
-}
-
-func (s schemaDependency) IsSet() bool {
-	return s.FQN != ""
-}
-
 type openAPISchemaConfig struct {
 	// Schema is the already mapped and processed OpenAPI schema for a proto message/enum.
 	Schema *openapiv3.Schema
 	// Dependencies is the list of enum or proto message dependencies that must be included in the same
 	// OpenAPI document.
-	Dependencies []schemaDependency
+	Dependencies internal.SchemaDependencyStore
 }
 
 func (g *Generator) LoadFromDescriptorRegistry() error {

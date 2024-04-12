@@ -10,6 +10,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/genproto/googleapis/api/annotations"
@@ -240,19 +241,15 @@ func (g *Generator) schemaNameForFQN(fqn string) (string, error) {
 // renderFieldSchema returns OpenAPI schema for a message field.
 func (g *Generator) renderFieldSchema(
 	field *descriptor.Field,
-	baseConfig *openapiv3.Schema) (*openapiv3.Schema, schemaDependency, error) {
+	baseConfig *openapiv3.Schema) (*openapiv3.Schema, internal.SchemaDependency, error) {
 
 	var fieldSchema *openapiv3.Schema
-	dependency := schemaDependency{}
+	dependency := internal.SchemaDependency{}
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 
 	switch field.GetType() {
-	case descriptorpb.FieldDescriptorProto_TYPE_GROUP:
-		// TODO: handle the group wire format.
-		//fieldSchema.Object = openapiv3.SchemaCore{
-		//  Type: openapiv3.TypeSet{openapiv3.TypeObject},
-		//}
-	case descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
+	// TODO: handle the group wire format.
+	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if wellKnownSchema := wellKnownTypes(field.GetTypeName()); wellKnownSchema != nil {
 			fieldSchema = wellKnownSchema
 			break
@@ -284,7 +281,7 @@ func (g *Generator) renderFieldSchema(
 			}
 			fieldSchema = g.createSchemaRef(schemaName)
 			dependency.FQN = msg.FQMN()
-			dependency.Kind = dependencyKindMessage
+			dependency.Kind = internal.DependencyKindMessage
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
@@ -297,7 +294,7 @@ func (g *Generator) renderFieldSchema(
 		}
 		fieldSchema = g.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
-		dependency.Kind = dependencyKindEnum
+		dependency.Kind = internal.DependencyKindEnum
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		fieldSchema = &openapiv3.Schema{
@@ -437,7 +434,7 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISch
 		}
 	}
 
-	var dependencies []schemaDependency
+	var dependencies internal.SchemaDependencyStore
 
 	schema.Object.Properties = make(map[string]*openapiv3.Schema)
 
@@ -460,7 +457,7 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (openAPISch
 		}
 
 		if dependency.IsSet() {
-			dependencies = append(dependencies, dependency)
+			dependencies = internal.AddDependency(dependencies, dependency)
 		}
 
 		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
