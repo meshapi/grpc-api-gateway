@@ -84,13 +84,13 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 
 			session := g.newSession(doc)
 
-			err := session.addProtoMessageAndEnums(file)
+			err := session.addMessageAndEnums(file)
 			if err != nil {
 				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
 			}
 
 			for _, service := range file.Services {
-				if err := session.addServiceToSession(service); err != nil {
+				if err := session.addService(service); err != nil {
 					return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
 				}
 			}
@@ -115,7 +115,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	return files, nil
 }
 
-func (s *Session) addServiceToSession(service *descriptor.Service) error {
+func (s *Session) addService(service *descriptor.Service) error {
 	if s.Document.Object.Paths == nil {
 		s.Document.Object.Paths = make(map[string]*openapiv3.Path)
 	}
@@ -175,14 +175,9 @@ func (s *Session) addServiceToSession(service *descriptor.Service) error {
 				s.Document.Object.Paths[path] = pathObject
 			}
 
-			operation, dependencies, err := s.renderOperation(binding)
+			operation, err := s.renderOperation(binding)
 			if err != nil {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
-			}
-
-			location := binding.Method.Service.File.GetPackage()
-			if err := s.includeDependencies(location, dependencies); err != nil {
-				return fmt.Errorf("error adding dependencies: %w", err)
 			}
 
 			operation.Summary = summary
@@ -194,7 +189,7 @@ func (s *Session) addServiceToSession(service *descriptor.Service) error {
 	return nil
 }
 
-func (s *Session) addProtoMessageAndEnums(file *descriptor.File) error {
+func (s *Session) addMessageAndEnums(file *descriptor.File) error {
 	if s.Document.Object.Components == nil {
 		s.Document.Object.Components = &openapiv3.Components{}
 	}

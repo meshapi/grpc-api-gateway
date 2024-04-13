@@ -5,18 +5,14 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func (s *Session) renderOperation(
-	binding *descriptor.Binding) (*openapiv3.OperationCore, internal.SchemaDependencyStore, error) {
+func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.OperationCore, error) {
 	operation := &openapiv3.OperationCore{}
-
-	var dependencies internal.SchemaDependencyStore
 
 	if !s.DisableServiceTags {
 		tag := binding.Method.Service.GetName()
@@ -31,13 +27,9 @@ func (s *Session) renderOperation(
 
 	// handle path parameters
 	for _, pathParam := range binding.PathParameters {
-		parameter, dependency, err := s.renderPathParameter(&pathParam)
+		parameter, err := s.renderPathParameter(&pathParam)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to render path parameter %q: %w", pathParam.FieldPath.String(), err)
-		}
-
-		if dependency.IsSet() {
-			dependencies = internal.AddDependency(dependencies, dependency)
+			return nil, fmt.Errorf("failed to render path parameter %q: %w", pathParam.FieldPath.String(), err)
 		}
 
 		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
@@ -47,13 +39,9 @@ func (s *Session) renderOperation(
 
 	// handle query parameters
 	for _, queryParam := range binding.QueryParameters {
-		parameter, dependency, err := s.renderQueryParameter(&queryParam, nil)
+		parameter, err := s.renderQueryParameter(&queryParam)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
-		}
-
-		if dependency.IsSet() {
-			dependencies = internal.AddDependency(dependencies, dependency)
+			return nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
 		}
 
 		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
@@ -90,27 +78,28 @@ func (s *Session) renderOperation(
 				fieldPathMessageType := binding.Body.FieldPath[len(binding.Body.FieldPath)-1].Target.GetTypeName()
 				nestedBody, err := s.registry.LookupMessage(requestBody.FQMN(), fieldPathMessageType)
 				if err != nil {
-					return operation, dependencies, fmt.Errorf("failed to look up %q: %w", fieldPathMessageType, err)
+					return operation, fmt.Errorf("failed to look up %q: %w", fieldPathMessageType, err)
 				}
 				requestBody = nestedBody
 			}
 			filteredSchema, err := s.renderMessageSchemaWithFilter(requestBody, bodyFilter)
 			if err != nil {
-				return operation, dependencies, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
+				return operation, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
 			}
 			schema = filteredSchema.Schema
-			dependencies = internal.AddDependencies(dependencies, filteredSchema.Dependencies)
+			if err := s.includeDependencies(requestBody.FQMN(), filteredSchema.Dependencies); err != nil {
+				return nil, err
+			}
 		} else {
 			schemaName, err := s.schemaNameForFQN(binding.Method.RequestType.FQMN())
 			if err != nil {
-				return nil, dependencies, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
 			}
 			schema = s.createSchemaRef(schemaName)
-			dependencies = internal.AddDependency(dependencies, internal.SchemaDependency{
-				FQN:  binding.Method.RequestType.FQMN(),
-				Kind: internal.DependencyKindMessage,
-			})
+			if err := s.includeMessage("", binding.Method.RequestType.FQMN()); err != nil {
+				return nil, err
+			}
 		}
 
 		operation.RequestBody = &openapiv3.Ref[openapiv3.RequestBody]{
@@ -129,39 +118,38 @@ func (s *Session) renderOperation(
 		}
 	}
 
-	return operation, dependencies, nil
+	return operation, nil
 }
 
-func (s *Session) renderPathParameter(
-	param *descriptor.Parameter) (*openapiv3.Parameter, internal.SchemaDependency, error) {
+func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.Parameter, error) {
 
 	field := param.Target
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 	var schema *openapiv3.Schema
-	var dependency internal.SchemaDependency
 
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if descriptor.IsWellKnownType(field.GetTypeName()) {
 			if repeated {
-				return nil, dependency, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
+				return nil, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
 			}
 			schema = wellKnownTypes(field.GetTypeName())
 			break
 		}
-		return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
+		return nil, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		enum, err := s.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
-			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
+			return nil, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
 		schemaName, err := s.schemaNameForFQN(enum.FQEN())
 		if err != nil {
-			return nil, dependency, err
+			return nil, err
 		}
 		schema = s.createSchemaRef(schemaName)
-		dependency.FQN = enum.FQEN()
-		dependency.Kind = internal.DependencyKindEnum
+		if err := s.includeEnum("", enum.FQEN()); err != nil {
+			return nil, err
+		}
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		schema = &openapiv3.Schema{
@@ -218,11 +206,11 @@ func (s *Session) renderPathParameter(
 	fieldCustomization, err := s.getCustomizedFieldSchema(
 		field, s.messages[field.Message.FQMN()])
 	if err != nil {
-		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
+		return nil, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
 		if err := s.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
-			return nil, dependency, err
+			return nil, err
 		}
 
 		parameter.Object.Schema = fieldCustomization.Schema
@@ -232,16 +220,13 @@ func (s *Session) renderPathParameter(
 		parameter.Object.Description = renderComment(&s.Options, comments)
 	}
 
-	return parameter, dependency, nil
+	return parameter, nil
 }
 
-func (s *Session) renderQueryParameter(
-	param *descriptor.QueryParameter,
-	baseConfig *openapiv3.Schema) (*openapiv3.Parameter, internal.SchemaDependency, error) {
+func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*openapiv3.Parameter, error) {
 
 	field := param.Target()
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
-	var dependency internal.SchemaDependency
 
 	var paramName string
 	if config := s.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
@@ -271,19 +256,19 @@ func (s *Session) renderQueryParameter(
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if descriptor.IsWellKnownType(field.GetTypeName()) {
 			if repeated {
-				return nil, dependency, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
+				return nil, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
 			}
 			parameter.Object.Schema = wellKnownTypes(field.GetTypeName())
 			break
 		}
 		message, err := s.registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
 		if err != nil {
-			return nil, dependency, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+			return nil, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
 		}
 		if message.IsMapEntry() {
 			// NOTE: If the map entry has any type other than scalar types, it cannot be parsed in query parameters.
 			if !message.Fields[1].IsScalarType() {
-				return nil, dependency, fmt.Errorf(
+				return nil, fmt.Errorf(
 					"only primitive and enum types can be used as map values, received type %q", message.Fields[1].GetTypeName())
 			}
 			repeated = false
@@ -297,20 +282,21 @@ func (s *Session) renderQueryParameter(
 				` The query format is "map_name[key]=value", e.g. If the map name is Age, the key type is string,` +
 				` and the value type is integer, the query parameter is expressed as Age["bob"]=18`
 		} else {
-			return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
+			return nil, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
 		enum, err := s.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
-			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
+			return nil, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
 		schemaName, err := s.schemaNameForFQN(enum.FQEN())
 		if err != nil {
-			return nil, dependency, err
+			return nil, err
 		}
 		parameter.Object.Schema = s.createSchemaRef(schemaName)
-		dependency.FQN = enum.FQEN()
-		dependency.Kind = internal.DependencyKindEnum
+		if err := s.includeEnum("", enum.FQEN()); err != nil {
+			return nil, err
+		}
 	default:
 		fieldType, format := openAPITypeAndFormatForScalarTypes(field.GetType())
 		parameter.Object.Schema = &openapiv3.Schema{
@@ -346,11 +332,11 @@ func (s *Session) renderQueryParameter(
 	fieldCustomization, err := s.getCustomizedFieldSchema(
 		field, s.messages[field.Message.FQMN()])
 	if err != nil {
-		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
+		return nil, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
 		if err := s.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
-			return nil, dependency, err
+			return nil, err
 		}
 
 		parameter.Object.Schema = fieldCustomization.Schema
@@ -364,7 +350,7 @@ func (s *Session) renderQueryParameter(
 		parameter.Object.Description = renderComment(&s.Options, comments)
 	}
 
-	return parameter, dependency, nil
+	return parameter, nil
 }
 
 func camelLowerCaseFieldPath(fieldPath descriptor.FieldPath) string {
