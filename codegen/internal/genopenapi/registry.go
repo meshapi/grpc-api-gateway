@@ -232,24 +232,6 @@ func (g *Generator) getSchemaForEnum(protoPackage, fqen string) (*openapiv3.Sche
 	return result, nil
 }
 
-// lookUpFieldConfig looks up field configuration by searching the configs and then the proto extension.
-//
-// TODO: revisit this method for performance.
-func (g *Generator) lookUpFieldConfig(field *descriptor.Field) *openapi.FieldConfiguration {
-	if config, ok := g.messages[field.Message.FQMN()]; ok {
-		if fieldConfig := config.Fields[field.GetName()]; fieldConfig != nil && fieldConfig.Config != nil {
-			return fieldConfig.Config
-		}
-	}
-
-	protoConfig, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
-	if ok && protoConfig != nil && protoConfig.Config != nil {
-		return protoConfig.Config
-	}
-
-	return nil
-}
-
 func (g *Generator) getSchemaForMessage(protoPackage, fqmn string) (internal.OpenAPISchema, error) {
 	// first look up the cache
 	if result, alreadyProcessed := g.schemas[fqmn]; alreadyProcessed {

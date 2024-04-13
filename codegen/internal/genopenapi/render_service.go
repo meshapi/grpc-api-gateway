@@ -160,9 +160,14 @@ func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.P
 		}
 	}
 
+	fieldCustomization, err := s.getCustomizedFieldSchema(field, s.messages[field.Message.FQMN()])
+	if err != nil {
+		return nil, fmt.Errorf("failed to build field customization: %w", err)
+	}
+
 	var paramName string
-	if config := s.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
-		paramName = config.PathParamName
+	if fieldCustomization.PathParamName != nil {
+		paramName = *fieldCustomization.PathParamName
 	} else {
 		switch s.Options.FieldNameMode {
 		case FieldNameModeJSON:
@@ -203,11 +208,6 @@ func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.P
 		}
 	}
 
-	fieldCustomization, err := s.getCustomizedFieldSchema(
-		field, s.messages[field.Message.FQMN()])
-	if err != nil {
-		return nil, fmt.Errorf("failed to build field customization: %w", err)
-	}
 	if fieldCustomization.Schema != nil {
 		if err := s.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
 			return nil, err
@@ -229,19 +229,15 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 
 	var paramName string
-	if config := s.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
-		paramName = config.PathParamName
-	} else {
-		switch s.Options.FieldNameMode {
-		case FieldNameModeJSON:
-			if param.NameIsAlias {
-				paramName = param.Name
-			} else {
-				paramName = camelLowerCaseFieldPath(param.FieldPath)
-			}
-		case FieldNameModeProto:
+	switch s.Options.FieldNameMode {
+	case FieldNameModeJSON:
+		if param.NameIsAlias {
 			paramName = param.Name
+		} else {
+			paramName = camelLowerCaseFieldPath(param.FieldPath)
 		}
+	case FieldNameModeProto:
+		paramName = param.Name
 	}
 
 	parameter := &openapiv3.Parameter{
@@ -329,8 +325,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 		}
 	}
 
-	fieldCustomization, err := s.getCustomizedFieldSchema(
-		field, s.messages[field.Message.FQMN()])
+	fieldCustomization, err := s.getCustomizedFieldSchema(field, s.messages[field.Message.FQMN()])
 	if err != nil {
 		return nil, fmt.Errorf("failed to build field customization: %w", err)
 	}
