@@ -15,16 +15,16 @@ import (
 )
 
 type Session struct {
+	*Generator
 	Document *openapiv3.Document
 
-	generator       *Generator
 	includedSchemas map[string]struct{}
 }
 
 func (g *Generator) newSession(doc *openapiv3.Document) *Session {
 	return &Session{
 		Document:        doc,
-		generator:       g,
+		Generator:       g,
 		includedSchemas: make(map[string]struct{}),
 	}
 }
@@ -38,7 +38,7 @@ func (s *Session) includeMessage(location, fqmn string) error {
 		return nil
 	}
 
-	schema, err := s.generator.getSchemaForMessage(location, fqmn)
+	schema, err := s.getSchemaForMessage(location, fqmn)
 	if err != nil {
 		return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
 	}
@@ -47,7 +47,7 @@ func (s *Session) includeMessage(location, fqmn string) error {
 		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
 	}
 
-	name, ok := s.generator.schemaNames[fqmn]
+	name, ok := s.schemaNames[fqmn]
 	if !ok {
 		return fmt.Errorf("unrecognized message: %s", fqmn)
 	}
@@ -71,7 +71,7 @@ func (s *Session) includeEnum(location, fqen string) error {
 		return nil
 	}
 
-	schema, err := s.generator.getSchemaForEnum(location, fqen)
+	schema, err := s.getSchemaForEnum(location, fqen)
 	if err != nil {
 		return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
 	}
@@ -80,7 +80,7 @@ func (s *Session) includeEnum(location, fqen string) error {
 		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
 	}
 
-	name, ok := s.generator.schemaNames[fqen]
+	name, ok := s.schemaNames[fqen]
 	if !ok {
 		return fmt.Errorf("unrecognized message: %s", fqen)
 	}
@@ -162,10 +162,10 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 
 // renderMessageSchemaWithFilter is similar to renderMessageSchema but it removes fields from the pathfilter and
 // renders schemas with modified fields. Fields that do not match remain unaffected.
-func (g *Generator) renderMessageSchemaWithFilter(
+func (s *Session) renderMessageSchemaWithFilter(
 	message *descriptor.Message, filter *pathfilter.Instance) (internal.OpenAPISchema, error) {
 
-	originalSchema, err := g.getSchemaForMessage("", message.FQMN())
+	originalSchema, err := s.getSchemaForMessage("", message.FQMN())
 	if err != nil {
 		return internal.OpenAPISchema{}, fmt.Errorf("failed to get schema for %q: %w", message.FQMN(), err)
 	}
@@ -184,28 +184,28 @@ func (g *Generator) renderMessageSchemaWithFilter(
 		switch {
 		case !impacted:
 			// If unimpacted, just use the same value.
-			fieldName := g.fieldName(field)
+			fieldName := s.fieldName(field)
 			result.Schema.Object.Properties[fieldName] = originalSchema.Schema.Object.Properties[fieldName]
 		case instance.Excluded:
 			// path parameter cannot be excluded and be a non-scalar type so there is only one scenario in which dependencies
 			// need to get updated, if the type is an enum type.
 			if field.GetType() == descriptorpb.FieldDescriptorProto_TYPE_ENUM {
-				enum, err := g.registry.LookupEnum(message.FQMN(), field.GetTypeName())
+				enum, err := s.registry.LookupEnum(message.FQMN(), field.GetTypeName())
 				if err != nil {
 					return internal.OpenAPISchema{}, fmt.Errorf("failed to find enum %q: %w", field.GetTypeName(), err)
 				}
 				result.Dependencies.Drop(enum.FQEN())
 			}
 		default:
-			underlyingMessage, err := g.registry.LookupMessage(message.FQMN(), field.GetTypeName())
+			underlyingMessage, err := s.registry.LookupMessage(message.FQMN(), field.GetTypeName())
 			if err != nil {
 				return internal.OpenAPISchema{}, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
 			}
-			modifiedSchema, err := g.renderMessageSchemaWithFilter(underlyingMessage, instance)
+			modifiedSchema, err := s.renderMessageSchemaWithFilter(underlyingMessage, instance)
 			if err != nil {
 				return internal.OpenAPISchema{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
 			}
-			result.Schema.Object.Properties[g.fieldName(field)] = modifiedSchema.Schema
+			result.Schema.Object.Properties[s.fieldName(field)] = modifiedSchema.Schema
 			result.Dependencies.Drop(underlyingMessage.FQMN())
 		}
 	}

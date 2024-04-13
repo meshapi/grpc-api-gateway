@@ -84,13 +84,13 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 
 			session := g.newSession(doc)
 
-			err := g.addProtoMessageAndEnums(session, file)
+			err := session.addProtoMessageAndEnums(file)
 			if err != nil {
 				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
 			}
 
 			for _, service := range file.Services {
-				if err := g.addServiceToSession(session, service); err != nil {
+				if err := session.addServiceToSession(service); err != nil {
 					return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
 				}
 			}
@@ -115,19 +115,19 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 	return files, nil
 }
 
-func (g *Generator) addServiceToSession(session *Session, service *descriptor.Service) error {
-	if session.Document.Object.Paths == nil {
-		session.Document.Object.Paths = make(map[string]*openapiv3.Path)
+func (s *Session) addServiceToSession(service *descriptor.Service) error {
+	if s.Document.Object.Paths == nil {
+		s.Document.Object.Paths = make(map[string]*openapiv3.Path)
 	}
 
-	comments := g.commentRegistry.LookupService(service)
+	comments := s.commentRegistry.LookupService(service)
 
 	for _, method := range service.Methods {
 		summary, description := "", ""
 
 		if comments != nil && comments.Methods != nil {
 			if methodComment := comments.Methods[int32(method.Index)]; methodComment != nil {
-				result := renderComment(&g.Options, methodComment)
+				result := renderComment(&s.Options, methodComment)
 				firstParagraph := strings.Index(result, "\n\n")
 				if firstParagraph > 0 {
 					summary = result[:firstParagraph]
@@ -141,7 +141,7 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 		for _, binding := range method.Bindings {
 			path := renderPath(binding)
 
-			pathObject, exists := session.Document.Object.Paths[path]
+			pathObject, exists := s.Document.Object.Paths[path]
 			if !exists {
 				pathObject = &openapiv3.Path{}
 			}
@@ -172,16 +172,16 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 			if !exists {
 				// add this only when the operation is using an HTTP endpoint that can be recorded in
 				// the OpenAPI document.
-				session.Document.Object.Paths[path] = pathObject
+				s.Document.Object.Paths[path] = pathObject
 			}
 
-			operation, dependencies, err := g.renderOperation(binding)
+			operation, dependencies, err := s.renderOperation(binding)
 			if err != nil {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
 			}
 
 			location := binding.Method.Service.File.GetPackage()
-			if err := session.includeDependencies(location, dependencies); err != nil {
+			if err := s.includeDependencies(location, dependencies); err != nil {
 				return fmt.Errorf("error adding dependencies: %w", err)
 			}
 
@@ -194,10 +194,9 @@ func (g *Generator) addServiceToSession(session *Session, service *descriptor.Se
 	return nil
 }
 
-// func (g *Generator) addProtoMessageAndEnums(doc *openapiv3.DocumentCore, file *descriptor.File) error {
-func (g *Generator) addProtoMessageAndEnums(session *Session, file *descriptor.File) error {
-	if session.Document.Object.Components == nil {
-		session.Document.Object.Components = &openapiv3.Components{}
+func (s *Session) addProtoMessageAndEnums(file *descriptor.File) error {
+	if s.Document.Object.Components == nil {
+		s.Document.Object.Components = &openapiv3.Components{}
 	}
 
 	for _, message := range file.Messages {
@@ -206,13 +205,13 @@ func (g *Generator) addProtoMessageAndEnums(session *Session, file *descriptor.F
 			continue
 		}
 
-		if err := session.includeMessage(file.GetPackage(), message.FQMN()); err != nil {
+		if err := s.includeMessage(file.GetPackage(), message.FQMN()); err != nil {
 			return fmt.Errorf("failed to process message %q: %w", message.FQMN(), err)
 		}
 	}
 
 	for _, enum := range file.Enums {
-		if err := session.includeEnum(file.GetPackage(), enum.FQEN()); err != nil {
+		if err := s.includeEnum(file.GetPackage(), enum.FQEN()); err != nil {
 			return fmt.Errorf("failed to process enum %q: %w", enum.FQEN(), err)
 		}
 	}

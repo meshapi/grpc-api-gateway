@@ -12,15 +12,15 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func (g *Generator) renderOperation(
+func (s *Session) renderOperation(
 	binding *descriptor.Binding) (*openapiv3.OperationCore, internal.SchemaDependencyStore, error) {
 	operation := &openapiv3.OperationCore{}
 
 	var dependencies internal.SchemaDependencyStore
 
-	if !g.DisableServiceTags {
+	if !s.DisableServiceTags {
 		tag := binding.Method.Service.GetName()
-		if g.IncludePackageInTags {
+		if s.IncludePackageInTags {
 			if pkg := binding.Method.Service.File.GetPackage(); pkg != "" {
 				tag = pkg + "." + tag
 			}
@@ -31,7 +31,7 @@ func (g *Generator) renderOperation(
 
 	// handle path parameters
 	for _, pathParam := range binding.PathParameters {
-		parameter, dependency, err := g.renderPathParameter(&pathParam)
+		parameter, dependency, err := s.renderPathParameter(&pathParam)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to render path parameter %q: %w", pathParam.FieldPath.String(), err)
 		}
@@ -47,7 +47,7 @@ func (g *Generator) renderOperation(
 
 	// handle query parameters
 	for _, queryParam := range binding.QueryParameters {
-		parameter, dependency, err := g.renderQueryParameter(&queryParam, nil)
+		parameter, dependency, err := s.renderQueryParameter(&queryParam, nil)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
 		}
@@ -88,25 +88,25 @@ func (g *Generator) renderOperation(
 			requestBody := binding.Method.RequestType
 			if len(binding.Body.FieldPath) > 0 {
 				fieldPathMessageType := binding.Body.FieldPath[len(binding.Body.FieldPath)-1].Target.GetTypeName()
-				nestedBody, err := g.registry.LookupMessage(requestBody.FQMN(), fieldPathMessageType)
+				nestedBody, err := s.registry.LookupMessage(requestBody.FQMN(), fieldPathMessageType)
 				if err != nil {
 					return operation, dependencies, fmt.Errorf("failed to look up %q: %w", fieldPathMessageType, err)
 				}
 				requestBody = nestedBody
 			}
-			filteredSchema, err := g.renderMessageSchemaWithFilter(requestBody, bodyFilter)
+			filteredSchema, err := s.renderMessageSchemaWithFilter(requestBody, bodyFilter)
 			if err != nil {
 				return operation, dependencies, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
 			}
 			schema = filteredSchema.Schema
 			dependencies = internal.AddDependencies(dependencies, filteredSchema.Dependencies)
 		} else {
-			schemaName, err := g.schemaNameForFQN(binding.Method.RequestType.FQMN())
+			schemaName, err := s.schemaNameForFQN(binding.Method.RequestType.FQMN())
 			if err != nil {
 				return nil, dependencies, fmt.Errorf(
 					"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
 			}
-			schema = g.createSchemaRef(schemaName)
+			schema = s.createSchemaRef(schemaName)
 			dependencies = internal.AddDependency(dependencies, internal.SchemaDependency{
 				FQN:  binding.Method.RequestType.FQMN(),
 				Kind: internal.DependencyKindMessage,
@@ -132,7 +132,7 @@ func (g *Generator) renderOperation(
 	return operation, dependencies, nil
 }
 
-func (g *Generator) renderPathParameter(
+func (s *Session) renderPathParameter(
 	param *descriptor.Parameter) (*openapiv3.Parameter, internal.SchemaDependency, error) {
 
 	field := param.Target
@@ -151,15 +151,15 @@ func (g *Generator) renderPathParameter(
 		}
 		return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
+		enum, err := s.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
-		schemaName, err := g.schemaNameForFQN(enum.FQEN())
+		schemaName, err := s.schemaNameForFQN(enum.FQEN())
 		if err != nil {
 			return nil, dependency, err
 		}
-		schema = g.createSchemaRef(schemaName)
+		schema = s.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
 		dependency.Kind = internal.DependencyKindEnum
 	default:
@@ -173,10 +173,10 @@ func (g *Generator) renderPathParameter(
 	}
 
 	var paramName string
-	if config := g.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
+	if config := s.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
 		paramName = config.PathParamName
 	} else {
-		switch g.Options.FieldNameMode {
+		switch s.Options.FieldNameMode {
 		case FieldNameModeJSON:
 			paramName = camelLowerCaseFieldPath(param.FieldPath)
 		case FieldNameModeProto:
@@ -203,7 +203,7 @@ func (g *Generator) renderPathParameter(
 			},
 		}
 
-		switch g.Options.RepeatedPathParameterSeparator {
+		switch s.Options.RepeatedPathParameterSeparator {
 		case descriptor.PathParameterSeparatorCSV:
 			parameter.Object.Style = openapiv3.ParameterStyleSimple
 		case descriptor.PathParameterSeparatorSSV:
@@ -215,27 +215,27 @@ func (g *Generator) renderPathParameter(
 		}
 	}
 
-	fieldCustomization, err := g.getCustomizedFieldSchema(
-		field, g.messages[field.Message.FQMN()])
+	fieldCustomization, err := s.getCustomizedFieldSchema(
+		field, s.messages[field.Message.FQMN()])
 	if err != nil {
 		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
-		if err := g.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+		if err := s.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
 			return nil, dependency, err
 		}
 
 		parameter.Object.Schema = fieldCustomization.Schema
 	}
 
-	if comments := g.commentRegistry.LookupField(param.Target); comments != nil {
-		parameter.Object.Description = renderComment(&g.Options, comments)
+	if comments := s.commentRegistry.LookupField(param.Target); comments != nil {
+		parameter.Object.Description = renderComment(&s.Options, comments)
 	}
 
 	return parameter, dependency, nil
 }
 
-func (g *Generator) renderQueryParameter(
+func (s *Session) renderQueryParameter(
 	param *descriptor.QueryParameter,
 	baseConfig *openapiv3.Schema) (*openapiv3.Parameter, internal.SchemaDependency, error) {
 
@@ -244,10 +244,10 @@ func (g *Generator) renderQueryParameter(
 	var dependency internal.SchemaDependency
 
 	var paramName string
-	if config := g.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
+	if config := s.lookUpFieldConfig(field); config != nil && config.PathParamName != "" {
 		paramName = config.PathParamName
 	} else {
-		switch g.Options.FieldNameMode {
+		switch s.Options.FieldNameMode {
 		case FieldNameModeJSON:
 			if param.NameIsAlias {
 				paramName = param.Name
@@ -276,7 +276,7 @@ func (g *Generator) renderQueryParameter(
 			parameter.Object.Schema = wellKnownTypes(field.GetTypeName())
 			break
 		}
-		message, err := g.registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
+		message, err := s.registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
 		}
@@ -300,15 +300,15 @@ func (g *Generator) renderQueryParameter(
 			return nil, dependency, fmt.Errorf("only well-known and primitive types are allowed in path parameters")
 		}
 	case descriptorpb.FieldDescriptorProto_TYPE_ENUM:
-		enum, err := g.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
+		enum, err := s.registry.LookupEnum(field.Message.File.GetPackage(), field.GetTypeName())
 		if err != nil {
 			return nil, dependency, fmt.Errorf("failed to resolve enum %q: %w", field.GetTypeName(), err)
 		}
-		schemaName, err := g.schemaNameForFQN(enum.FQEN())
+		schemaName, err := s.schemaNameForFQN(enum.FQEN())
 		if err != nil {
 			return nil, dependency, err
 		}
-		parameter.Object.Schema = g.createSchemaRef(schemaName)
+		parameter.Object.Schema = s.createSchemaRef(schemaName)
 		dependency.FQN = enum.FQEN()
 		dependency.Kind = internal.DependencyKindEnum
 	default:
@@ -331,7 +331,7 @@ func (g *Generator) renderQueryParameter(
 			},
 		}
 
-		switch g.Options.RepeatedPathParameterSeparator {
+		switch s.Options.RepeatedPathParameterSeparator {
 		case descriptor.PathParameterSeparatorCSV:
 			parameter.Object.Style = openapiv3.ParameterStyleSimple
 		case descriptor.PathParameterSeparatorSSV:
@@ -343,13 +343,13 @@ func (g *Generator) renderQueryParameter(
 		}
 	}
 
-	fieldCustomization, err := g.getCustomizedFieldSchema(
-		field, g.messages[field.Message.FQMN()])
+	fieldCustomization, err := s.getCustomizedFieldSchema(
+		field, s.messages[field.Message.FQMN()])
 	if err != nil {
 		return nil, dependency, fmt.Errorf("failed to build field customization: %w", err)
 	}
 	if fieldCustomization.Schema != nil {
-		if err := g.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
+		if err := s.mergeObjects(fieldCustomization.Schema, parameter.Object.Schema); err != nil {
 			return nil, dependency, err
 		}
 
@@ -360,8 +360,8 @@ func (g *Generator) renderQueryParameter(
 		parameter.Object.Required = true
 	}
 
-	if comments := g.commentRegistry.LookupField(field); comments != nil {
-		parameter.Object.Description = renderComment(&g.Options, comments)
+	if comments := s.commentRegistry.LookupField(field); comments != nil {
+		parameter.Object.Description = renderComment(&s.Options, comments)
 	}
 
 	return parameter, dependency, nil

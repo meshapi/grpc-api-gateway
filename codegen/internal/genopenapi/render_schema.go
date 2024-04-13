@@ -18,14 +18,6 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-type fieldSchemaCustomization struct {
-	Schema        *openapiv3.Schema
-	PathParamName *string
-	Required      bool
-	ReadOnly      bool
-	WriteOnly     bool
-}
-
 func (g *Generator) mergeObjects(base, source any) error {
 	if g.MergeWithOverwrite {
 		if err := mergo.Merge(base, source); err != nil {
@@ -39,8 +31,8 @@ func (g *Generator) mergeObjects(base, source any) error {
 }
 
 func (g *Generator) getCustomizedFieldSchema(
-	field *descriptor.Field, config *internal.OpenAPIMessageSpec) (fieldSchemaCustomization, error) {
-	result := fieldSchemaCustomization{}
+	field *descriptor.Field, config *internal.OpenAPIMessageSpec) (internal.FieldSchemaCustomization, error) {
+	result := internal.FieldSchemaCustomization{}
 
 	if config != nil && config.Fields != nil {
 		if fieldSchema := config.Fields[field.GetName()]; fieldSchema != nil {
@@ -328,7 +320,7 @@ func (g *Generator) renderFieldSchema(
 	return fieldSchema, dependency, nil
 }
 
-func setFieldAnnotations(field *descriptor.Field, customizationObject *fieldSchemaCustomization) {
+func setFieldAnnotations(field *descriptor.Field, customizationObject *internal.FieldSchemaCustomization) {
 	items, ok := proto.GetExtension(field.Options, annotations.E_FieldBehavior).([]annotations.FieldBehavior)
 	if !ok || len(items) == 0 {
 		return
