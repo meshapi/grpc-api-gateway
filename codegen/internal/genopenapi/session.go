@@ -91,6 +91,16 @@ func (s *Session) includeEnum(location, fqen string) error {
 	return nil
 }
 
+func (s *Session) includeDependency(location string, dependency internal.SchemaDependency) error {
+	switch dependency.Kind {
+	case internal.DependencyKindMessage:
+		return s.includeMessage(location, dependency.FQN)
+	case internal.DependencyKindEnum:
+		return s.includeEnum(location, dependency.FQN)
+	}
+	return fmt.Errorf("unexpected dependency kind: %v", dependency.Kind)
+}
+
 func (s *Session) includeDependencies(location string, dependencies internal.SchemaDependencyStore) error {
 	for fqn, dependency := range dependencies {
 		switch dependency.Kind {

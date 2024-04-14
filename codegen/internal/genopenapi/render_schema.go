@@ -233,7 +233,7 @@ func (g *Generator) schemaNameForFQN(fqn string) (string, error) {
 // renderFieldSchema returns OpenAPI schema for a message field.
 func (g *Generator) renderFieldSchema(
 	field *descriptor.Field,
-	baseConfig *openapiv3.Schema) (*openapiv3.Schema, internal.SchemaDependency, error) {
+	customization internal.FieldSchemaCustomization) (*openapiv3.Schema, internal.SchemaDependency, error) {
 
 	var fieldSchema *openapiv3.Schema
 	dependency := internal.SchemaDependency{}
@@ -259,7 +259,7 @@ func (g *Generator) renderFieldSchema(
 					},
 				},
 			}
-			valueSchema, valueDependency, err := g.renderFieldSchema(msg.Fields[1], nil)
+			valueSchema, valueDependency, err := g.renderFieldSchema(msg.Fields[1], internal.FieldSchemaCustomization{})
 			if err != nil {
 				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
 			}
@@ -309,12 +309,20 @@ func (g *Generator) renderFieldSchema(
 	}
 	fieldSchema.Object.Deprecated = field.Options.GetDeprecated()
 
-	if baseConfig != nil {
-		if err := g.mergeObjects(baseConfig, fieldSchema); err != nil {
+	if customization.WriteOnly {
+		fieldSchema.Object.WriteOnly = true
+	}
+
+	if customization.ReadOnly {
+		fieldSchema.Object.ReadOnly = true
+	}
+
+	if customization.Schema != nil {
+		if err := g.mergeObjects(customization.Schema, fieldSchema); err != nil {
 			return nil, dependency, err
 		}
 
-		return baseConfig, dependency, nil
+		return customization.Schema, dependency, nil
 	}
 
 	return fieldSchema, dependency, nil
@@ -443,7 +451,7 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 			return internal.OpenAPISchema{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
-		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema.Schema)
+		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema)
 		if err != nil {
 			return internal.OpenAPISchema{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
@@ -455,14 +463,6 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 
 		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
 			fieldSchema.Object.Description = renderComment(&g.Options, comment.Fields[int32(index)])
-		}
-
-		if customFieldSchema.WriteOnly {
-			fieldSchema.Object.WriteOnly = true
-		}
-
-		if customFieldSchema.ReadOnly {
-			fieldSchema.Object.ReadOnly = true
 		}
 
 		fieldName := g.fieldName(field)

@@ -63,54 +63,85 @@ func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.Opera
 
 func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref[openapiv3.RequestBody], error) {
 	var bodyFilter *pathfilter.Instance
-	if len(binding.PathParameters) > 0 {
+	hasPathParameters := len(binding.PathParameters) > 0
+	hasBodySelector := len(binding.Body.FieldPath) > 0
+	if hasPathParameters {
 		bodyFilter = pathfilter.New()
 		for _, param := range binding.PathParameters {
 			bodyFilter.PutString(param.FieldPath.String())
-		}
-
-		if len(binding.Body.FieldPath) > 0 {
-			_, bodyFilter = bodyFilter.HasString(binding.Body.FieldPath.String())
 		}
 	}
 
 	// pull the description, though we likely want to render these operations in a for loop so we can use the same
 	// description.
 
-	// we also might want to use the session here so we don't have to add extra values in the slice.
-	// TODO: if the target is not a message/group type then we just check exclusion and render field.
-
 	// if the target is indeed a message/group, then we look it up and move on.
 
+	// if the field is scalar type, then it can be enum where we need a dependency to get pulled in but other than that
+	// we just need to make sure it's not excluded and then render the field.
+
+	// if the type is non-scalar, then it is ought to be a message (what happens to tables?) and we can just use the
+	// filtered version.
 	var schema *openapiv3.Schema
-	if bodyFilter != nil {
-		// render schema with filter.
-		requestBody := binding.Method.RequestType
-		if len(binding.Body.FieldPath) > 0 {
-			fieldPathMessageType := binding.Body.FieldPath.Target().GetTypeName()
-			nestedBody, err := s.registry.LookupMessage(requestBody.FQMN(), fieldPathMessageType)
+	requestBody := binding.Method.RequestType
+
+	if hasBodySelector {
+		field := binding.Body.FieldPath.Target()
+		if field.IsScalarType() {
+			// if request body field path resolves to a scalar type, it will be rendered as a singular field or
+			// ignored completely if it is already captured in the path.
+			if bodyFilter != nil {
+				if filteredOut, _ := bodyFilter.HasString(binding.Body.FieldPath.String()); filteredOut {
+					return nil, nil
+				}
+			}
+			fieldCustomization, err := s.getCustomizedFieldSchema(field, s.messages[field.Message.FQMN()])
 			if err != nil {
-				return nil, fmt.Errorf("failed to look up %q: %w", fieldPathMessageType, err)
+				return nil, fmt.Errorf("failed to prepare field customization for %q: %w", field.Message.FQMN(), err)
+			}
+			// TODO: improve render field schema to render the comments as well.
+			fieldSchema, dependency, err := s.renderFieldSchema(field, fieldCustomization)
+			if err != nil {
+				return nil, fmt.Errorf("failed to render field %q: %w", field.FQFN(), err)
+			}
+			// TODO: need to render the comments here.
+			if dependency.IsSet() {
+				if err := s.includeDependency(field.Message.FQMN(), dependency); err != nil {
+					return nil, fmt.Errorf("failed to render dependency %q: %w", dependency.FQN, err)
+				}
+			}
+			schema = fieldSchema
+		} else {
+			_, bodyFilter = bodyFilter.HasString(binding.Body.FieldPath.String())
+			nestedBody, err := s.registry.LookupMessage(requestBody.FQMN(), field.GetTypeName())
+			if err != nil {
+				return nil, fmt.Errorf("failed to look up %q: %w", field.GetTypeName(), err)
 			}
 			requestBody = nestedBody
 		}
-		filteredSchema, err := s.renderMessageSchemaWithFilter(requestBody, bodyFilter)
-		if err != nil {
-			return nil, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
-		}
-		schema = filteredSchema.Schema
-		if err := s.includeDependencies(requestBody.FQMN(), filteredSchema.Dependencies); err != nil {
-			return nil, err
-		}
-	} else {
-		schemaName, err := s.schemaNameForFQN(binding.Method.RequestType.FQMN())
-		if err != nil {
-			return nil, fmt.Errorf(
-				"could not find schema name for %q: %w", binding.Method.RequestType.FQMN(), err)
-		}
-		schema = s.createSchemaRef(schemaName)
-		if err := s.includeMessage("", binding.Method.RequestType.FQMN()); err != nil {
-			return nil, err
+	}
+
+	if schema == nil {
+		if bodyFilter != nil {
+			// render schema with filter.
+			filteredSchema, err := s.renderMessageSchemaWithFilter(requestBody, bodyFilter)
+			if err != nil {
+				return nil, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
+			}
+			schema = filteredSchema.Schema
+			if err := s.includeDependencies(requestBody.FQMN(), filteredSchema.Dependencies); err != nil {
+				return nil, err
+			}
+		} else {
+			schemaName, err := s.schemaNameForFQN(requestBody.FQMN())
+			if err != nil {
+				return nil, fmt.Errorf(
+					"could not find schema name for %q: %w", requestBody, err)
+			}
+			schema = s.createSchemaRef(schemaName)
+			if err := s.includeMessage("", requestBody.FQMN()); err != nil {
+				return nil, err
+			}
 		}
 	}
 
