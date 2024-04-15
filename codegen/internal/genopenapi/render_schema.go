@@ -82,7 +82,7 @@ func (g *Generator) getCustomizedFieldSchema(
 }
 
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
-func renderComment(options *Options, location *descriptorpb.SourceCodeInfo_Location) string {
+func (g *Generator) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
 	// get leading comments.
 	leadingComments := strings.NewReader(location.GetLeadingComments())
 	trailingComments := strings.NewReader(location.GetTrailingComments())
@@ -92,7 +92,7 @@ func renderComment(options *Options, location *descriptorpb.SourceCodeInfo_Locat
 	reader := bufio.NewScanner(leadingComments)
 	for reader.Scan() {
 		line := strings.TrimSpace(reader.Text())
-		if options.RemoveInternalComments {
+		if g.RemoveInternalComments {
 			if strings.HasPrefix(line, commentInternalOpen) && strings.HasSuffix(line, commentInternalClose) {
 				continue
 			}
@@ -119,9 +119,9 @@ func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (s
 		return "", nil
 	}
 
-	result := renderComment(&g.Options, comments.Location) + "\n"
+	result := g.renderComment(comments.Location) + "\n"
 	for index, value := range values {
-		result += "- " + value + ": " + renderComment(&g.Options, comments.Values[int32(index)])
+		result += "- " + value + ": " + g.renderComment(comments.Values[int32(index)])
 	}
 
 	// TODO: handle the template doc.
@@ -328,7 +328,7 @@ func (g *Generator) renderFieldSchema(
 	}
 
 	if comments != nil && fieldSchema.Object.Description == "" {
-		fieldSchema.Object.Description = renderComment(&g.Options, comments)
+		fieldSchema.Object.Description = g.renderComment(comments)
 	}
 
 	return fieldSchema, dependency, nil
@@ -448,7 +448,7 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 	// handle the title, description and summary here.
 	comment := g.commentRegistry.LookupMessage(message)
 	if comment != nil {
-		schema.Object.Description = renderComment(&g.Options, comment.Location)
+		schema.Object.Description = g.renderComment(comment.Location)
 	}
 
 	for index, field := range message.Fields {

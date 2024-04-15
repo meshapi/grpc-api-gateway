@@ -257,7 +257,7 @@ func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.P
 	}
 
 	if comments := s.commentRegistry.LookupField(param.Target); comments != nil {
-		parameter.Object.Description = renderComment(&s.Options, comments)
+		parameter.Object.Description = s.renderComment(comments)
 	}
 
 	return parameter, nil
@@ -382,7 +382,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 	}
 
 	if comments := s.commentRegistry.LookupField(field); comments != nil {
-		parameter.Object.Description = renderComment(&s.Options, comments)
+		parameter.Object.Description = s.renderComment(comments)
 	}
 
 	return parameter, nil

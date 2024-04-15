@@ -127,7 +127,7 @@ func (s *Session) addService(service *descriptor.Service) error {
 
 		if comments != nil && comments.Methods != nil {
 			if methodComment := comments.Methods[int32(method.Index)]; methodComment != nil {
-				result := renderComment(&s.Options, methodComment)
+				result := s.renderComment(methodComment)
 				firstParagraph := strings.Index(result, "\n\n")
 				if firstParagraph > 0 {
 					summary = result[:firstParagraph]
