@@ -200,13 +200,13 @@ func (s *Session) addMessageAndEnums(file *descriptor.File) error {
 			continue
 		}
 
-		if err := s.includeMessage(file.GetPackage(), message.FQMN()); err != nil {
+		if err := s.includeMessage(message.FQMN()); err != nil {
 			return fmt.Errorf("failed to process message %q: %w", message.FQMN(), err)
 		}
 	}
 
 	for _, enum := range file.Enums {
-		if err := s.includeEnum(file.GetPackage(), enum.FQEN()); err != nil {
+		if err := s.includeEnum(enum.FQEN()); err != nil {
 			return fmt.Errorf("failed to process enum %q: %w", enum.FQEN(), err)
 		}
 	}

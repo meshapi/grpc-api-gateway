@@ -61,6 +61,24 @@ func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.Opera
 	return operation, nil
 }
 
+func (s *Session) addFieldSchema(field *descriptor.Field) (*openapiv3.Schema, error) {
+	fieldCustomization, err := s.getCustomizedFieldSchema(field, s.messages[field.Message.FQMN()])
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare field customization for %q: %w", field.Message.FQMN(), err)
+	}
+	fieldSchema, dependency, err := s.renderFieldSchema(
+		field, fieldCustomization, s.commentRegistry.LookupField(field))
+	if err != nil {
+		return nil, fmt.Errorf("failed to render field %q: %w", field.FQFN(), err)
+	}
+	if dependency.IsSet() {
+		if err := s.includeDependency(field.Message.FQMN(), dependency); err != nil {
+			return nil, fmt.Errorf("failed to render dependency %q: %w", dependency.FQN, err)
+		}
+	}
+	return fieldSchema, nil
+}
+
 func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref[openapiv3.RequestBody], error) {
 	var bodyFilter *pathfilter.Instance
 	hasPathParameters := len(binding.PathParameters) > 0
@@ -72,21 +90,12 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 		}
 	}
 
-	// pull the description, though we likely want to render these operations in a for loop so we can use the same
-	// description.
-
-	// if the target is indeed a message/group, then we look it up and move on.
-
-	// if the field is scalar type, then it can be enum where we need a dependency to get pulled in but other than that
-	// we just need to make sure it's not excluded and then render the field.
-
-	// if the type is non-scalar, then it is ought to be a message (what happens to tables?) and we can just use the
-	// filtered version.
 	var schema *openapiv3.Schema
+	var field *descriptor.Field
 	requestBody := binding.Method.RequestType
 
 	if hasBodySelector {
-		field := binding.Body.FieldPath.Target()
+		field = binding.Body.FieldPath.Target()
 		if field.IsScalarType() {
 			// if request body field path resolves to a scalar type, it will be rendered as a singular field or
 			// ignored completely if it is already captured in the path.
@@ -95,20 +104,9 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 					return nil, nil
 				}
 			}
-			fieldCustomization, err := s.getCustomizedFieldSchema(field, s.messages[field.Message.FQMN()])
+			fieldSchema, err := s.addFieldSchema(field)
 			if err != nil {
-				return nil, fmt.Errorf("failed to prepare field customization for %q: %w", field.Message.FQMN(), err)
-			}
-			fieldSchema, dependency, err := s.renderFieldSchema(
-				field, fieldCustomization, s.commentRegistry.LookupField(field))
-			if err != nil {
-				return nil, fmt.Errorf("failed to render field %q: %w", field.FQFN(), err)
-			}
-			// TODO: need to render the comments here.
-			if dependency.IsSet() {
-				if err := s.includeDependency(field.Message.FQMN(), dependency); err != nil {
-					return nil, fmt.Errorf("failed to render dependency %q: %w", dependency.FQN, err)
-				}
+				return nil, err
 			}
 			schema = fieldSchema
 		} else {
@@ -122,24 +120,31 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 	}
 
 	if schema == nil {
-		if bodyFilter != nil {
+		switch {
+		case bodyFilter != nil:
 			// render schema with filter.
 			filteredSchema, err := s.renderMessageSchemaWithFilter(requestBody, bodyFilter)
 			if err != nil {
 				return nil, fmt.Errorf("failed to render filtered schema %q: %w", requestBody.FQMN(), err)
 			}
 			schema = filteredSchema.Schema
-			if err := s.includeDependencies(requestBody.FQMN(), filteredSchema.Dependencies); err != nil {
+			if err := s.includeDependencies(filteredSchema.Dependencies); err != nil {
 				return nil, err
 			}
-		} else {
+		case field != nil:
+			fieldSchema, err := s.addFieldSchema(field)
+			if err != nil {
+				return nil, err
+			}
+			schema = fieldSchema
+		default:
 			schemaName, err := s.schemaNameForFQN(requestBody.FQMN())
 			if err != nil {
 				return nil, fmt.Errorf(
 					"could not find schema name for %q: %w", requestBody, err)
 			}
 			schema = s.createSchemaRef(schemaName)
-			if err := s.includeMessage("", requestBody.FQMN()); err != nil {
+			if err := s.includeMessage(requestBody.FQMN()); err != nil {
 				return nil, err
 			}
 		}
@@ -187,7 +192,7 @@ func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.P
 			return nil, err
 		}
 		schema = s.createSchemaRef(schemaName)
-		if err := s.includeEnum("", enum.FQEN()); err != nil {
+		if err := s.includeEnum(enum.FQEN()); err != nil {
 			return nil, err
 		}
 	default:
@@ -330,7 +335,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 			return nil, err
 		}
 		parameter.Object.Schema = s.createSchemaRef(schemaName)
-		if err := s.includeEnum("", enum.FQEN()); err != nil {
+		if err := s.includeEnum(enum.FQEN()); err != nil {
 			return nil, err
 		}
 	default:

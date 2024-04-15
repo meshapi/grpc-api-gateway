@@ -29,22 +29,20 @@ func (g *Generator) newSession(doc *openapiv3.Document) *Session {
 	}
 }
 
-func (s *Session) includeMessage(location, fqmn string) error {
-	// TODO: we may need to do less object nesting here.
-
-	// TODO: we may need to build the full FQMN here.
-	// if schema is already added, skip processing it.
+func (s *Session) includeMessage(fqmn string) error {
 	if _, ok := s.includedSchemas[fqmn]; ok {
 		return nil
 	}
 
-	schema, err := s.getSchemaForMessage(location, fqmn)
+	schema, err := s.getSchemaForMessage("", fqmn)
 	if err != nil {
 		return fmt.Errorf("failed to render proto message %q to OpenAPI schema: %w", fqmn, err)
 	}
 
-	if s.Document.Object.Components.Object.Schemas == nil {
-		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+	schemas := s.Document.Object.Components.Object.Schemas
+	if schemas == nil {
+		schemas = make(map[string]*openapiv3.Schema)
+		s.Document.Object.Components.Object.Schemas = schemas
 	}
 
 	name, ok := s.schemaNames[fqmn]
@@ -53,31 +51,29 @@ func (s *Session) includeMessage(location, fqmn string) error {
 	}
 
 	s.includedSchemas[fqmn] = struct{}{}
-	s.Document.Object.Components.Object.Schemas[name] = schema.Schema
+	schemas[name] = schema.Schema
 
-	if err := s.includeDependencies(location, schema.Dependencies); err != nil {
+	if err := s.includeDependencies(schema.Dependencies); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Session) includeEnum(location, fqen string) error {
-	// TODO: we may need to do less object nesting here.
-
-	// TODO: we may need to build the full FQMN here.
-	// if schema is already added, skip processing it.
+func (s *Session) includeEnum(fqen string) error {
 	if _, ok := s.includedSchemas[fqen]; ok {
 		return nil
 	}
 
-	schema, err := s.getSchemaForEnum(location, fqen)
+	schema, err := s.getSchemaForEnum("", fqen)
 	if err != nil {
 		return fmt.Errorf("failed to render proto enum %q to OpenAPI schema: %w", fqen, err)
 	}
 
-	if s.Document.Object.Components.Object.Schemas == nil {
-		s.Document.Object.Components.Object.Schemas = make(map[string]*openapiv3.Schema)
+	schemas := s.Document.Object.Components.Object.Schemas
+	if schemas == nil {
+		schemas = make(map[string]*openapiv3.Schema)
+		s.Document.Object.Components.Object.Schemas = schemas
 	}
 
 	name, ok := s.schemaNames[fqen]
@@ -86,7 +82,7 @@ func (s *Session) includeEnum(location, fqen string) error {
 	}
 
 	s.includedSchemas[fqen] = struct{}{}
-	s.Document.Object.Components.Object.Schemas[name] = schema
+	schemas[name] = schema
 
 	return nil
 }
@@ -94,22 +90,22 @@ func (s *Session) includeEnum(location, fqen string) error {
 func (s *Session) includeDependency(location string, dependency internal.SchemaDependency) error {
 	switch dependency.Kind {
 	case internal.DependencyKindMessage:
-		return s.includeMessage(location, dependency.FQN)
+		return s.includeMessage(dependency.FQN)
 	case internal.DependencyKindEnum:
-		return s.includeEnum(location, dependency.FQN)
+		return s.includeEnum(dependency.FQN)
 	}
 	return fmt.Errorf("unexpected dependency kind: %v", dependency.Kind)
 }
 
-func (s *Session) includeDependencies(location string, dependencies internal.SchemaDependencyStore) error {
+func (s *Session) includeDependencies(dependencies internal.SchemaDependencyStore) error {
 	for fqn, dependency := range dependencies {
 		switch dependency.Kind {
 		case internal.DependencyKindMessage:
-			if err := s.includeMessage(location, fqn); err != nil {
+			if err := s.includeMessage(fqn); err != nil {
 				return fmt.Errorf("failed to include message dependency %q: %w", fqn, err)
 			}
 		case internal.DependencyKindEnum:
-			if err := s.includeEnum(location, fqn); err != nil {
+			if err := s.includeEnum(fqn); err != nil {
 				return fmt.Errorf("failed to include enum dependency %q: %w", fqn, err)
 			}
 		}
