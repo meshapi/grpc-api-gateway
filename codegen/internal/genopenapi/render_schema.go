@@ -13,6 +13,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -233,7 +234,8 @@ func (g *Generator) schemaNameForFQN(fqn string) (string, error) {
 // renderFieldSchema returns OpenAPI schema for a message field.
 func (g *Generator) renderFieldSchema(
 	field *descriptor.Field,
-	customization internal.FieldSchemaCustomization) (*openapiv3.Schema, internal.SchemaDependency, error) {
+	customization internal.FieldSchemaCustomization,
+	comments *protocomment.Location) (*openapiv3.Schema, internal.SchemaDependency, error) {
 
 	var fieldSchema *openapiv3.Schema
 	dependency := internal.SchemaDependency{}
@@ -259,7 +261,7 @@ func (g *Generator) renderFieldSchema(
 					},
 				},
 			}
-			valueSchema, valueDependency, err := g.renderFieldSchema(msg.Fields[1], internal.FieldSchemaCustomization{})
+			valueSchema, valueDependency, err := g.renderFieldSchema(msg.Fields[1], internal.FieldSchemaCustomization{}, nil)
 			if err != nil {
 				return nil, valueDependency, fmt.Errorf("failed to process map entry %q: %w", msg.FQMN(), err)
 			}
@@ -322,7 +324,11 @@ func (g *Generator) renderFieldSchema(
 			return nil, dependency, err
 		}
 
-		return customization.Schema, dependency, nil
+		fieldSchema = customization.Schema
+	}
+
+	if comments != nil && fieldSchema.Object.Description == "" {
+		fieldSchema.Object.Description = renderComment(&g.Options, comments)
 	}
 
 	return fieldSchema, dependency, nil
@@ -451,7 +457,11 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 			return internal.OpenAPISchema{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
 		}
 
-		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema)
+		var fieldComments *protocomment.Location
+		if comment != nil && comment.Fields != nil {
+			fieldComments = comment.Fields[int32(index)]
+		}
+		fieldSchema, dependency, err := g.renderFieldSchema(field, customFieldSchema, fieldComments)
 		if err != nil {
 			return internal.OpenAPISchema{}, fmt.Errorf(
 				"failed to process field %q in message %q: %w", field.GetName(), message.FQMN(), err)
@@ -459,10 +469,6 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 
 		if dependency.IsSet() {
 			dependencies = internal.AddDependency(dependencies, dependency)
-		}
-
-		if fieldSchema.Object.Description == "" && comment != nil && comment.Fields != nil {
-			fieldSchema.Object.Description = renderComment(&g.Options, comment.Fields[int32(index)])
 		}
 
 		fieldName := g.fieldName(field)

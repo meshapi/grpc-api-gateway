@@ -99,8 +99,8 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 			if err != nil {
 				return nil, fmt.Errorf("failed to prepare field customization for %q: %w", field.Message.FQMN(), err)
 			}
-			// TODO: improve render field schema to render the comments as well.
-			fieldSchema, dependency, err := s.renderFieldSchema(field, fieldCustomization)
+			fieldSchema, dependency, err := s.renderFieldSchema(
+				field, fieldCustomization, s.commentRegistry.LookupField(field))
 			if err != nil {
 				return nil, fmt.Errorf("failed to render field %q: %w", field.FQFN(), err)
 			}
