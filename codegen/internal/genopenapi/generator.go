@@ -138,8 +138,12 @@ func (s *Session) addService(service *descriptor.Service) error {
 			}
 		}
 
+		var pathParamAliasMap map[string]string
+
 		for _, binding := range method.Bindings {
-			path := renderPath(binding)
+			pathParamAliasMap = s.updatePathParameterAliasesMap(pathParamAliasMap, binding)
+
+			path := renderPath(binding, pathParamAliasMap)
 
 			pathObject, exists := s.Document.Object.Paths[path]
 			if !exists {

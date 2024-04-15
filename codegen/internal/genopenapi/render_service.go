@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/api"
+	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -405,7 +408,47 @@ func camelLowerCaseFieldPath(fieldPath descriptor.FieldPath) string {
 	return builder.String()
 }
 
-func renderPath(binding *descriptor.Binding) string {
+func (s *Session) updatePathParameterAliasesMap(table map[string]string, binding *descriptor.Binding) map[string]string {
+	for _, param := range binding.PathParameters {
+		paramPath := param.String()
+		if table != nil && table[paramPath] == "" {
+			continue
+		}
+
+		// NOTE: It is expensive to use the existing function to build the full field customization object.
+		// thus a cheaper logic is used here to look up path parameter name.
+		field := param.FieldPath.Target()
+		if msg := s.messages[field.Message.FQMN()]; msg != nil && msg.Fields != nil {
+			if paramName := msg.Fields[field.GetName()].GetConfig().GetPathParamName(); paramName != "" {
+				table = addPathParameterAlias(table, paramPath, paramName)
+				continue
+			}
+		}
+
+		fieldConfig, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
+		if !ok || fieldConfig == nil {
+			continue
+		}
+
+		if paramName := fieldConfig.GetConfig().GetPathParamName(); paramName != "" {
+			table = addPathParameterAlias(table, paramPath, paramName)
+		}
+	}
+	return table
+}
+
+func addPathParameterAlias(table map[string]string, key, value string) map[string]string {
+	if table == nil {
+		table = map[string]string{
+			key: value,
+		}
+	} else {
+		table[key] = value
+	}
+	return table
+}
+
+func renderPath(binding *descriptor.Binding, aliasMap map[string]string) string {
 	writer := &strings.Builder{}
 
 	if len(binding.PathTemplate.Segments) == 0 {
@@ -416,12 +459,16 @@ func renderPath(binding *descriptor.Binding) string {
 		switch segment.Type {
 		case httprule.SegmentTypeLiteral:
 			writer.WriteString("/" + segment.Value)
-		case httprule.SegmentTypeSelector:
+		case httprule.SegmentTypeSelector, httprule.SegmentTypeCatchAllSelector:
+			if aliasMap != nil {
+				if name, ok := aliasMap[segment.Value]; ok {
+					writer.WriteString("/{" + name + "}")
+					continue
+				}
+			}
 			writer.WriteString("/{" + segment.Value + "}")
 		case httprule.SegmentTypeWildcard:
 			_, _ = fmt.Fprintf(writer, "/?")
-		case httprule.SegmentTypeCatchAllSelector:
-			writer.WriteString("/{" + segment.Value + "}")
 		default:
 			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
 		}
