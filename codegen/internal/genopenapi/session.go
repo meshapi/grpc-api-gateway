@@ -183,7 +183,9 @@ func (s *Session) renderMessageSchemaWithFilter(
 		Dependencies: originalSchema.Dependencies.Copy(),
 	}
 
-	// TODO: need to update required list as well.
+	hasRequiredSlice := len(schemaCopy.Object.Required) > 0
+	var fieldsToRemove map[string]struct{}
+
 	for _, field := range message.Fields {
 		impacted, instance := filter.HasString(field.GetName())
 
@@ -202,6 +204,9 @@ func (s *Session) renderMessageSchemaWithFilter(
 				}
 				result.Dependencies.Drop(enum.FQEN())
 			}
+			if hasRequiredSlice {
+				fieldsToRemove = s.appendFieldToRemovedFields(fieldsToRemove, field)
+			}
 		default:
 			underlyingMessage, err := s.registry.LookupMessage(message.FQMN(), field.GetTypeName())
 			if err != nil {
@@ -211,10 +216,29 @@ func (s *Session) renderMessageSchemaWithFilter(
 			if err != nil {
 				return internal.OpenAPISchema{}, fmt.Errorf("failed to render filtered message %q: %w", underlyingMessage.FQMN(), err)
 			}
-			result.Schema.Object.Properties[s.fieldName(field)] = modifiedSchema.Schema
-			result.Dependencies.Drop(underlyingMessage.FQMN())
+			if len(modifiedSchema.Schema.Object.Properties) != 0 {
+				result.Schema.Object.Properties[s.fieldName(field)] = modifiedSchema.Schema
+				result.Dependencies.Drop(underlyingMessage.FQMN())
+			} else if hasRequiredSlice {
+				// NOTE: Messages that are empty are considered to be deliberately empty so they do not get removed.
+				// However, the schemas that become empty as part of this filtering down get removed.
+				fieldsToRemove = s.appendFieldToRemovedFields(fieldsToRemove, field)
+			}
 		}
 	}
 
+	if fieldsToRemove != nil {
+		schemaCopy.Object.Required = internal.FilteredStringSlice(schemaCopy.Object.Required, fieldsToRemove)
+	}
+
 	return result, nil
+}
+
+func (s *Session) appendFieldToRemovedFields(table map[string]struct{}, field *descriptor.Field) map[string]struct{} {
+	if table == nil {
+		return map[string]struct{}{s.fieldName(field): {}}
+	}
+
+	table[s.fieldName(field)] = struct{}{}
+	return table
 }

@@ -1,20 +1,18 @@
 package internal
 
-func AppendUnique(list []string, item string) []string {
+func FilteredStringSlice(list []string, itemsToExclude map[string]struct{}) []string {
+	if len(list) <= len(itemsToExclude) {
+		return nil
+	}
+	// NOTE: Sacrifice memory for time here. Overallocation is a possibility here.
+	newList := make([]string, 0, len(list))
+
 	for _, value := range list {
-		if value == item {
-			return list
+		if _, exclude := itemsToExclude[value]; exclude {
+			continue
 		}
-	}
-	return append(list, item)
-}
-
-func RemoveUnique(list []string, item string) []string {
-	for index, value := range list {
-		if value == item {
-			return append(list[:index], list[index+1:]...)
-		}
+		newList = append(newList, value)
 	}
 
-	return list
+	return newList
 }
