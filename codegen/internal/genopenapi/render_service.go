@@ -61,6 +61,10 @@ func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.Opera
 		operation.RequestBody = requestBody
 	}
 
+	if !s.DisableDefaultResponses {
+		s.addDefaultResponse(binding, operation)
+	}
+
 	return operation, nil
 }
 
@@ -394,6 +398,47 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 	}
 
 	return parameter, nil
+}
+
+func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *openapiv3.OperationCore) {
+	if operation.Responses == nil {
+		operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
+	}
+
+	var schema *openapiv3.Schema
+	if binding.ResponseBody != nil {
+		// render field schema
+		fieldSchema, err := s.addFieldSchema(binding.ResponseBody.FieldPath.Target())
+		if err != nil {
+			// handle err here
+		}
+		schema = fieldSchema
+	} else {
+		// render schema reference
+		name, err := s.schemaNameForFQN(binding.Method.ResponseType.FQMN())
+		if err != nil {
+			// handle it here.
+		}
+		schema = s.createSchemaRef(name)
+		if err := s.includeMessage(binding.Method.ResponseType.FQMN()); err != nil {
+			// handle err here
+		}
+	}
+
+	operation.Responses["200"] = &openapiv3.Ref[openapiv3.Response]{
+		Data: openapiv3.Response{
+			Object: openapiv3.ResponseCore{
+				Content: map[string]*openapiv3.MediaType{
+					"application/json": {
+						Object: openapiv3.MediaTypeCore{
+							Schema:  schema,
+							Example: nil,
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func camelLowerCaseFieldPath(fieldPath descriptor.FieldPath) string {

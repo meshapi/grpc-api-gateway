@@ -56,8 +56,11 @@ type Options struct {
 	// If set to true, all comment lines that start with (-- and end with --) get excluded.
 	RemoveInternalComments bool
 
-	// Is set to true, the default error response does not get added to the responses.
+	// If set to true, the default error response does not get added to the responses.
 	DisableDefaultErrors bool
+
+	// If set to true, the default 200 successful response does not get added to the responses.
+	DisableDefaultResponses bool
 
 	// UseEnumNumbers uses numerical value of enums instead of strings.
 	UseEnumNumbers bool
@@ -110,6 +113,7 @@ func DefaultOptions() Options {
 		IgnoreComments:                 false,
 		RemoveInternalComments:         false,
 		DisableDefaultErrors:           false,
+		DisableDefaultResponses:        false,
 		UseEnumNumbers:                 false,
 		GlobalOpenAPIConfigFile:        "",
 		ConfigSearchPath:               ".",
