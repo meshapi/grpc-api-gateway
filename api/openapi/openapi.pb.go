@@ -2893,6 +2893,55 @@ func (x *Components) GetExtensions() map[string]*structpb.Value {
 	return nil
 }
 
+// DocumentConfiguration allows for controlling the default responses
+type DocumentConfiguration struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// default_responses is used to control the default responses generated in this OpenAPI document.
+	DefaultResponses map[string]*Response `protobuf:"bytes,1,rep,name=default_responses,json=defaultResponses,proto3" json:"default_responses,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *DocumentConfiguration) Reset() {
+	*x = DocumentConfiguration{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DocumentConfiguration) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DocumentConfiguration) ProtoMessage() {}
+
+func (x *DocumentConfiguration) ProtoReflect() protoreflect.Message {
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DocumentConfiguration.ProtoReflect.Descriptor instead.
+func (*DocumentConfiguration) Descriptor() ([]byte, []int) {
+	return file_meshapi_gateway_openapi_openapi_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *DocumentConfiguration) GetDefaultResponses() map[string]*Response {
+	if x != nil {
+		return x.DefaultResponses
+	}
+	return nil
+}
+
 // This is the root object of the OpenAPI document.
 // See: https://spec.openapis.org/oas/v3.1.0#openapi-object
 type Document struct {
@@ -2923,12 +2972,14 @@ type Document struct {
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
 	Extensions map[string]*structpb.Value `protobuf:"bytes,9,rep,name=extensions,proto3" json:"extensions,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// DocumentConfiguration is used to change the behavior of documentation generation such as default responses.
+	Config *DocumentConfiguration `protobuf:"bytes,10,opt,name=config,proto3" json:"config,omitempty"`
 }
 
 func (x *Document) Reset() {
 	*x = Document{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[23]
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2941,7 +2992,7 @@ func (x *Document) String() string {
 func (*Document) ProtoMessage() {}
 
 func (x *Document) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[23]
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2954,7 +3005,7 @@ func (x *Document) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Document.ProtoReflect.Descriptor instead.
 func (*Document) Descriptor() ([]byte, []int) {
-	return file_meshapi_gateway_openapi_openapi_proto_rawDescGZIP(), []int{23}
+	return file_meshapi_gateway_openapi_openapi_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *Document) GetInfo() *Info {
@@ -3006,6 +3057,13 @@ func (x *Document) GetExtensions() map[string]*structpb.Value {
 	return nil
 }
 
+func (x *Document) GetConfig() *DocumentConfiguration {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
 type Schema_SchemaList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -3017,7 +3075,7 @@ type Schema_SchemaList struct {
 func (x *Schema_SchemaList) Reset() {
 	*x = Schema_SchemaList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[35]
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3030,7 +3088,7 @@ func (x *Schema_SchemaList) String() string {
 func (*Schema_SchemaList) ProtoMessage() {}
 
 func (x *Schema_SchemaList) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[35]
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3068,7 +3126,7 @@ type Schema_Item struct {
 func (x *Schema_Item) Reset() {
 	*x = Schema_Item{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[36]
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3081,7 +3139,7 @@ func (x *Schema_Item) String() string {
 func (*Schema_Item) ProtoMessage() {}
 
 func (x *Schema_Item) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[36]
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3156,7 +3214,7 @@ type SecurityScheme_OAuthFlow struct {
 func (x *SecurityScheme_OAuthFlow) Reset() {
 	*x = SecurityScheme_OAuthFlow{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[58]
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3169,7 +3227,7 @@ func (x *SecurityScheme_OAuthFlow) String() string {
 func (*SecurityScheme_OAuthFlow) ProtoMessage() {}
 
 func (x *SecurityScheme_OAuthFlow) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[58]
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3244,7 +3302,7 @@ type SecurityScheme_OAuthFlows struct {
 func (x *SecurityScheme_OAuthFlows) Reset() {
 	*x = SecurityScheme_OAuthFlows{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[59]
+		mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3257,7 +3315,7 @@ func (x *SecurityScheme_OAuthFlows) String() string {
 func (*SecurityScheme_OAuthFlows) ProtoMessage() {}
 
 func (x *SecurityScheme_OAuthFlows) ProtoReflect() protoreflect.Message {
-	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[59]
+	mi := &file_meshapi_gateway_openapi_openapi_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4192,55 +4250,74 @@ var file_meshapi_gateway_openapi_openapi_proto_rawDesc = []byte{
 	0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16,
 	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
 	0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38,
-	0x01, 0x4a, 0x04, 0x08, 0x09, 0x10, 0x0a, 0x4a, 0x04, 0x08, 0x0a, 0x10, 0x0b, 0x22, 0xc4, 0x04,
-	0x0a, 0x08, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x31, 0x0a, 0x04, 0x69, 0x6e,
-	0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61,
-	0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61,
-	0x70, 0x69, 0x2e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x12, 0x39, 0x0a,
-	0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1f,
-	0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79,
-	0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x52,
-	0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x12, 0x43, 0x0a, 0x0a, 0x63, 0x6f, 0x6d, 0x70,
-	0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6d,
-	0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f,
-	0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74,
-	0x73, 0x52, 0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x48, 0x0a,
-	0x08, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x2c, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61,
-	0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65, 0x63, 0x75, 0x72, 0x69,
-	0x74, 0x79, 0x52, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x08, 0x73,
-	0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x12, 0x30, 0x0a, 0x04, 0x74, 0x61, 0x67, 0x73, 0x18,
-	0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e,
-	0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e,
-	0x54, 0x61, 0x67, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x12, 0x53, 0x0a, 0x0d, 0x65, 0x78, 0x74,
-	0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x64, 0x6f, 0x63, 0x73, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x2e, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77,
-	0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x45, 0x78, 0x74, 0x65, 0x72,
-	0x6e, 0x61, 0x6c, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e,
-	0x52, 0x0c, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x44, 0x6f, 0x63, 0x73, 0x12, 0x51,
-	0x0a, 0x0a, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x09, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x31, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74,
+	0x01, 0x4a, 0x04, 0x08, 0x09, 0x10, 0x0a, 0x4a, 0x04, 0x08, 0x0a, 0x10, 0x0b, 0x22, 0xf2, 0x01,
+	0x0a, 0x15, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x75, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x71, 0x0a, 0x11, 0x64, 0x65, 0x66, 0x61, 0x75,
+	0x6c, 0x74, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0b, 0x32, 0x44, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74,
 	0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x44, 0x6f, 0x63,
-	0x75, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73,
-	0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e,
-	0x73, 0x1a, 0x55, 0x0a, 0x0f, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x45,
-	0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x4a, 0x04, 0x08, 0x03, 0x10, 0x04, 0x4a, 0x04,
-	0x08, 0x04, 0x10, 0x05, 0x2a, 0x70, 0x0a, 0x0e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x44, 0x61,
-	0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57,
-	0x4e, 0x10, 0x00, 0x12, 0x09, 0x0a, 0x05, 0x41, 0x52, 0x52, 0x41, 0x59, 0x10, 0x01, 0x12, 0x0b,
-	0x0a, 0x07, 0x42, 0x4f, 0x4f, 0x4c, 0x45, 0x41, 0x4e, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x07, 0x49,
-	0x4e, 0x54, 0x45, 0x47, 0x45, 0x52, 0x10, 0x03, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x55, 0x4c, 0x4c,
-	0x10, 0x04, 0x12, 0x0a, 0x0a, 0x06, 0x4e, 0x55, 0x4d, 0x42, 0x45, 0x52, 0x10, 0x05, 0x12, 0x0a,
-	0x0a, 0x06, 0x4f, 0x42, 0x4a, 0x45, 0x43, 0x54, 0x10, 0x06, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x54,
-	0x52, 0x49, 0x4e, 0x47, 0x10, 0x07, 0x42, 0x32, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x72, 0x70,
-	0x63, 0x2d, 0x72, 0x65, 0x73, 0x74, 0x2d, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x75, 0x6d, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x10, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x73, 0x1a, 0x66, 0x0a, 0x15, 0x44, 0x65,
+	0x66, 0x61, 0x75, 0x6c, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x73, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x37, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67,
+	0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02,
+	0x38, 0x01, 0x22, 0x8c, 0x05, 0x0a, 0x08, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x12,
+	0x31, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e,
+	0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e,
+	0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x69, 0x6e,
+	0x66, 0x6f, 0x12, 0x39, 0x0a, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x18, 0x02, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61,
+	0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x53, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x52, 0x07, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x73, 0x12, 0x43, 0x0a,
+	0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x23, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65,
+	0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x43, 0x6f, 0x6d, 0x70,
+	0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x0a, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e,
+	0x74, 0x73, 0x12, 0x48, 0x0a, 0x08, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x18, 0x06,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e, 0x67,
+	0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e, 0x53,
+	0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x52, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x6d, 0x65,
+	0x6e, 0x74, 0x52, 0x08, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x12, 0x30, 0x0a, 0x04,
+	0x74, 0x61, 0x67, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6d, 0x65, 0x73,
+	0x68, 0x61, 0x70, 0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65,
+	0x6e, 0x61, 0x70, 0x69, 0x2e, 0x54, 0x61, 0x67, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x12, 0x53,
+	0x0a, 0x0d, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x5f, 0x64, 0x6f, 0x63, 0x73, 0x18,
+	0x08, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2e,
+	0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x2e,
+	0x45, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x65, 0x78, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x44,
+	0x6f, 0x63, 0x73, 0x12, 0x51, 0x0a, 0x0a, 0x65, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x09, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70,
+	0x69, 0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70,
+	0x69, 0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x45, 0x78, 0x74, 0x65, 0x6e,
+	0x73, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x65, 0x78, 0x74, 0x65,
+	0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x46, 0x0a, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69,
+	0x2e, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2e, 0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69,
+	0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x75,
+	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x1a, 0x55,
+	0x0a, 0x0f, 0x45, 0x78, 0x74, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72,
+	0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
+	0x6b, 0x65, 0x79, 0x12, 0x2c, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x16, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x3a, 0x02, 0x38, 0x01, 0x4a, 0x04, 0x08, 0x03, 0x10, 0x04, 0x4a, 0x04, 0x08, 0x04, 0x10,
+	0x05, 0x2a, 0x70, 0x0a, 0x0e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x44, 0x61, 0x74, 0x61, 0x54,
+	0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x55, 0x4e, 0x4b, 0x4e, 0x4f, 0x57, 0x4e, 0x10, 0x00,
+	0x12, 0x09, 0x0a, 0x05, 0x41, 0x52, 0x52, 0x41, 0x59, 0x10, 0x01, 0x12, 0x0b, 0x0a, 0x07, 0x42,
+	0x4f, 0x4f, 0x4c, 0x45, 0x41, 0x4e, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x07, 0x49, 0x4e, 0x54, 0x45,
+	0x47, 0x45, 0x52, 0x10, 0x03, 0x12, 0x08, 0x0a, 0x04, 0x4e, 0x55, 0x4c, 0x4c, 0x10, 0x04, 0x12,
+	0x0a, 0x0a, 0x06, 0x4e, 0x55, 0x4d, 0x42, 0x45, 0x52, 0x10, 0x05, 0x12, 0x0a, 0x0a, 0x06, 0x4f,
+	0x42, 0x4a, 0x45, 0x43, 0x54, 0x10, 0x06, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x54, 0x52, 0x49, 0x4e,
+	0x47, 0x10, 0x07, 0x42, 0x32, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x6d, 0x65, 0x73, 0x68, 0x61, 0x70, 0x69, 0x2f, 0x67, 0x72, 0x70, 0x63, 0x2d, 0x72,
+	0x65, 0x73, 0x74, 0x2d, 0x67, 0x61, 0x74, 0x65, 0x77, 0x61, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f,
+	0x6f, 0x70, 0x65, 0x6e, 0x61, 0x70, 0x69, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -4256,7 +4333,7 @@ func file_meshapi_gateway_openapi_openapi_proto_rawDescGZIP() []byte {
 }
 
 var file_meshapi_gateway_openapi_openapi_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_meshapi_gateway_openapi_openapi_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
+var file_meshapi_gateway_openapi_openapi_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
 var file_meshapi_gateway_openapi_openapi_proto_goTypes = []interface{}{
 	(SchemaDataType)(0),               // 0: meshapi.gateway.openapi.SchemaDataType
 	(*Contact)(nil),                   // 1: meshapi.gateway.openapi.Contact
@@ -4282,210 +4359,215 @@ var file_meshapi_gateway_openapi_openapi_proto_goTypes = []interface{}{
 	(*SecurityScheme)(nil),            // 21: meshapi.gateway.openapi.SecurityScheme
 	(*Operation)(nil),                 // 22: meshapi.gateway.openapi.Operation
 	(*Components)(nil),                // 23: meshapi.gateway.openapi.Components
-	(*Document)(nil),                  // 24: meshapi.gateway.openapi.Document
-	nil,                               // 25: meshapi.gateway.openapi.Contact.ExtensionsEntry
-	nil,                               // 26: meshapi.gateway.openapi.License.ExtensionsEntry
-	nil,                               // 27: meshapi.gateway.openapi.Info.ExtensionsEntry
-	nil,                               // 28: meshapi.gateway.openapi.ServerVariable.ExtensionsEntry
-	nil,                               // 29: meshapi.gateway.openapi.Server.VariablesEntry
-	nil,                               // 30: meshapi.gateway.openapi.Server.ExtensionsEntry
-	nil,                               // 31: meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry
-	nil,                               // 32: meshapi.gateway.openapi.Tag.ExtensionsEntry
-	nil,                               // 33: meshapi.gateway.openapi.Discriminator.MappingEntry
-	nil,                               // 34: meshapi.gateway.openapi.Discriminator.ExtensionsEntry
-	nil,                               // 35: meshapi.gateway.openapi.Schema.ExtraEntry
-	(*Schema_SchemaList)(nil),         // 36: meshapi.gateway.openapi.Schema.SchemaList
-	(*Schema_Item)(nil),               // 37: meshapi.gateway.openapi.Schema.Item
-	nil,                               // 38: meshapi.gateway.openapi.Schema.PropertiesEntry
-	nil,                               // 39: meshapi.gateway.openapi.Link.ParametersEntry
-	nil,                               // 40: meshapi.gateway.openapi.Link.ExtensionsEntry
-	nil,                               // 41: meshapi.gateway.openapi.Example.ExtensionsEntry
-	nil,                               // 42: meshapi.gateway.openapi.Encoding.HeadersEntry
-	nil,                               // 43: meshapi.gateway.openapi.Encoding.ExtensionsEntry
-	nil,                               // 44: meshapi.gateway.openapi.MediaType.ExamplesEntry
-	nil,                               // 45: meshapi.gateway.openapi.MediaType.EncodingEntry
-	nil,                               // 46: meshapi.gateway.openapi.MediaType.ExtensionsEntry
-	nil,                               // 47: meshapi.gateway.openapi.Header.ExamplesEntry
-	nil,                               // 48: meshapi.gateway.openapi.Header.ContentEntry
-	nil,                               // 49: meshapi.gateway.openapi.Header.ExtensionsEntry
-	nil,                               // 50: meshapi.gateway.openapi.Parameter.ExamplesEntry
-	nil,                               // 51: meshapi.gateway.openapi.Parameter.ContentEntry
-	nil,                               // 52: meshapi.gateway.openapi.Parameter.ExtensionsEntry
-	nil,                               // 53: meshapi.gateway.openapi.Response.HeadersEntry
-	nil,                               // 54: meshapi.gateway.openapi.Response.ContentEntry
-	nil,                               // 55: meshapi.gateway.openapi.Response.LinksEntry
-	nil,                               // 56: meshapi.gateway.openapi.Response.ExtensionsEntry
-	nil,                               // 57: meshapi.gateway.openapi.RequestBody.ContentEntry
-	nil,                               // 58: meshapi.gateway.openapi.RequestBody.ExtensionsEntry
-	(*SecurityScheme_OAuthFlow)(nil),  // 59: meshapi.gateway.openapi.SecurityScheme.OAuthFlow
-	(*SecurityScheme_OAuthFlows)(nil), // 60: meshapi.gateway.openapi.SecurityScheme.OAuthFlows
-	nil,                               // 61: meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry
-	nil,                               // 62: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ScopesEntry
-	nil,                               // 63: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry
-	nil,                               // 64: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry
-	nil,                               // 65: meshapi.gateway.openapi.Operation.ResponsesEntry
-	nil,                               // 66: meshapi.gateway.openapi.Operation.ExtensionsEntry
-	nil,                               // 67: meshapi.gateway.openapi.Components.SchemasEntry
-	nil,                               // 68: meshapi.gateway.openapi.Components.ResponsesEntry
-	nil,                               // 69: meshapi.gateway.openapi.Components.ParametersEntry
-	nil,                               // 70: meshapi.gateway.openapi.Components.ExamplesEntry
-	nil,                               // 71: meshapi.gateway.openapi.Components.RequestBodiesEntry
-	nil,                               // 72: meshapi.gateway.openapi.Components.HeadersEntry
-	nil,                               // 73: meshapi.gateway.openapi.Components.SecuritySchemesEntry
-	nil,                               // 74: meshapi.gateway.openapi.Components.LinksEntry
-	nil,                               // 75: meshapi.gateway.openapi.Components.ExtensionsEntry
-	nil,                               // 76: meshapi.gateway.openapi.Document.ExtensionsEntry
-	(*structpb.Value)(nil),            // 77: google.protobuf.Value
+	(*DocumentConfiguration)(nil),     // 24: meshapi.gateway.openapi.DocumentConfiguration
+	(*Document)(nil),                  // 25: meshapi.gateway.openapi.Document
+	nil,                               // 26: meshapi.gateway.openapi.Contact.ExtensionsEntry
+	nil,                               // 27: meshapi.gateway.openapi.License.ExtensionsEntry
+	nil,                               // 28: meshapi.gateway.openapi.Info.ExtensionsEntry
+	nil,                               // 29: meshapi.gateway.openapi.ServerVariable.ExtensionsEntry
+	nil,                               // 30: meshapi.gateway.openapi.Server.VariablesEntry
+	nil,                               // 31: meshapi.gateway.openapi.Server.ExtensionsEntry
+	nil,                               // 32: meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry
+	nil,                               // 33: meshapi.gateway.openapi.Tag.ExtensionsEntry
+	nil,                               // 34: meshapi.gateway.openapi.Discriminator.MappingEntry
+	nil,                               // 35: meshapi.gateway.openapi.Discriminator.ExtensionsEntry
+	nil,                               // 36: meshapi.gateway.openapi.Schema.ExtraEntry
+	(*Schema_SchemaList)(nil),         // 37: meshapi.gateway.openapi.Schema.SchemaList
+	(*Schema_Item)(nil),               // 38: meshapi.gateway.openapi.Schema.Item
+	nil,                               // 39: meshapi.gateway.openapi.Schema.PropertiesEntry
+	nil,                               // 40: meshapi.gateway.openapi.Link.ParametersEntry
+	nil,                               // 41: meshapi.gateway.openapi.Link.ExtensionsEntry
+	nil,                               // 42: meshapi.gateway.openapi.Example.ExtensionsEntry
+	nil,                               // 43: meshapi.gateway.openapi.Encoding.HeadersEntry
+	nil,                               // 44: meshapi.gateway.openapi.Encoding.ExtensionsEntry
+	nil,                               // 45: meshapi.gateway.openapi.MediaType.ExamplesEntry
+	nil,                               // 46: meshapi.gateway.openapi.MediaType.EncodingEntry
+	nil,                               // 47: meshapi.gateway.openapi.MediaType.ExtensionsEntry
+	nil,                               // 48: meshapi.gateway.openapi.Header.ExamplesEntry
+	nil,                               // 49: meshapi.gateway.openapi.Header.ContentEntry
+	nil,                               // 50: meshapi.gateway.openapi.Header.ExtensionsEntry
+	nil,                               // 51: meshapi.gateway.openapi.Parameter.ExamplesEntry
+	nil,                               // 52: meshapi.gateway.openapi.Parameter.ContentEntry
+	nil,                               // 53: meshapi.gateway.openapi.Parameter.ExtensionsEntry
+	nil,                               // 54: meshapi.gateway.openapi.Response.HeadersEntry
+	nil,                               // 55: meshapi.gateway.openapi.Response.ContentEntry
+	nil,                               // 56: meshapi.gateway.openapi.Response.LinksEntry
+	nil,                               // 57: meshapi.gateway.openapi.Response.ExtensionsEntry
+	nil,                               // 58: meshapi.gateway.openapi.RequestBody.ContentEntry
+	nil,                               // 59: meshapi.gateway.openapi.RequestBody.ExtensionsEntry
+	(*SecurityScheme_OAuthFlow)(nil),  // 60: meshapi.gateway.openapi.SecurityScheme.OAuthFlow
+	(*SecurityScheme_OAuthFlows)(nil), // 61: meshapi.gateway.openapi.SecurityScheme.OAuthFlows
+	nil,                               // 62: meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry
+	nil,                               // 63: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ScopesEntry
+	nil,                               // 64: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry
+	nil,                               // 65: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry
+	nil,                               // 66: meshapi.gateway.openapi.Operation.ResponsesEntry
+	nil,                               // 67: meshapi.gateway.openapi.Operation.ExtensionsEntry
+	nil,                               // 68: meshapi.gateway.openapi.Components.SchemasEntry
+	nil,                               // 69: meshapi.gateway.openapi.Components.ResponsesEntry
+	nil,                               // 70: meshapi.gateway.openapi.Components.ParametersEntry
+	nil,                               // 71: meshapi.gateway.openapi.Components.ExamplesEntry
+	nil,                               // 72: meshapi.gateway.openapi.Components.RequestBodiesEntry
+	nil,                               // 73: meshapi.gateway.openapi.Components.HeadersEntry
+	nil,                               // 74: meshapi.gateway.openapi.Components.SecuritySchemesEntry
+	nil,                               // 75: meshapi.gateway.openapi.Components.LinksEntry
+	nil,                               // 76: meshapi.gateway.openapi.Components.ExtensionsEntry
+	nil,                               // 77: meshapi.gateway.openapi.DocumentConfiguration.DefaultResponsesEntry
+	nil,                               // 78: meshapi.gateway.openapi.Document.ExtensionsEntry
+	(*structpb.Value)(nil),            // 79: google.protobuf.Value
 }
 var file_meshapi_gateway_openapi_openapi_proto_depIdxs = []int32{
-	25,  // 0: meshapi.gateway.openapi.Contact.extensions:type_name -> meshapi.gateway.openapi.Contact.ExtensionsEntry
-	26,  // 1: meshapi.gateway.openapi.License.extensions:type_name -> meshapi.gateway.openapi.License.ExtensionsEntry
+	26,  // 0: meshapi.gateway.openapi.Contact.extensions:type_name -> meshapi.gateway.openapi.Contact.ExtensionsEntry
+	27,  // 1: meshapi.gateway.openapi.License.extensions:type_name -> meshapi.gateway.openapi.License.ExtensionsEntry
 	1,   // 2: meshapi.gateway.openapi.Info.contact:type_name -> meshapi.gateway.openapi.Contact
 	2,   // 3: meshapi.gateway.openapi.Info.license:type_name -> meshapi.gateway.openapi.License
-	27,  // 4: meshapi.gateway.openapi.Info.extensions:type_name -> meshapi.gateway.openapi.Info.ExtensionsEntry
-	28,  // 5: meshapi.gateway.openapi.ServerVariable.extensions:type_name -> meshapi.gateway.openapi.ServerVariable.ExtensionsEntry
-	29,  // 6: meshapi.gateway.openapi.Server.variables:type_name -> meshapi.gateway.openapi.Server.VariablesEntry
-	30,  // 7: meshapi.gateway.openapi.Server.extensions:type_name -> meshapi.gateway.openapi.Server.ExtensionsEntry
-	31,  // 8: meshapi.gateway.openapi.ExternalDocumentation.extensions:type_name -> meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry
+	28,  // 4: meshapi.gateway.openapi.Info.extensions:type_name -> meshapi.gateway.openapi.Info.ExtensionsEntry
+	29,  // 5: meshapi.gateway.openapi.ServerVariable.extensions:type_name -> meshapi.gateway.openapi.ServerVariable.ExtensionsEntry
+	30,  // 6: meshapi.gateway.openapi.Server.variables:type_name -> meshapi.gateway.openapi.Server.VariablesEntry
+	31,  // 7: meshapi.gateway.openapi.Server.extensions:type_name -> meshapi.gateway.openapi.Server.ExtensionsEntry
+	32,  // 8: meshapi.gateway.openapi.ExternalDocumentation.extensions:type_name -> meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry
 	7,   // 9: meshapi.gateway.openapi.Tag.external_docs:type_name -> meshapi.gateway.openapi.ExternalDocumentation
-	32,  // 10: meshapi.gateway.openapi.Tag.extensions:type_name -> meshapi.gateway.openapi.Tag.ExtensionsEntry
-	33,  // 11: meshapi.gateway.openapi.Discriminator.mapping:type_name -> meshapi.gateway.openapi.Discriminator.MappingEntry
-	34,  // 12: meshapi.gateway.openapi.Discriminator.extensions:type_name -> meshapi.gateway.openapi.Discriminator.ExtensionsEntry
+	33,  // 10: meshapi.gateway.openapi.Tag.extensions:type_name -> meshapi.gateway.openapi.Tag.ExtensionsEntry
+	34,  // 11: meshapi.gateway.openapi.Discriminator.mapping:type_name -> meshapi.gateway.openapi.Discriminator.MappingEntry
+	35,  // 12: meshapi.gateway.openapi.Discriminator.extensions:type_name -> meshapi.gateway.openapi.Discriminator.ExtensionsEntry
 	9,   // 13: meshapi.gateway.openapi.Schema.discriminator:type_name -> meshapi.gateway.openapi.Discriminator
 	7,   // 14: meshapi.gateway.openapi.Schema.external_docs:type_name -> meshapi.gateway.openapi.ExternalDocumentation
-	35,  // 15: meshapi.gateway.openapi.Schema.extra:type_name -> meshapi.gateway.openapi.Schema.ExtraEntry
+	36,  // 15: meshapi.gateway.openapi.Schema.extra:type_name -> meshapi.gateway.openapi.Schema.ExtraEntry
 	10,  // 16: meshapi.gateway.openapi.Schema.config:type_name -> meshapi.gateway.openapi.FieldConfiguration
 	0,   // 17: meshapi.gateway.openapi.Schema.types:type_name -> meshapi.gateway.openapi.SchemaDataType
-	37,  // 18: meshapi.gateway.openapi.Schema.items:type_name -> meshapi.gateway.openapi.Schema.Item
-	38,  // 19: meshapi.gateway.openapi.Schema.properties:type_name -> meshapi.gateway.openapi.Schema.PropertiesEntry
+	38,  // 18: meshapi.gateway.openapi.Schema.items:type_name -> meshapi.gateway.openapi.Schema.Item
+	39,  // 19: meshapi.gateway.openapi.Schema.properties:type_name -> meshapi.gateway.openapi.Schema.PropertiesEntry
 	11,  // 20: meshapi.gateway.openapi.Schema.additional_properties:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 21: meshapi.gateway.openapi.Schema.default:type_name -> google.protobuf.Value
+	79,  // 21: meshapi.gateway.openapi.Schema.default:type_name -> google.protobuf.Value
 	11,  // 22: meshapi.gateway.openapi.Schema.all_of:type_name -> meshapi.gateway.openapi.Schema
 	11,  // 23: meshapi.gateway.openapi.Schema.any_of:type_name -> meshapi.gateway.openapi.Schema
 	11,  // 24: meshapi.gateway.openapi.Schema.one_of:type_name -> meshapi.gateway.openapi.Schema
 	11,  // 25: meshapi.gateway.openapi.Schema.not:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 26: meshapi.gateway.openapi.Schema.examples:type_name -> google.protobuf.Value
+	79,  // 26: meshapi.gateway.openapi.Schema.examples:type_name -> google.protobuf.Value
 	12,  // 27: meshapi.gateway.openapi.Link.ref:type_name -> meshapi.gateway.openapi.Reference
-	39,  // 28: meshapi.gateway.openapi.Link.parameters:type_name -> meshapi.gateway.openapi.Link.ParametersEntry
-	77,  // 29: meshapi.gateway.openapi.Link.request_body:type_name -> google.protobuf.Value
+	40,  // 28: meshapi.gateway.openapi.Link.parameters:type_name -> meshapi.gateway.openapi.Link.ParametersEntry
+	79,  // 29: meshapi.gateway.openapi.Link.request_body:type_name -> google.protobuf.Value
 	5,   // 30: meshapi.gateway.openapi.Link.server:type_name -> meshapi.gateway.openapi.Server
-	40,  // 31: meshapi.gateway.openapi.Link.extensions:type_name -> meshapi.gateway.openapi.Link.ExtensionsEntry
+	41,  // 31: meshapi.gateway.openapi.Link.extensions:type_name -> meshapi.gateway.openapi.Link.ExtensionsEntry
 	12,  // 32: meshapi.gateway.openapi.Example.ref:type_name -> meshapi.gateway.openapi.Reference
-	77,  // 33: meshapi.gateway.openapi.Example.value:type_name -> google.protobuf.Value
-	41,  // 34: meshapi.gateway.openapi.Example.extensions:type_name -> meshapi.gateway.openapi.Example.ExtensionsEntry
-	42,  // 35: meshapi.gateway.openapi.Encoding.headers:type_name -> meshapi.gateway.openapi.Encoding.HeadersEntry
-	43,  // 36: meshapi.gateway.openapi.Encoding.extensions:type_name -> meshapi.gateway.openapi.Encoding.ExtensionsEntry
+	79,  // 33: meshapi.gateway.openapi.Example.value:type_name -> google.protobuf.Value
+	42,  // 34: meshapi.gateway.openapi.Example.extensions:type_name -> meshapi.gateway.openapi.Example.ExtensionsEntry
+	43,  // 35: meshapi.gateway.openapi.Encoding.headers:type_name -> meshapi.gateway.openapi.Encoding.HeadersEntry
+	44,  // 36: meshapi.gateway.openapi.Encoding.extensions:type_name -> meshapi.gateway.openapi.Encoding.ExtensionsEntry
 	11,  // 37: meshapi.gateway.openapi.MediaType.schema:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 38: meshapi.gateway.openapi.MediaType.example:type_name -> google.protobuf.Value
-	44,  // 39: meshapi.gateway.openapi.MediaType.examples:type_name -> meshapi.gateway.openapi.MediaType.ExamplesEntry
-	45,  // 40: meshapi.gateway.openapi.MediaType.encoding:type_name -> meshapi.gateway.openapi.MediaType.EncodingEntry
-	46,  // 41: meshapi.gateway.openapi.MediaType.extensions:type_name -> meshapi.gateway.openapi.MediaType.ExtensionsEntry
+	79,  // 38: meshapi.gateway.openapi.MediaType.example:type_name -> google.protobuf.Value
+	45,  // 39: meshapi.gateway.openapi.MediaType.examples:type_name -> meshapi.gateway.openapi.MediaType.ExamplesEntry
+	46,  // 40: meshapi.gateway.openapi.MediaType.encoding:type_name -> meshapi.gateway.openapi.MediaType.EncodingEntry
+	47,  // 41: meshapi.gateway.openapi.MediaType.extensions:type_name -> meshapi.gateway.openapi.MediaType.ExtensionsEntry
 	12,  // 42: meshapi.gateway.openapi.Header.ref:type_name -> meshapi.gateway.openapi.Reference
 	11,  // 43: meshapi.gateway.openapi.Header.schema:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 44: meshapi.gateway.openapi.Header.example:type_name -> google.protobuf.Value
-	47,  // 45: meshapi.gateway.openapi.Header.examples:type_name -> meshapi.gateway.openapi.Header.ExamplesEntry
-	48,  // 46: meshapi.gateway.openapi.Header.content:type_name -> meshapi.gateway.openapi.Header.ContentEntry
-	49,  // 47: meshapi.gateway.openapi.Header.extensions:type_name -> meshapi.gateway.openapi.Header.ExtensionsEntry
+	79,  // 44: meshapi.gateway.openapi.Header.example:type_name -> google.protobuf.Value
+	48,  // 45: meshapi.gateway.openapi.Header.examples:type_name -> meshapi.gateway.openapi.Header.ExamplesEntry
+	49,  // 46: meshapi.gateway.openapi.Header.content:type_name -> meshapi.gateway.openapi.Header.ContentEntry
+	50,  // 47: meshapi.gateway.openapi.Header.extensions:type_name -> meshapi.gateway.openapi.Header.ExtensionsEntry
 	12,  // 48: meshapi.gateway.openapi.Parameter.ref:type_name -> meshapi.gateway.openapi.Reference
 	11,  // 49: meshapi.gateway.openapi.Parameter.schema:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 50: meshapi.gateway.openapi.Parameter.example:type_name -> google.protobuf.Value
-	50,  // 51: meshapi.gateway.openapi.Parameter.examples:type_name -> meshapi.gateway.openapi.Parameter.ExamplesEntry
-	51,  // 52: meshapi.gateway.openapi.Parameter.content:type_name -> meshapi.gateway.openapi.Parameter.ContentEntry
-	52,  // 53: meshapi.gateway.openapi.Parameter.extensions:type_name -> meshapi.gateway.openapi.Parameter.ExtensionsEntry
+	79,  // 50: meshapi.gateway.openapi.Parameter.example:type_name -> google.protobuf.Value
+	51,  // 51: meshapi.gateway.openapi.Parameter.examples:type_name -> meshapi.gateway.openapi.Parameter.ExamplesEntry
+	52,  // 52: meshapi.gateway.openapi.Parameter.content:type_name -> meshapi.gateway.openapi.Parameter.ContentEntry
+	53,  // 53: meshapi.gateway.openapi.Parameter.extensions:type_name -> meshapi.gateway.openapi.Parameter.ExtensionsEntry
 	12,  // 54: meshapi.gateway.openapi.Response.ref:type_name -> meshapi.gateway.openapi.Reference
-	53,  // 55: meshapi.gateway.openapi.Response.headers:type_name -> meshapi.gateway.openapi.Response.HeadersEntry
-	54,  // 56: meshapi.gateway.openapi.Response.content:type_name -> meshapi.gateway.openapi.Response.ContentEntry
-	55,  // 57: meshapi.gateway.openapi.Response.links:type_name -> meshapi.gateway.openapi.Response.LinksEntry
-	56,  // 58: meshapi.gateway.openapi.Response.extensions:type_name -> meshapi.gateway.openapi.Response.ExtensionsEntry
+	54,  // 55: meshapi.gateway.openapi.Response.headers:type_name -> meshapi.gateway.openapi.Response.HeadersEntry
+	55,  // 56: meshapi.gateway.openapi.Response.content:type_name -> meshapi.gateway.openapi.Response.ContentEntry
+	56,  // 57: meshapi.gateway.openapi.Response.links:type_name -> meshapi.gateway.openapi.Response.LinksEntry
+	57,  // 58: meshapi.gateway.openapi.Response.extensions:type_name -> meshapi.gateway.openapi.Response.ExtensionsEntry
 	12,  // 59: meshapi.gateway.openapi.RequestBody.ref:type_name -> meshapi.gateway.openapi.Reference
-	57,  // 60: meshapi.gateway.openapi.RequestBody.content:type_name -> meshapi.gateway.openapi.RequestBody.ContentEntry
-	58,  // 61: meshapi.gateway.openapi.RequestBody.extensions:type_name -> meshapi.gateway.openapi.RequestBody.ExtensionsEntry
+	58,  // 60: meshapi.gateway.openapi.RequestBody.content:type_name -> meshapi.gateway.openapi.RequestBody.ContentEntry
+	59,  // 61: meshapi.gateway.openapi.RequestBody.extensions:type_name -> meshapi.gateway.openapi.RequestBody.ExtensionsEntry
 	12,  // 62: meshapi.gateway.openapi.SecurityScheme.ref:type_name -> meshapi.gateway.openapi.Reference
-	60,  // 63: meshapi.gateway.openapi.SecurityScheme.flows:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlows
-	61,  // 64: meshapi.gateway.openapi.SecurityScheme.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry
+	61,  // 63: meshapi.gateway.openapi.SecurityScheme.flows:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlows
+	62,  // 64: meshapi.gateway.openapi.SecurityScheme.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry
 	7,   // 65: meshapi.gateway.openapi.Operation.external_docs:type_name -> meshapi.gateway.openapi.ExternalDocumentation
 	18,  // 66: meshapi.gateway.openapi.Operation.parameters:type_name -> meshapi.gateway.openapi.Parameter
-	65,  // 67: meshapi.gateway.openapi.Operation.responses:type_name -> meshapi.gateway.openapi.Operation.ResponsesEntry
+	66,  // 67: meshapi.gateway.openapi.Operation.responses:type_name -> meshapi.gateway.openapi.Operation.ResponsesEntry
 	6,   // 68: meshapi.gateway.openapi.Operation.security:type_name -> meshapi.gateway.openapi.SecurityRequirement
 	5,   // 69: meshapi.gateway.openapi.Operation.servers:type_name -> meshapi.gateway.openapi.Server
-	66,  // 70: meshapi.gateway.openapi.Operation.extensions:type_name -> meshapi.gateway.openapi.Operation.ExtensionsEntry
-	67,  // 71: meshapi.gateway.openapi.Components.schemas:type_name -> meshapi.gateway.openapi.Components.SchemasEntry
-	68,  // 72: meshapi.gateway.openapi.Components.responses:type_name -> meshapi.gateway.openapi.Components.ResponsesEntry
-	69,  // 73: meshapi.gateway.openapi.Components.parameters:type_name -> meshapi.gateway.openapi.Components.ParametersEntry
-	70,  // 74: meshapi.gateway.openapi.Components.examples:type_name -> meshapi.gateway.openapi.Components.ExamplesEntry
-	71,  // 75: meshapi.gateway.openapi.Components.request_bodies:type_name -> meshapi.gateway.openapi.Components.RequestBodiesEntry
-	72,  // 76: meshapi.gateway.openapi.Components.headers:type_name -> meshapi.gateway.openapi.Components.HeadersEntry
-	73,  // 77: meshapi.gateway.openapi.Components.security_schemes:type_name -> meshapi.gateway.openapi.Components.SecuritySchemesEntry
-	74,  // 78: meshapi.gateway.openapi.Components.links:type_name -> meshapi.gateway.openapi.Components.LinksEntry
-	75,  // 79: meshapi.gateway.openapi.Components.extensions:type_name -> meshapi.gateway.openapi.Components.ExtensionsEntry
-	3,   // 80: meshapi.gateway.openapi.Document.info:type_name -> meshapi.gateway.openapi.Info
-	5,   // 81: meshapi.gateway.openapi.Document.servers:type_name -> meshapi.gateway.openapi.Server
-	23,  // 82: meshapi.gateway.openapi.Document.components:type_name -> meshapi.gateway.openapi.Components
-	6,   // 83: meshapi.gateway.openapi.Document.security:type_name -> meshapi.gateway.openapi.SecurityRequirement
-	8,   // 84: meshapi.gateway.openapi.Document.tags:type_name -> meshapi.gateway.openapi.Tag
-	7,   // 85: meshapi.gateway.openapi.Document.external_docs:type_name -> meshapi.gateway.openapi.ExternalDocumentation
-	76,  // 86: meshapi.gateway.openapi.Document.extensions:type_name -> meshapi.gateway.openapi.Document.ExtensionsEntry
-	77,  // 87: meshapi.gateway.openapi.Contact.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 88: meshapi.gateway.openapi.License.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 89: meshapi.gateway.openapi.Info.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 90: meshapi.gateway.openapi.ServerVariable.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	4,   // 91: meshapi.gateway.openapi.Server.VariablesEntry.value:type_name -> meshapi.gateway.openapi.ServerVariable
-	77,  // 92: meshapi.gateway.openapi.Server.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 93: meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 94: meshapi.gateway.openapi.Tag.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 95: meshapi.gateway.openapi.Discriminator.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 96: meshapi.gateway.openapi.Schema.ExtraEntry.value:type_name -> google.protobuf.Value
-	11,  // 97: meshapi.gateway.openapi.Schema.SchemaList.items:type_name -> meshapi.gateway.openapi.Schema
-	11,  // 98: meshapi.gateway.openapi.Schema.Item.schema:type_name -> meshapi.gateway.openapi.Schema
-	36,  // 99: meshapi.gateway.openapi.Schema.Item.list:type_name -> meshapi.gateway.openapi.Schema.SchemaList
-	11,  // 100: meshapi.gateway.openapi.Schema.PropertiesEntry.value:type_name -> meshapi.gateway.openapi.Schema
-	77,  // 101: meshapi.gateway.openapi.Link.ParametersEntry.value:type_name -> google.protobuf.Value
-	77,  // 102: meshapi.gateway.openapi.Link.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 103: meshapi.gateway.openapi.Example.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	17,  // 104: meshapi.gateway.openapi.Encoding.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
-	77,  // 105: meshapi.gateway.openapi.Encoding.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	14,  // 106: meshapi.gateway.openapi.MediaType.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
-	15,  // 107: meshapi.gateway.openapi.MediaType.EncodingEntry.value:type_name -> meshapi.gateway.openapi.Encoding
-	77,  // 108: meshapi.gateway.openapi.MediaType.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	14,  // 109: meshapi.gateway.openapi.Header.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
-	16,  // 110: meshapi.gateway.openapi.Header.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
-	77,  // 111: meshapi.gateway.openapi.Header.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	14,  // 112: meshapi.gateway.openapi.Parameter.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
-	16,  // 113: meshapi.gateway.openapi.Parameter.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
-	77,  // 114: meshapi.gateway.openapi.Parameter.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	17,  // 115: meshapi.gateway.openapi.Response.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
-	16,  // 116: meshapi.gateway.openapi.Response.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
-	13,  // 117: meshapi.gateway.openapi.Response.LinksEntry.value:type_name -> meshapi.gateway.openapi.Link
-	77,  // 118: meshapi.gateway.openapi.Response.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	16,  // 119: meshapi.gateway.openapi.RequestBody.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
-	77,  // 120: meshapi.gateway.openapi.RequestBody.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	62,  // 121: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.scopes:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ScopesEntry
-	63,  // 122: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry
-	59,  // 123: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.implicit:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
-	59,  // 124: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.password:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
-	59,  // 125: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.client_credentials:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
-	59,  // 126: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.authorization_code:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
-	64,  // 127: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry
-	77,  // 128: meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 129: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 130: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	19,  // 131: meshapi.gateway.openapi.Operation.ResponsesEntry.value:type_name -> meshapi.gateway.openapi.Response
-	77,  // 132: meshapi.gateway.openapi.Operation.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	11,  // 133: meshapi.gateway.openapi.Components.SchemasEntry.value:type_name -> meshapi.gateway.openapi.Schema
-	19,  // 134: meshapi.gateway.openapi.Components.ResponsesEntry.value:type_name -> meshapi.gateway.openapi.Response
-	18,  // 135: meshapi.gateway.openapi.Components.ParametersEntry.value:type_name -> meshapi.gateway.openapi.Parameter
-	14,  // 136: meshapi.gateway.openapi.Components.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
-	20,  // 137: meshapi.gateway.openapi.Components.RequestBodiesEntry.value:type_name -> meshapi.gateway.openapi.RequestBody
-	17,  // 138: meshapi.gateway.openapi.Components.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
-	21,  // 139: meshapi.gateway.openapi.Components.SecuritySchemesEntry.value:type_name -> meshapi.gateway.openapi.SecurityScheme
-	13,  // 140: meshapi.gateway.openapi.Components.LinksEntry.value:type_name -> meshapi.gateway.openapi.Link
-	77,  // 141: meshapi.gateway.openapi.Components.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	77,  // 142: meshapi.gateway.openapi.Document.ExtensionsEntry.value:type_name -> google.protobuf.Value
-	143, // [143:143] is the sub-list for method output_type
-	143, // [143:143] is the sub-list for method input_type
-	143, // [143:143] is the sub-list for extension type_name
-	143, // [143:143] is the sub-list for extension extendee
-	0,   // [0:143] is the sub-list for field type_name
+	67,  // 70: meshapi.gateway.openapi.Operation.extensions:type_name -> meshapi.gateway.openapi.Operation.ExtensionsEntry
+	68,  // 71: meshapi.gateway.openapi.Components.schemas:type_name -> meshapi.gateway.openapi.Components.SchemasEntry
+	69,  // 72: meshapi.gateway.openapi.Components.responses:type_name -> meshapi.gateway.openapi.Components.ResponsesEntry
+	70,  // 73: meshapi.gateway.openapi.Components.parameters:type_name -> meshapi.gateway.openapi.Components.ParametersEntry
+	71,  // 74: meshapi.gateway.openapi.Components.examples:type_name -> meshapi.gateway.openapi.Components.ExamplesEntry
+	72,  // 75: meshapi.gateway.openapi.Components.request_bodies:type_name -> meshapi.gateway.openapi.Components.RequestBodiesEntry
+	73,  // 76: meshapi.gateway.openapi.Components.headers:type_name -> meshapi.gateway.openapi.Components.HeadersEntry
+	74,  // 77: meshapi.gateway.openapi.Components.security_schemes:type_name -> meshapi.gateway.openapi.Components.SecuritySchemesEntry
+	75,  // 78: meshapi.gateway.openapi.Components.links:type_name -> meshapi.gateway.openapi.Components.LinksEntry
+	76,  // 79: meshapi.gateway.openapi.Components.extensions:type_name -> meshapi.gateway.openapi.Components.ExtensionsEntry
+	77,  // 80: meshapi.gateway.openapi.DocumentConfiguration.default_responses:type_name -> meshapi.gateway.openapi.DocumentConfiguration.DefaultResponsesEntry
+	3,   // 81: meshapi.gateway.openapi.Document.info:type_name -> meshapi.gateway.openapi.Info
+	5,   // 82: meshapi.gateway.openapi.Document.servers:type_name -> meshapi.gateway.openapi.Server
+	23,  // 83: meshapi.gateway.openapi.Document.components:type_name -> meshapi.gateway.openapi.Components
+	6,   // 84: meshapi.gateway.openapi.Document.security:type_name -> meshapi.gateway.openapi.SecurityRequirement
+	8,   // 85: meshapi.gateway.openapi.Document.tags:type_name -> meshapi.gateway.openapi.Tag
+	7,   // 86: meshapi.gateway.openapi.Document.external_docs:type_name -> meshapi.gateway.openapi.ExternalDocumentation
+	78,  // 87: meshapi.gateway.openapi.Document.extensions:type_name -> meshapi.gateway.openapi.Document.ExtensionsEntry
+	24,  // 88: meshapi.gateway.openapi.Document.config:type_name -> meshapi.gateway.openapi.DocumentConfiguration
+	79,  // 89: meshapi.gateway.openapi.Contact.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 90: meshapi.gateway.openapi.License.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 91: meshapi.gateway.openapi.Info.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 92: meshapi.gateway.openapi.ServerVariable.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	4,   // 93: meshapi.gateway.openapi.Server.VariablesEntry.value:type_name -> meshapi.gateway.openapi.ServerVariable
+	79,  // 94: meshapi.gateway.openapi.Server.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 95: meshapi.gateway.openapi.ExternalDocumentation.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 96: meshapi.gateway.openapi.Tag.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 97: meshapi.gateway.openapi.Discriminator.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 98: meshapi.gateway.openapi.Schema.ExtraEntry.value:type_name -> google.protobuf.Value
+	11,  // 99: meshapi.gateway.openapi.Schema.SchemaList.items:type_name -> meshapi.gateway.openapi.Schema
+	11,  // 100: meshapi.gateway.openapi.Schema.Item.schema:type_name -> meshapi.gateway.openapi.Schema
+	37,  // 101: meshapi.gateway.openapi.Schema.Item.list:type_name -> meshapi.gateway.openapi.Schema.SchemaList
+	11,  // 102: meshapi.gateway.openapi.Schema.PropertiesEntry.value:type_name -> meshapi.gateway.openapi.Schema
+	79,  // 103: meshapi.gateway.openapi.Link.ParametersEntry.value:type_name -> google.protobuf.Value
+	79,  // 104: meshapi.gateway.openapi.Link.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 105: meshapi.gateway.openapi.Example.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	17,  // 106: meshapi.gateway.openapi.Encoding.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
+	79,  // 107: meshapi.gateway.openapi.Encoding.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	14,  // 108: meshapi.gateway.openapi.MediaType.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
+	15,  // 109: meshapi.gateway.openapi.MediaType.EncodingEntry.value:type_name -> meshapi.gateway.openapi.Encoding
+	79,  // 110: meshapi.gateway.openapi.MediaType.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	14,  // 111: meshapi.gateway.openapi.Header.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
+	16,  // 112: meshapi.gateway.openapi.Header.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
+	79,  // 113: meshapi.gateway.openapi.Header.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	14,  // 114: meshapi.gateway.openapi.Parameter.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
+	16,  // 115: meshapi.gateway.openapi.Parameter.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
+	79,  // 116: meshapi.gateway.openapi.Parameter.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	17,  // 117: meshapi.gateway.openapi.Response.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
+	16,  // 118: meshapi.gateway.openapi.Response.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
+	13,  // 119: meshapi.gateway.openapi.Response.LinksEntry.value:type_name -> meshapi.gateway.openapi.Link
+	79,  // 120: meshapi.gateway.openapi.Response.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	16,  // 121: meshapi.gateway.openapi.RequestBody.ContentEntry.value:type_name -> meshapi.gateway.openapi.MediaType
+	79,  // 122: meshapi.gateway.openapi.RequestBody.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	63,  // 123: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.scopes:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ScopesEntry
+	64,  // 124: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry
+	60,  // 125: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.implicit:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
+	60,  // 126: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.password:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
+	60,  // 127: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.client_credentials:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
+	60,  // 128: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.authorization_code:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlow
+	65,  // 129: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.extensions:type_name -> meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry
+	79,  // 130: meshapi.gateway.openapi.SecurityScheme.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 131: meshapi.gateway.openapi.SecurityScheme.OAuthFlow.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	79,  // 132: meshapi.gateway.openapi.SecurityScheme.OAuthFlows.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	19,  // 133: meshapi.gateway.openapi.Operation.ResponsesEntry.value:type_name -> meshapi.gateway.openapi.Response
+	79,  // 134: meshapi.gateway.openapi.Operation.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	11,  // 135: meshapi.gateway.openapi.Components.SchemasEntry.value:type_name -> meshapi.gateway.openapi.Schema
+	19,  // 136: meshapi.gateway.openapi.Components.ResponsesEntry.value:type_name -> meshapi.gateway.openapi.Response
+	18,  // 137: meshapi.gateway.openapi.Components.ParametersEntry.value:type_name -> meshapi.gateway.openapi.Parameter
+	14,  // 138: meshapi.gateway.openapi.Components.ExamplesEntry.value:type_name -> meshapi.gateway.openapi.Example
+	20,  // 139: meshapi.gateway.openapi.Components.RequestBodiesEntry.value:type_name -> meshapi.gateway.openapi.RequestBody
+	17,  // 140: meshapi.gateway.openapi.Components.HeadersEntry.value:type_name -> meshapi.gateway.openapi.Header
+	21,  // 141: meshapi.gateway.openapi.Components.SecuritySchemesEntry.value:type_name -> meshapi.gateway.openapi.SecurityScheme
+	13,  // 142: meshapi.gateway.openapi.Components.LinksEntry.value:type_name -> meshapi.gateway.openapi.Link
+	79,  // 143: meshapi.gateway.openapi.Components.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	19,  // 144: meshapi.gateway.openapi.DocumentConfiguration.DefaultResponsesEntry.value:type_name -> meshapi.gateway.openapi.Response
+	79,  // 145: meshapi.gateway.openapi.Document.ExtensionsEntry.value:type_name -> google.protobuf.Value
+	146, // [146:146] is the sub-list for method output_type
+	146, // [146:146] is the sub-list for method input_type
+	146, // [146:146] is the sub-list for extension type_name
+	146, // [146:146] is the sub-list for extension extendee
+	0,   // [0:146] is the sub-list for field type_name
 }
 
 func init() { file_meshapi_gateway_openapi_openapi_proto_init() }
@@ -4771,6 +4853,18 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 			}
 		}
 		file_meshapi_gateway_openapi_openapi_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DocumentConfiguration); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_meshapi_gateway_openapi_openapi_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Document); i {
 			case 0:
 				return &v.state
@@ -4782,7 +4876,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 				return nil
 			}
 		}
-		file_meshapi_gateway_openapi_openapi_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+		file_meshapi_gateway_openapi_openapi_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Schema_SchemaList); i {
 			case 0:
 				return &v.state
@@ -4794,7 +4888,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 				return nil
 			}
 		}
-		file_meshapi_gateway_openapi_openapi_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+		file_meshapi_gateway_openapi_openapi_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Schema_Item); i {
 			case 0:
 				return &v.state
@@ -4806,7 +4900,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 				return nil
 			}
 		}
-		file_meshapi_gateway_openapi_openapi_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+		file_meshapi_gateway_openapi_openapi_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SecurityScheme_OAuthFlow); i {
 			case 0:
 				return &v.state
@@ -4818,7 +4912,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 				return nil
 			}
 		}
-		file_meshapi_gateway_openapi_openapi_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+		file_meshapi_gateway_openapi_openapi_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SecurityScheme_OAuthFlows); i {
 			case 0:
 				return &v.state
@@ -4835,7 +4929,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 		(*Link_OperationRef)(nil),
 		(*Link_OperationId)(nil),
 	}
-	file_meshapi_gateway_openapi_openapi_proto_msgTypes[36].OneofWrappers = []interface{}{
+	file_meshapi_gateway_openapi_openapi_proto_msgTypes[37].OneofWrappers = []interface{}{
 		(*Schema_Item_Schema)(nil),
 		(*Schema_Item_List)(nil),
 	}
@@ -4845,7 +4939,7 @@ func file_meshapi_gateway_openapi_openapi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_meshapi_gateway_openapi_openapi_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   76,
+			NumMessages:   78,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

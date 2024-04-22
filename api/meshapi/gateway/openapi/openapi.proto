@@ -832,6 +832,12 @@ message Components {
   map<string, google.protobuf.Value> extensions = 11;
 }
 
+// DocumentConfiguration allows for controlling the default responses
+message DocumentConfiguration {
+	// default_responses is used to control the default responses generated in this OpenAPI document.
+	map<string, Response> default_responses = 1;
+}
+
 // This is the root object of the OpenAPI document.
 // See: https://spec.openapis.org/oas/v3.1.0#openapi-object
 message Document {
@@ -860,4 +866,6 @@ message Document {
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
   map<string, google.protobuf.Value> extensions = 9;
+	// DocumentConfiguration is used to change the behavior of documentation generation such as default responses.
+	DocumentConfiguration config = 10;
 }

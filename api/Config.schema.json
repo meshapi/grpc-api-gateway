@@ -282,7 +282,7 @@
                 "document": {
                     "$ref": "#/definitions/meshapi.gateway.openapi.Document",
                     "additionalProperties": false,
-                    "description": "document can be used to override default values for OpenAPI document files when using the option to generate OpenAPI files per service. Additionally, this can be used to assign default values used by the operations/methods under this service."
+                    "description": "document can be used to override default values for OpenAPI document files when using the option to generate OpenAPI files per service. Additionally, this can be used to change documentation generation behavior such as default responses regardless of the output generation mode. NOTE: This document will only be used when using output mode of \"per service\" and in all other modes, this object simply gets ignored save for the config field. Since the config field instructs the generation of responses and the document objects for that service only, regardless of the output mode the settings will be honored."
                 },
                 "methods": {
                     "additionalProperties": {
@@ -614,12 +614,33 @@
                     },
                     "type": "object",
                     "description": "extensions that start with \"x-\" such as \"x-foo\" used to describe extra functionality that is not covered by standard OpenAPI specification. See: https://spec.openapis.org/oas/latest.html#specification-extensions"
+                },
+                "config": {
+                    "$ref": "#/definitions/meshapi.gateway.openapi.DocumentConfiguration",
+                    "additionalProperties": false,
+                    "description": "DocumentConfiguration is used to change the behavior of documentation generation such as default responses."
                 }
             },
             "additionalProperties": false,
             "type": "object",
             "title": "Document",
             "description": "This is the root object of the OpenAPI document. See: https://spec.openapis.org/oas/v3.1.0#openapi-object"
+        },
+        "meshapi.gateway.openapi.DocumentConfiguration": {
+            "properties": {
+                "default_responses": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/meshapi.gateway.openapi.Response",
+                        "additionalProperties": false
+                    },
+                    "type": "object",
+                    "description": "default_responses is used to control the default responses generated in this OpenAPI document."
+                }
+            },
+            "additionalProperties": false,
+            "type": "object",
+            "title": "Document Configuration",
+            "description": "DocumentConfiguration allows for controlling the default responses"
         },
         "meshapi.gateway.openapi.Encoding": {
             "properties": {

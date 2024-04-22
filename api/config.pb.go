@@ -36,8 +36,15 @@ type OpenAPIServiceSpec struct {
 	// fully qualified method name (FQMN).
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// document can be used to override default values for OpenAPI document files when using the option to generate
-	// OpenAPI files per service. Additionally, this can be used to assign default values used by the operations/methods
-	// under this service.
+	// OpenAPI files per service.
+	//
+	// Additionally, this can be used to change documentation generation behavior such as default responses regardless
+	// of the output generation mode.
+	//
+	// NOTE: This document will only be used when using output mode of "per service" and in all other
+	// modes, this object simply gets ignored save for the config field. Since the config field instructs
+	// the generation of responses and the document objects for that service only, regardless of the output mode
+	// the settings will be honored.
 	Document *openapi.Document `protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
 	// methods maps each method to an operation configuration.
 	Methods map[string]*openapi.Operation `protobuf:"bytes,3,rep,name=methods,proto3" json:"methods,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
