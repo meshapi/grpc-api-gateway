@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"dario.cat/mergo"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -31,9 +30,15 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 			return fmt.Errorf("failed to load global OpenAPI config file: %w", err)
 		}
 
-		g.rootDocument, err = openapimap.Document(doc.Document)
+		g.rootDocument.Document, err = openapimap.Document(doc.Document)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI document in %q: %w", configPath, err)
+		}
+
+		g.rootDocument.DefaultResponses, err = openapimap.ResponseMap(
+			doc.GetDocument().GetConfig().GetDefaultResponses())
+		if err != nil {
+			return fmt.Errorf("failed to map default responses to OpenAPI response in %q: %w", configPath, err)
 		}
 
 		err = g.addMessageConfigs(doc.Messages, internal.SourceInfo{Filename: configPath})
@@ -93,12 +98,23 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 
 			if doc == nil {
 				doc = docFromProto
-			} else if err := mergo.Merge(doc, docFromProto); err != nil {
+			} else if err := g.mergeObjects(doc, docFromProto); err != nil {
 				return fmt.Errorf("failed to merge OpenAPI config and proto documents for %q: %w", filePath, err)
 			}
 		}
 
-		g.documents[protoFile] = doc
+		defaultResponsesSpec := internal.MergeDefaultResponseSpec(
+			configFromProto.GetConfig().GetDefaultResponses(),
+			configFromFile.GetDocument().GetConfig().GetDefaultResponses())
+		defaultResponses, err := openapimap.ResponseMap(defaultResponsesSpec)
+		if err != nil {
+			return fmt.Errorf("failed to map config response map to OpenAPI response map: %w", err)
+		}
+		defaultResponses = internal.MergeDefaultResponse(defaultResponses, g.rootDocument.DefaultResponses)
+		g.files[protoFile] = internal.OpenAPIDocument{
+			Document:         doc,
+			DefaultResponses: defaultResponses,
+		}
 
 		for _, message := range protoFile.Messages {
 			messages = append(messages, message.FQMN())
@@ -289,8 +305,8 @@ func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.Fil
 	return result, nil
 }
 
-func (g *Generator) LookupDocument(file *descriptor.File) *openapiv3.Document {
-	return g.documents[file]
+func (g *Generator) LookupFile(file *descriptor.File) internal.OpenAPIDocument {
+	return g.files[file]
 }
 
 func (g *Generator) loadFile(filePath string) (*api.OpenAPISpec, error) {

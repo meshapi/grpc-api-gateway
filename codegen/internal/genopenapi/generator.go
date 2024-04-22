@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
@@ -19,9 +18,9 @@ type Generator struct {
 	commentRegistry *protocomment.Registry
 
 	// rootDocument is the global and top-level document loaded from the global config.
-	rootDocument *openapiv3.Document
-	// documents are the mapped documents from for each proto file.
-	documents map[*descriptor.File]*openapiv3.Document
+	rootDocument internal.OpenAPIDocument
+	// files are the mapped files from for each proto file.
+	files map[*descriptor.File]internal.OpenAPIDocument
 	// schemaNames holds a one to one association of message/enum FQNs to the generated OpenAPI schema name.
 	schemaNames map[string]string
 	// messages holds a map of message FQMNs to parsed configuration.
@@ -40,8 +39,8 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		Options:         options,
 		registry:        descriptorRegistry,
 		commentRegistry: commentRegistry,
-		rootDocument:    nil,
-		documents:       map[*descriptor.File]*openapiv3.Document{},
+		rootDocument:    internal.OpenAPIDocument{},
+		files:           map[*descriptor.File]internal.OpenAPIDocument{},
 		schemaNames:     map[string]string{},
 		messages:        map[string]*internal.OpenAPIMessageSpec{},
 		enums:           map[string]*internal.OpenAPIEnumSpec{},
@@ -53,12 +52,6 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 
 func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
 	var files []*descriptor.ResponseFile
-
-	mergeOptions := []func(*mergo.Config){}
-
-	if !g.Options.MergeWithOverwrite {
-		mergeOptions = append(mergeOptions, mergo.WithAppendSlice)
-	}
 
 	if err := g.loadFromDescriptorRegistry(); err != nil {
 		return nil, err
@@ -77,12 +70,12 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 		case OutputModePerProtoFile:
 			// TODO: if the document dose not have any schema or paths that was generated,
 			// we should avoid generating the file.
-			doc := g.LookupDocument(file)
-			if doc == nil {
-				doc = &openapiv3.Document{}
+			doc := g.LookupFile(file)
+			if doc.Document == nil {
+				doc.Document = &openapiv3.Document{}
 			}
 
-			session := g.newSession(doc)
+			session := g.newSession(doc.Document)
 
 			err := session.addMessageAndEnums(file)
 			if err != nil {
@@ -96,13 +89,13 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			}
 
 			// Merge with the root document if needed.
-			if g.rootDocument != nil {
-				if err := mergo.Merge(doc, g.rootDocument, mergeOptions...); err != nil {
+			if g.rootDocument.Document != nil {
+				if err := g.mergeObjects(doc.Document, g.rootDocument.Document); err != nil {
 					return nil, fmt.Errorf("failed to merge OpenAPI documents: %w", err)
 				}
 			}
 
-			file, err := g.writeDocument(file.GeneratedFilenamePrefix+openAPIOutputSuffix, doc)
+			file, err := g.writeDocument(file.GeneratedFilenamePrefix+openAPIOutputSuffix, doc.Document)
 			if err != nil {
 				return nil, fmt.Errorf("failed to write OpenAPI doc: %w", err)
 			}
@@ -121,6 +114,7 @@ func (s *Session) addService(service *descriptor.Service) error {
 	}
 
 	comments := s.commentRegistry.LookupService(service)
+	defaultResponses := s.defaultResponsesForService(service)
 
 	for _, method := range service.Methods {
 		summary, description := "", ""
@@ -179,7 +173,7 @@ func (s *Session) addService(service *descriptor.Service) error {
 				s.Document.Object.Paths[path] = pathObject
 			}
 
-			operation, err := s.renderOperation(binding)
+			operation, err := s.renderOperation(binding, defaultResponses)
 			if err != nil {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
 			}
@@ -187,6 +181,9 @@ func (s *Session) addService(service *descriptor.Service) error {
 			operation.Summary = summary
 			operation.Description = description
 
+			// TODO: here is where we might need to
+			// map and merge the operation object with the one mapped from the config.
+			// though likely it needs to be built and merged from inside the operation.
 			*operationPtr = operation
 		}
 	}

@@ -14,7 +14,9 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.OperationCore, error) {
+func (s *Session) renderOperation(
+	binding *descriptor.Binding,
+	defaultResponses map[string]*openapiv3.Ref[openapiv3.Response]) (*openapiv3.OperationCore, error) {
 	operation := &openapiv3.OperationCore{}
 
 	if !s.DisableServiceTags {
@@ -61,8 +63,19 @@ func (s *Session) renderOperation(binding *descriptor.Binding) (*openapiv3.Opera
 		operation.RequestBody = requestBody
 	}
 
+	if defaultResponses != nil {
+		if operation.Responses == nil {
+			operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
+		}
+		for status, response := range defaultResponses {
+			operation.Responses[status] = response
+		}
+	}
+
 	if !s.DisableDefaultResponses {
-		s.addDefaultResponse(binding, operation)
+		if err := s.addDefaultResponse(binding, operation); err != nil {
+			return nil, fmt.Errorf("failed to add default responses: %w", err)
+		}
 	}
 
 	return operation, nil
@@ -148,7 +161,7 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 			schemaName, err := s.schemaNameForFQN(requestBody.FQMN())
 			if err != nil {
 				return nil, fmt.Errorf(
-					"could not find schema name for %q: %w", requestBody, err)
+					"could not find schema name for %q: %w", requestBody.FQMN(), err)
 			}
 			schema = s.createSchemaRef(schemaName)
 			if err := s.includeMessage(requestBody.FQMN()); err != nil {
@@ -400,7 +413,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 	return parameter, nil
 }
 
-func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *openapiv3.OperationCore) {
+func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *openapiv3.OperationCore) error {
 	if operation.Responses == nil {
 		operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
 	}
@@ -410,18 +423,19 @@ func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *ope
 		// render field schema
 		fieldSchema, err := s.addFieldSchema(binding.ResponseBody.FieldPath.Target())
 		if err != nil {
-			// handle err here
+			return err
 		}
 		schema = fieldSchema
 	} else {
 		// render schema reference
 		name, err := s.schemaNameForFQN(binding.Method.ResponseType.FQMN())
 		if err != nil {
-			// handle it here.
+			return fmt.Errorf(
+				"could not find schema name for %q: %w", binding.Method.ResponseType.FQMN(), err)
 		}
 		schema = s.createSchemaRef(name)
 		if err := s.includeMessage(binding.Method.ResponseType.FQMN()); err != nil {
-			// handle err here
+			return err
 		}
 	}
 
@@ -439,6 +453,7 @@ func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *ope
 			},
 		},
 	}
+	return nil
 }
 
 func camelLowerCaseFieldPath(fieldPath descriptor.FieldPath) string {

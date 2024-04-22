@@ -41,3 +41,11 @@ type OpenAPISchema struct {
 	// OpenAPI document.
 	Dependencies SchemaDependencyStore
 }
+
+// OpenAPIDocument is a wrapper around an openapiv3.Document with document generation configs.
+type OpenAPIDocument struct {
+	// Document is the already mapped and processed OpenAPI document for a proto file.
+	Document *openapiv3.Document
+	// DefaultResponses are the already mapped default responses for all operations for this document/service.
+	DefaultResponses map[string]*openapiv3.Ref[openapiv3.Response]
+}

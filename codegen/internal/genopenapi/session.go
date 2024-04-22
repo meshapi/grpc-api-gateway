@@ -114,6 +114,12 @@ func (s *Session) includeDependencies(dependencies internal.SchemaDependencyStor
 	return nil
 }
 
+func (g *Generator) defaultResponsesForService(
+	service *descriptor.Service) map[string]*openapiv3.Ref[openapiv3.Response] {
+
+	return g.LookupFile(service.File).DefaultResponses
+}
+
 func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
