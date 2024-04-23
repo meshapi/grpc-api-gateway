@@ -911,11 +911,18 @@ type Schema struct {
 	Extra map[string]*structpb.Value `protobuf:"bytes,4,rep,name=extra,proto3" json:"extra,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Ref is used to define an external reference to include in the message.
 	// This could be a fully qualified proto message reference, and that type must
-	// be imported into the protofile. If no message is identified, the Ref will
-	// be used verbatim in the output.
+	// be available in the proto files or their dependencies.
+	// If no message is identified, the Ref will be used verbatim in the output.
+	//
 	// For example:
 	//
-	//	`ref: ".google.protobuf.Timestamp"`.
+	//	`ref: "google.protobuf.Timestamp"`.
+	//
+	// Relative references are allowed as well:
+	//
+	//	`ref: ".MyType"`.
+	//
+	// NOTE: This reference will only be honored when used in top-level schemas in responses and request bodies.
 	Ref string `protobuf:"bytes,5,opt,name=ref,proto3" json:"ref,omitempty"`
 	// config is additional schema config related to OpenAPI doc generation.
 	Config *FieldConfiguration `protobuf:"bytes,6,opt,name=config,proto3" json:"config,omitempty"`
