@@ -47,6 +47,7 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		schemas: map[string]internal.OpenAPISchema{
 			fqmnAny: internal.AnySchema(),
 		},
+		services: map[string]*internal.OpenAPIServiceSpec{},
 	}
 }
 
@@ -114,7 +115,10 @@ func (s *Session) addService(service *descriptor.Service) error {
 	}
 
 	comments := s.commentRegistry.LookupService(service)
-	defaultResponses := s.defaultResponsesForService(service)
+	defaultResponses, err := s.defaultResponsesForService(service)
+	if err != nil {
+		return err
+	}
 
 	for _, method := range service.Methods {
 		summary, description := "", ""

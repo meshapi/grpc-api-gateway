@@ -215,7 +215,7 @@ func (g *Generator) addServiceConfigs(configs []*api.OpenAPIServiceSpec, src int
 
 		if existingConfig, alreadyExists := g.services[serviceConfig.Selector]; alreadyExists {
 			return fmt.Errorf(
-				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
+				"multiple external OpenAPI configurations for service %q: both %q and %q contain bindings for this selector",
 				serviceConfig.Selector, existingConfig.Filename, src.Filename)
 		}
 

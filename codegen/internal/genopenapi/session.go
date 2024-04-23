@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/meshapi/grpc-rest-gateway/api"
+	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 	"gopkg.in/yaml.v3"
@@ -115,9 +119,28 @@ func (s *Session) includeDependencies(dependencies internal.SchemaDependencyStor
 }
 
 func (g *Generator) defaultResponsesForService(
-	service *descriptor.Service) map[string]*openapiv3.Ref[openapiv3.Response] {
+	service *descriptor.Service) (map[string]*openapiv3.Ref[openapiv3.Response], error) {
 
-	return g.LookupFile(service.File).DefaultResponses
+	var fromConfig, fromProto map[string]*openapi.Response
+	if doc := g.services[service.FQSN()]; doc != nil {
+		fromConfig = doc.GetDocument().GetConfig().GetDefaultResponses()
+	}
+	serviceSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
+	if ok && serviceSpec != nil {
+		fromProto = serviceSpec.GetConfig().GetDefaultResponses()
+	}
+	serviceDefaultResponseSpec := internal.MergeDefaultResponseSpec(fromProto, fromConfig)
+
+	if serviceDefaultResponseSpec == nil {
+		return g.LookupFile(service.File).DefaultResponses, nil
+	}
+
+	responses, err := openapimap.ResponseMap(serviceDefaultResponseSpec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map default responses to OpenAPI responses: %w", err)
+	}
+
+	return internal.MergeDefaultResponse(responses, g.LookupFile(service.File).DefaultResponses), nil
 }
 
 func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
