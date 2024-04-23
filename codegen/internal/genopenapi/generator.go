@@ -137,6 +137,10 @@ func (s *Session) addService(service *descriptor.Service) error {
 		}
 
 		var pathParamAliasMap map[string]string
+		customizedOperation, err := s.getCustomizedMethodOperation(method)
+		if err != nil {
+			return fmt.Errorf("failed to map method configs to OpenAPI operation object for %q: %w", method.FQMN(), err)
+		}
 
 		for _, binding := range method.Bindings {
 			pathParamAliasMap = s.updatePathParameterAliasesMap(pathParamAliasMap, binding)
@@ -148,7 +152,7 @@ func (s *Session) addService(service *descriptor.Service) error {
 				pathObject = &openapiv3.Path{}
 			}
 
-			var operationPtr **openapiv3.OperationCore
+			var operationPtr **openapiv3.Operation
 
 			switch binding.HTTPMethod {
 			case http.MethodGet:
@@ -182,13 +186,19 @@ func (s *Session) addService(service *descriptor.Service) error {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
 			}
 
-			operation.Summary = summary
-			operation.Description = description
+			operation.Object.Summary = summary
+			operation.Object.Description = description
 
-			// TODO: here is where we might need to
-			// map and merge the operation object with the one mapped from the config.
-			// though likely it needs to be built and merged from inside the operation.
-			*operationPtr = operation
+			if customizedOperation != nil {
+				if err := s.mergeObjects(customizedOperation, operation); err != nil {
+					return err
+				}
+
+				*operationPtr = customizedOperation
+			} else {
+				*operationPtr = operation
+			}
+
 		}
 	}
 	return nil

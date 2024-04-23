@@ -37,19 +37,12 @@ func Document(doc *openapi.Document) (*openapiv3.Document, error) {
 		return nil, fmt.Errorf("invalid external doc: %w", err)
 	}
 
-	result.Object.Servers, err = Servers(doc.Servers)
+	result.Object.Servers, err = ServerSlice(doc.Servers)
 	if err != nil {
 		return nil, fmt.Errorf("invalid servers list: %w", err)
 	}
 
-	if doc.Security != nil {
-		result.Object.Security = make([]map[string][]string, len(doc.Security))
-		for index, security := range doc.Security {
-			result.Object.Security[index] = map[string][]string{
-				security.Name: security.Scopes,
-			}
-		}
-	}
+	result.Object.Security = SecurityRequirementSlice(doc.Security)
 
 	result.Object.Tags, err = Tags(doc.Tags)
 	if err != nil {
@@ -230,7 +223,7 @@ func Server(server *openapi.Server) (*openapiv3.Server, error) {
 	}, nil
 }
 
-func Servers(servers []*openapi.Server) ([]*openapiv3.Server, error) {
+func ServerSlice(servers []*openapi.Server) ([]*openapiv3.Server, error) {
 	if len(servers) == 0 {
 		return nil, nil
 	}
@@ -613,6 +606,56 @@ func HeaderMap(headerMap map[string]*openapi.Header) (map[string]*openapiv3.Ref[
 	return result, nil
 }
 
+func Parameter(paramFromProto *openapi.Parameter) (*openapiv3.Ref[openapiv3.Parameter], error) {
+	if paramFromProto == nil {
+		return nil, nil
+	}
+
+	if paramFromProto.Ref != nil {
+		return MakeReference[openapiv3.Parameter](paramFromProto.Ref), nil
+	}
+
+	extensions, err := Extensions(paramFromProto.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &openapiv3.Ref[openapiv3.Parameter]{
+		Data: openapiv3.Parameter{
+			Object: openapiv3.ParameterCore{
+				Name:            paramFromProto.Name,
+				In:              paramFromProto.In,
+				Description:     paramFromProto.Description,
+				Required:        paramFromProto.Required,
+				Deprecated:      paramFromProto.Deprecated,
+				AllowEmptyValue: paramFromProto.AllowEmptyValue,
+				AllowReserved:   paramFromProto.AllowReserved,
+				Style:           paramFromProto.Style,
+				Explode:         paramFromProto.Explode,
+				Example:         paramFromProto.Example.AsInterface(),
+			},
+			Extensions: extensions,
+		},
+	}
+
+	result.Data.Object.Schema, err = Schema(paramFromProto.Schema)
+	if err != nil {
+		return nil, fmt.Errorf("invalid schema: %w", err)
+	}
+
+	result.Data.Object.Examples, err = StructuredExampleMap(paramFromProto.Examples)
+	if err != nil {
+		return nil, fmt.Errorf("invalid examples list: %w", err)
+	}
+
+	result.Data.Object.Content, err = MediaTypes(paramFromProto.Content)
+	if err != nil {
+		return nil, fmt.Errorf("invalid media types object: %w", err)
+	}
+
+	return result, nil
+}
+
 func ParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*openapiv3.Ref[openapiv3.Parameter], error) {
 	if parameterMap == nil {
 		return nil, nil
@@ -620,50 +663,29 @@ func ParameterMap(parameterMap map[string]*openapi.Parameter) (map[string]*opena
 
 	result := make(map[string]*openapiv3.Ref[openapiv3.Parameter], len(parameterMap))
 	for key, paramFromProto := range parameterMap {
-		if paramFromProto.Ref != nil {
-			result[key] = MakeReference[openapiv3.Parameter](paramFromProto.Ref)
-			continue
-		}
-
-		extensions, err := Extensions(paramFromProto.Extensions)
+		header, err := Parameter(paramFromProto)
 		if err != nil {
 			return nil, fmt.Errorf("invalid parameter for %q: %w", key, err)
 		}
 
-		header := &openapiv3.Ref[openapiv3.Parameter]{
-			Data: openapiv3.Parameter{
-				Object: openapiv3.ParameterCore{
-					Name:            paramFromProto.Name,
-					In:              paramFromProto.In,
-					Description:     paramFromProto.Description,
-					Required:        paramFromProto.Required,
-					Deprecated:      paramFromProto.Deprecated,
-					AllowEmptyValue: paramFromProto.AllowEmptyValue,
-					AllowReserved:   paramFromProto.AllowReserved,
-					Style:           paramFromProto.Style,
-					Explode:         paramFromProto.Explode,
-					Example:         paramFromProto.Example.AsInterface(),
-				},
-				Extensions: extensions,
-			},
-		}
-
-		header.Data.Object.Schema, err = Schema(paramFromProto.Schema)
-		if err != nil {
-			return nil, fmt.Errorf("invalid schema for %q: %w", key, err)
-		}
-
-		header.Data.Object.Examples, err = StructuredExampleMap(paramFromProto.Examples)
-		if err != nil {
-			return nil, fmt.Errorf("invalid examples list: %w", err)
-		}
-
-		header.Data.Object.Content, err = MediaTypes(paramFromProto.Content)
-		if err != nil {
-			return nil, fmt.Errorf("invalid media types object: %w", err)
-		}
-
 		result[key] = header
+	}
+
+	return result, nil
+}
+
+func ParameterSlice(parameters []*openapi.Parameter) ([]*openapiv3.Ref[openapiv3.Parameter], error) {
+	if len(parameters) == 0 {
+		return nil, nil
+	}
+
+	result := make([]*openapiv3.Ref[openapiv3.Parameter], len(parameters))
+	for index, paramFromProto := range parameters {
+		param, err := Parameter(paramFromProto)
+		if err != nil {
+			return nil, fmt.Errorf("invalid parameter at index %d: %w", index, err)
+		}
+		result[index] = param
 	}
 
 	return result, nil
@@ -1044,4 +1066,64 @@ func Components(components *openapi.Components) (*openapiv3.Components, error) {
 	}
 
 	return result, nil
+}
+
+func Operation(operation *openapi.Operation) (*openapiv3.Operation, error) {
+	if operation == nil {
+		return nil, nil
+	}
+
+	result := &openapiv3.Operation{
+		Object: openapiv3.OperationCore{
+			Tags:        operation.Tags,
+			Summary:     operation.Summary,
+			Description: operation.Description,
+			OperationID: operation.OperationId,
+			Deprecated:  operation.Deprecated,
+			Security:    SecurityRequirementSlice(operation.Security),
+		},
+	}
+	var err error
+
+	result.Extensions, err = Extensions(operation.Extensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result.Object.ExternalDocs, err = ExternalDoc(operation.ExternalDocs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid external doc: %w", err)
+	}
+
+	result.Object.Parameters, err = ParameterSlice(operation.Parameters)
+	if err != nil {
+		return nil, fmt.Errorf("invalid parameters: %w", err)
+	}
+
+	result.Object.Responses, err = ResponseMap(operation.Responses)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map responses: %w", err)
+	}
+
+	result.Object.Servers, err = ServerSlice(operation.Servers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to map servers: %w", err)
+	}
+
+	return result, nil
+}
+
+func SecurityRequirementSlice(items []*openapi.SecurityRequirement) []map[string][]string {
+	if len(items) == 0 {
+		return nil
+	}
+
+	result := make([]map[string][]string, len(items))
+	for index, security := range items {
+		result[index] = map[string][]string{
+			security.Name: security.Scopes,
+		}
+	}
+
+	return result
 }

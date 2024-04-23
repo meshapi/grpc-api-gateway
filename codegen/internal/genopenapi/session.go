@@ -271,3 +271,35 @@ func (s *Session) appendFieldToRemovedFields(table map[string]struct{}, field *d
 	table[s.fieldName(field)] = struct{}{}
 	return table
 }
+
+func (s *Session) getCustomizedMethodOperation(method *descriptor.Method) (*openapiv3.Operation, error) {
+	var operation *openapiv3.Operation
+
+	if serviceConfig, ok := s.services[method.Service.FQSN()]; ok && serviceConfig.Methods != nil {
+		methodConfig, ok := serviceConfig.Methods[method.GetName()]
+		if ok {
+			result, err := openapimap.Operation(methodConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to map operation: %w", err)
+			}
+
+			operation = result
+		}
+	}
+
+	protoConfig, ok := proto.GetExtension(method.Options, api.E_OpenapiOperation).(*openapi.Operation)
+	if ok && protoConfig != nil {
+		result, err := openapimap.Operation(protoConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map operation from proto config: %w", err)
+		}
+
+		if operation == nil {
+			operation = result
+		} else if err := s.mergeObjects(operation, result); err != nil {
+			return nil, err
+		}
+	}
+
+	return operation, nil
+}

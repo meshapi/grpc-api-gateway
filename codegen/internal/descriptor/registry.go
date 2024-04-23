@@ -30,9 +30,6 @@ type Registry struct {
 	// files is a mapping from file path to descriptor
 	files map[string]*File
 
-	// pkgMap is a user-specified mapping from file path to proto package.
-	//pkgMap map[string]string
-
 	// pkgAliases is a mapping from package aliases to package paths in go which are already taken.
 	pkgAliases map[string]string
 

@@ -16,8 +16,8 @@ import (
 
 func (s *Session) renderOperation(
 	binding *descriptor.Binding,
-	defaultResponses map[string]*openapiv3.Ref[openapiv3.Response]) (*openapiv3.OperationCore, error) {
-	operation := &openapiv3.OperationCore{}
+	defaultResponses map[string]*openapiv3.Ref[openapiv3.Response]) (*openapiv3.Operation, error) {
+	operation := &openapiv3.Operation{}
 
 	if !s.DisableServiceTags {
 		tag := binding.Method.Service.GetName()
@@ -27,7 +27,7 @@ func (s *Session) renderOperation(
 			}
 		}
 
-		operation.Tags = append(operation.Tags, tag)
+		operation.Object.Tags = append(operation.Object.Tags, tag)
 	}
 
 	// handle path parameters
@@ -37,7 +37,7 @@ func (s *Session) renderOperation(
 			return nil, fmt.Errorf("failed to render path parameter %q: %w", pathParam.FieldPath.String(), err)
 		}
 
-		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
+		operation.Object.Parameters = append(operation.Object.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
 			Data: *parameter,
 		})
 	}
@@ -49,7 +49,7 @@ func (s *Session) renderOperation(
 			return nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
 		}
 
-		operation.Parameters = append(operation.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
+		operation.Object.Parameters = append(operation.Object.Parameters, &openapiv3.Ref[openapiv3.Parameter]{
 			Data: *parameter,
 		})
 	}
@@ -60,20 +60,20 @@ func (s *Session) renderOperation(
 			return nil, err
 		}
 
-		operation.RequestBody = requestBody
+		operation.Object.RequestBody = requestBody
 	}
 
 	if defaultResponses != nil {
-		if operation.Responses == nil {
-			operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
+		if operation.Object.Responses == nil {
+			operation.Object.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
 		}
 		for status, response := range defaultResponses {
-			operation.Responses[status] = response
+			operation.Object.Responses[status] = response
 		}
 	}
 
 	if !s.DisableDefaultResponses {
-		if err := s.addDefaultResponse(binding, operation); err != nil {
+		if err := s.addDefaultResponse(binding, &operation.Object); err != nil {
 			return nil, fmt.Errorf("failed to add default responses: %w", err)
 		}
 	}
