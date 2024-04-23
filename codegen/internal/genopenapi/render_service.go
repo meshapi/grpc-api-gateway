@@ -7,6 +7,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
@@ -535,4 +536,36 @@ func renderPath(binding *descriptor.Binding, aliasMap map[string]string) string 
 	}
 
 	return writer.String()
+}
+
+func (g *Generator) getCustomizedMethodOperation(method *descriptor.Method) (*openapiv3.Operation, error) {
+	var operation *openapiv3.Operation
+
+	if serviceConfig, ok := g.services[method.Service.FQSN()]; ok && serviceConfig.Methods != nil {
+		methodConfig, ok := serviceConfig.Methods[method.GetName()]
+		if ok {
+			result, err := openapimap.Operation(methodConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to map operation: %w", err)
+			}
+
+			operation = result
+		}
+	}
+
+	protoConfig, ok := proto.GetExtension(method.Options, api.E_OpenapiOperation).(*openapi.Operation)
+	if ok && protoConfig != nil {
+		result, err := openapimap.Operation(protoConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map operation from proto config: %w", err)
+		}
+
+		if operation == nil {
+			operation = result
+		} else if err := g.mergeObjects(operation, result); err != nil {
+			return nil, err
+		}
+	}
+
+	return operation, nil
 }
