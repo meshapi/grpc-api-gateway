@@ -163,6 +163,7 @@ func (s *Session) resolveRefReferencesInDefaultResponses(responses internal.Defa
 		if response.Response.Reference != nil {
 			continue
 		}
+
 		for _, header := range response.Response.Data.Object.Headers {
 			if ref := header.Data.Object.Schema.Object.Ref; ref != "" && ref[0] == '.' {
 				record, ok := s.schemaNames[ref]
@@ -180,19 +181,22 @@ func (s *Session) resolveRefReferencesInDefaultResponses(responses internal.Defa
 		}
 
 		for _, content := range response.Response.Data.Object.Content {
-			if schema := content.Object.Schema; schema != nil {
-				if ref := schema.Object.Ref; ref != "" && schema.Object.Ref[0] == '.' {
-					record, ok := s.schemaNames[ref]
-					if !ok {
-						continue
-					}
+			schema := content.Object.Schema
+			if schema == nil {
+				continue
+			}
 
-					schema.Object.Ref = refPrefix + record
-					var err error
-					response.Dependencies, err = s.addSchemaDependencyForFQN(response.Dependencies, ref)
-					if err != nil {
-						return err
-					}
+			if ref := schema.Object.Ref; ref == "" && schema.Object.Ref[0] == '.' {
+				record, ok := s.schemaNames[ref]
+				if !ok {
+					continue
+				}
+
+				schema.Object.Ref = refPrefix + record
+				var err error
+				response.Dependencies, err = s.addSchemaDependencyForFQN(response.Dependencies, ref)
+				if err != nil {
+					return err
 				}
 			}
 		}
