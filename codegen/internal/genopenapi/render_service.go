@@ -194,7 +194,7 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 		Data: openapiv3.RequestBody{
 			Object: openapiv3.RequestBodyCore{
 				Content: map[string]*openapiv3.MediaType{
-					"application/json": {
+					mimeTypeJSON: {
 						Object: openapiv3.MediaTypeCore{
 							Schema: schema,
 						},
@@ -459,12 +459,12 @@ func (s *Session) addDefaultSuccessResponse(binding *descriptor.Binding, operati
 		}
 	}
 
-	operation.Responses["200"] = &openapiv3.Ref[openapiv3.Response]{
+	operation.Responses[httpStatusOK] = &openapiv3.Ref[openapiv3.Response]{
 		Data: openapiv3.Response{
 			Object: openapiv3.ResponseCore{
 				Description: defaultSuccessfulResponse,
 				Content: map[string]*openapiv3.MediaType{
-					"application/json": {
+					mimeTypeJSON: {
 						Object: openapiv3.MediaTypeCore{
 							Schema:  schema,
 							Example: nil,

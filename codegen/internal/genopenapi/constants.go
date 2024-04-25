@@ -19,3 +19,5 @@ const (
 const refPrefix = "#/components/schemas/"
 
 const defaultSuccessfulResponse = "a successful response."
+const mimeTypeJSON = "application/json"
+const httpStatusOK = "200"
