@@ -9,7 +9,6 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"google.golang.org/protobuf/proto"
@@ -118,11 +117,9 @@ func (s *Session) includeDependencies(dependencies internal.SchemaDependencyStor
 	return nil
 }
 
-func (g *Generator) defaultResponsesForService(
-	service *descriptor.Service) (map[string]*openapiv3.Ref[openapiv3.Response], error) {
-
+func (s *Session) defaultResponsesForService(service *descriptor.Service) (internal.DefaultResponses, error) {
 	var fromConfig, fromProto map[string]*openapi.Response
-	if doc := g.services[service.FQSN()]; doc != nil {
+	if doc := s.services[service.FQSN()]; doc != nil {
 		fromConfig = doc.GetDocument().GetConfig().GetDefaultResponses()
 	}
 	serviceSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
@@ -132,15 +129,92 @@ func (g *Generator) defaultResponsesForService(
 	serviceDefaultResponseSpec := internal.MergeDefaultResponseSpec(fromProto, fromConfig)
 
 	if serviceDefaultResponseSpec == nil {
-		return g.LookupFile(service.File).DefaultResponses, nil
+		file := s.LookupFile(service.File)
+		if err := s.resolveRefReferencesInDefaultResponses(file.DefaultResponses); err != nil {
+			return nil, err
+		}
+		return file.DefaultResponses, nil
 	}
 
-	responses, err := openapimap.ResponseMap(serviceDefaultResponseSpec)
+	responses, err := internal.MapDefaultResponses(serviceDefaultResponseSpec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map default responses to OpenAPI responses: %w", err)
 	}
 
-	return internal.MergeDefaultResponse(responses, g.LookupFile(service.File).DefaultResponses), nil
+	// Review all of the schemas, if any $ref is used, update and replace them with OpenAPI references.
+	result := internal.MergeDefaultResponses(responses, s.LookupFile(service.File).DefaultResponses)
+	if err := s.resolveRefReferencesInDefaultResponses(result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Session) resolveRefReferencesInDefaultResponses(responses internal.DefaultResponses) error {
+	if len(responses) == 0 {
+		return nil
+	}
+
+	// Review all of the schemas, if any $ref is used, update and replace them with OpenAPI references.
+	for _, response := range responses {
+		if response.Processed {
+			continue
+		}
+		if response.Response.Reference != nil {
+			continue
+		}
+		for _, header := range response.Response.Data.Object.Headers {
+			if ref := header.Data.Object.Schema.Object.Ref; ref != "" && ref[0] == '.' {
+				record, ok := s.schemaNames[ref]
+				if !ok {
+					continue
+				}
+
+				header.Data.Object.Schema.Object.Ref = refPrefix + record
+				var err error
+				response.Dependencies, err = s.addSchemaDependencyForFQN(response.Dependencies, ref)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		for _, content := range response.Response.Data.Object.Content {
+			if schema := content.Object.Schema; schema != nil {
+				if ref := schema.Object.Ref; ref != "" && schema.Object.Ref[0] == '.' {
+					record, ok := s.schemaNames[ref]
+					if !ok {
+						continue
+					}
+
+					schema.Object.Ref = refPrefix + record
+					var err error
+					response.Dependencies, err = s.addSchemaDependencyForFQN(response.Dependencies, ref)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		response.Processed = true
+	}
+
+	return nil
+}
+
+// addSchemaDependencyForFQN produces a schema dependency for an FQN with unknown type.
+func (g *Generator) addSchemaDependencyForFQN(
+	store internal.SchemaDependencyStore, ref string) (internal.SchemaDependencyStore, error) {
+	if _, err := g.registry.LookupMessage("", ref); err == nil {
+		return internal.AddDependency(
+			store, internal.SchemaDependency{FQN: ref, Kind: internal.DependencyKindMessage}), nil
+	} else if _, err := g.registry.LookupEnum("", ref); err == nil {
+		return internal.AddDependency(
+			store, internal.SchemaDependency{FQN: ref, Kind: internal.DependencyKindEnum}), nil
+	} else {
+		return nil, fmt.Errorf("could not determine dependency kind for %q", ref)
+	}
 }
 
 func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {

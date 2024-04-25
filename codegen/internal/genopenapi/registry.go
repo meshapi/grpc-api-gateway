@@ -35,7 +35,7 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 			return fmt.Errorf("invalid OpenAPI document in %q: %w", configPath, err)
 		}
 
-		g.rootDocument.DefaultResponses, err = openapimap.ResponseMap(
+		g.rootDocument.DefaultResponses, err = internal.MapDefaultResponses(
 			doc.GetDocument().GetConfig().GetDefaultResponses())
 		if err != nil {
 			return fmt.Errorf("failed to map default responses to OpenAPI response in %q: %w", configPath, err)
@@ -106,11 +106,11 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		defaultResponsesSpec := internal.MergeDefaultResponseSpec(
 			configFromProto.GetConfig().GetDefaultResponses(),
 			configFromFile.GetDocument().GetConfig().GetDefaultResponses())
-		defaultResponses, err := openapimap.ResponseMap(defaultResponsesSpec)
+		defaultResponses, err := internal.MapDefaultResponses(defaultResponsesSpec)
 		if err != nil {
 			return fmt.Errorf("failed to map config response map to OpenAPI response map: %w", err)
 		}
-		defaultResponses = internal.MergeDefaultResponse(defaultResponses, g.rootDocument.DefaultResponses)
+		defaultResponses = internal.MergeDefaultResponses(defaultResponses, g.rootDocument.DefaultResponses)
 		g.files[protoFile] = internal.OpenAPIDocument{
 			Document:         doc,
 			DefaultResponses: defaultResponses,

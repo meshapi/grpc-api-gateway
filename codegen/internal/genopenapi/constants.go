@@ -17,3 +17,5 @@ const (
 )
 
 const refPrefix = "#/components/schemas/"
+
+const defaultSuccessfulResponse = "a successful response."

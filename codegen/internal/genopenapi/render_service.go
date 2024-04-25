@@ -7,6 +7,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
@@ -17,7 +18,7 @@ import (
 
 func (s *Session) renderOperation(
 	binding *descriptor.Binding,
-	defaultResponses map[string]*openapiv3.Ref[openapiv3.Response]) (*openapiv3.Operation, error) {
+	defaultResponses internal.DefaultResponses) (*openapiv3.Operation, error) {
 	operation := &openapiv3.Operation{}
 
 	if !s.DisableServiceTags {
@@ -64,22 +65,40 @@ func (s *Session) renderOperation(
 		operation.Object.RequestBody = requestBody
 	}
 
-	if defaultResponses != nil {
-		if operation.Object.Responses == nil {
-			operation.Object.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
-		}
-		for status, response := range defaultResponses {
-			operation.Object.Responses[status] = response
-		}
+	if err := s.addDefaultResponses(defaultResponses, &operation.Object); err != nil {
+		return nil, err
 	}
 
 	if !s.DisableDefaultResponses {
-		if err := s.addDefaultResponse(binding, &operation.Object); err != nil {
+		if err := s.addDefaultSuccessResponse(binding, &operation.Object); err != nil {
 			return nil, fmt.Errorf("failed to add default responses: %w", err)
 		}
 	}
 
 	return operation, nil
+}
+
+func (s *Session) addDefaultResponses(responses internal.DefaultResponses, operation *openapiv3.OperationCore) error {
+	if len(responses) == 0 {
+		return nil
+	}
+
+	if operation.Responses == nil {
+		operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
+	}
+
+	for status, response := range responses {
+		operation.Responses[status] = response.Response
+		if len(response.Dependencies) == 0 {
+			continue
+		}
+
+		if err := s.includeDependencies(response.Dependencies); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Session) addFieldSchema(field *descriptor.Field) (*openapiv3.Schema, error) {
@@ -414,7 +433,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 	return parameter, nil
 }
 
-func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *openapiv3.OperationCore) error {
+func (s *Session) addDefaultSuccessResponse(binding *descriptor.Binding, operation *openapiv3.OperationCore) error {
 	if operation.Responses == nil {
 		operation.Responses = make(map[string]*openapiv3.Ref[openapiv3.Response])
 	}
@@ -443,6 +462,7 @@ func (s *Session) addDefaultResponse(binding *descriptor.Binding, operation *ope
 	operation.Responses["200"] = &openapiv3.Ref[openapiv3.Response]{
 		Data: openapiv3.Response{
 			Object: openapiv3.ResponseCore{
+				Description: defaultSuccessfulResponse,
 				Content: map[string]*openapiv3.MediaType{
 					"application/json": {
 						Object: openapiv3.MediaTypeCore{

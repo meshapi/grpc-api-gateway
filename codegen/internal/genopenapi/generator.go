@@ -186,18 +186,20 @@ func (s *Session) addService(service *descriptor.Service) error {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
 			}
 
-			operation.Object.Summary = summary
-			operation.Object.Description = description
-
 			if customizedOperation != nil {
-				if err := s.mergeObjects(customizedOperation, operation); err != nil {
+				if err := s.mergeObjectsOverride(operation, customizedOperation); err != nil {
 					return err
 				}
-
-				*operationPtr = customizedOperation
-			} else {
-				*operationPtr = operation
 			}
+
+			if operation.Object.Summary == "" {
+				operation.Object.Summary = summary
+			}
+			if operation.Object.Description == "" {
+				operation.Object.Description = description
+			}
+
+			*operationPtr = operation
 
 		}
 	}

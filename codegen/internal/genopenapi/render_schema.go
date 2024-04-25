@@ -31,6 +31,18 @@ func (g *Generator) mergeObjects(base, source any) error {
 	return nil
 }
 
+func (g *Generator) mergeObjectsOverride(base, source any) error {
+	if g.MergeWithOverwrite {
+		if err := mergo.Merge(base, source, mergo.WithOverride); err != nil {
+			return fmt.Errorf("failed to merge: %w", err)
+		}
+	} else if err := mergo.Merge(base, source, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+		return fmt.Errorf("failed to merge: %w", err)
+	}
+
+	return nil
+}
+
 func (g *Generator) getCustomizedFieldSchema(
 	field *descriptor.Field, config *internal.OpenAPIMessageSpec) (internal.FieldSchemaCustomization, error) {
 	result := internal.FieldSchemaCustomization{}
