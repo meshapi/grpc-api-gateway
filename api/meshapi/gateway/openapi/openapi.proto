@@ -214,17 +214,14 @@ message Schema {
 	// objects.
 	map<string, google.protobuf.Value> extra = 4;
   // Ref is used to define an external reference to include in the message.
-  // This could be a fully qualified proto message reference, and that type must
-  // be available in the proto files or their dependencies.
+  // This could be a fully qualified proto message reference and start with a '.',
+	// and that type must be available in the proto files or their dependencies.
 	// If no message is identified, the Ref will be used verbatim in the output.
 	//
   // For example:
-  //  `ref: "google.protobuf.Timestamp"`.
+  //  `ref: ".google.protobuf.Timestamp"`.
 	//
-	// Relative references are allowed as well:
-	//  `ref: ".MyType"`.
-	//
-	// NOTE: This reference will only be honored when used in top-level schemas in responses and request bodies.
+	// NOTE: This reference will only be honored when used in top-level schemas in responses only.
 	string ref = 5;
 	// config is additional schema config related to OpenAPI doc generation.
 	FieldConfiguration config = 6;
