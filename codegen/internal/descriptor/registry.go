@@ -14,9 +14,12 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
+	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // Registry is a registry of information extracted from pluginpb.CodeGeneratorRequest.
@@ -30,12 +33,6 @@ type Registry struct {
 	// files is a mapping from file path to descriptor
 	files map[string]*File
 
-	// prefix is a prefix to be inserted to golang package paths generated from proto package names.
-	//prefix string
-
-	// pkgMap is a user-specified mapping from file path to proto package.
-	//pkgMap map[string]string
-
 	// pkgAliases is a mapping from package aliases to package paths in go which are already taken.
 	pkgAliases map[string]string
 
@@ -43,6 +40,8 @@ type Registry struct {
 	httpSpecRegistry *httpspec.Registry
 
 	RegistryOptions
+
+	filePaths []string
 }
 
 // NewRegistry creates and initializes a new registry.
@@ -64,18 +63,19 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
-		if err := r.httpSpecRegistry.LoadFromFile(r.GatewayFileLoadOptions.GlobalGatewayConfigFile, ""); err != nil {
+		filePath := filepath.Join(r.SearchPath, r.GatewayFileLoadOptions.GlobalGatewayConfigFile)
+		if err := r.httpSpecRegistry.LoadFromFile(filePath, ""); err != nil {
 			return fmt.Errorf("failed to load global gateway config file: %w", err)
 		}
 	}
 
-	filePaths := make([]string, 0, len(gen.FilesByPath))
+	r.filePaths = make([]string, 0, len(gen.FilesByPath))
 	for filePath := range gen.FilesByPath {
-		filePaths = append(filePaths, filePath)
+		r.filePaths = append(r.filePaths, filePath)
 	}
-	sort.Strings(filePaths)
+	sort.Strings(r.filePaths)
 
-	for _, filePath := range filePaths {
+	for _, filePath := range r.filePaths {
 		r.loadIncludedFile(filePath, gen.FilesByPath[filePath])
 
 		// if the file is a target of code genertaion, look for service mapping files.
@@ -93,7 +93,7 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
-	for _, filePath := range filePaths {
+	for _, filePath := range r.filePaths {
 		if !gen.FilesByPath[filePath].Generate {
 			continue
 		}
@@ -104,7 +104,30 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
+	r.loadRPCStatus()
 	return nil
+}
+
+// loadRPCStatus loads the rpc.Status object so that it can be found in the registry.
+func (r *Registry) loadRPCStatus() {
+	protoFiles := [2]*descriptorpb.FileDescriptorProto{
+		protodesc.ToFileDescriptorProto((&anypb.Any{}).ProtoReflect().Descriptor().ParentFile()),
+		protodesc.ToFileDescriptorProto((&statuspb.Status{}).ProtoReflect().Descriptor().ParentFile()),
+	}
+
+	for _, protoFile := range protoFiles {
+		if _, exists := r.files[protoFile.GetName()]; exists {
+			continue
+		}
+
+		f := &File{
+			FileDescriptorProto: protoFile,
+		}
+		r.files[protoFile.GetName()] = f
+		r.filePaths = append(r.filePaths, protoFile.GetName())
+		r.loadMessagesInFile(f, nil, protoFile.MessageType)
+		r.loadEnumsInFile(f, nil, protoFile.EnumType)
+	}
 }
 
 func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.File) error {
@@ -189,13 +212,14 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 }
 
 func (r *Registry) loadServices(file *File) error {
-	for _, protoService := range file.GetService() {
+	for index, protoService := range file.GetService() {
 		service := &Service{
 			ServiceDescriptorProto: protoService,
 			File:                   file,
 			Methods:                []*Method{},
+			Index:                  index,
 		}
-		for _, protoMethod := range service.GetMethod() {
+		for index, protoMethod := range service.GetMethod() {
 			fqmn := service.FQSN() + "." + protoMethod.GetName()
 			binding, ok := r.httpSpecRegistry.LookupBinding(fqmn)
 			if !ok {
@@ -219,7 +243,7 @@ func (r *Registry) loadServices(file *File) error {
 				}
 			}
 
-			if err := r.addMethodToService(service, protoMethod, binding); err != nil {
+			if err := r.addMethodToService(service, index, protoMethod, binding); err != nil {
 				return fmt.Errorf("failed to process method '%s': %w", protoMethod.GetName(), err)
 			}
 		}
@@ -235,7 +259,7 @@ func (r *Registry) loadServices(file *File) error {
 }
 
 func (r *Registry) addMethodToService(
-	service *Service, protoMethod *descriptorpb.MethodDescriptorProto, binding httpspec.EndpointSpec) error {
+	service *Service, index int, protoMethod *descriptorpb.MethodDescriptorProto, binding httpspec.EndpointSpec) error {
 
 	requestType, err := r.LookupMessage(service.File.GetPackage(), protoMethod.GetInputType())
 	if err != nil {
@@ -252,6 +276,7 @@ func (r *Registry) addMethodToService(
 		Service:               service,
 		RequestType:           requestType,
 		ResponseType:          responseType,
+		Index:                 index,
 	}
 
 	method.Bindings, err = r.mapBindings(method, binding)
@@ -346,13 +371,15 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 					FieldPath(fields))
 			} else {
 				name := queryParam.Name
+				customName := true
 				if name == "" {
 					name = FieldPath(fields).String()
+					customName = false
 				}
 
 				binding.QueryParameterCustomization.Aliases = append(
 					binding.QueryParameterCustomization.Aliases,
-					QueryParamAlias{Name: name, FieldPath: FieldPath(fields)})
+					QueryParamAlias{Name: name, FieldPath: FieldPath(fields), CustomName: customName})
 			}
 		}
 
@@ -444,9 +471,31 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	var queryParams []QueryParameter
 
 	for _, alias := range b.QueryParameterCustomization.Aliases {
+		field := alias.FieldPath[len(alias.FieldPath)-1].Target
+
+		repeated := field.HasRepeatedLabel()
+		if !field.IsScalarType() {
+			if repeated {
+				return nil, fmt.Errorf(
+					"invalid query param %q: only primitive and enum types can be used with a repeated label in query params",
+					alias.Name)
+			}
+
+			message, err := registry.LookupMessage(field.Message.FQMN(), field.GetTypeName())
+			if err != nil {
+				return nil, fmt.Errorf("failed to find message %q: %w", field.GetTypeName(), err)
+			}
+			// if the map entry's value type is not scalar, it cannot be parsed in query parameters.
+			if message.IsMapEntry() && !message.Fields[1].IsScalarType() {
+				return nil, fmt.Errorf(
+					"invalid query param %q: only primitive and enum types can be used in map values", alias.Name)
+			}
+		}
+
 		queryParams = append(queryParams, QueryParameter{
-			Name:      alias.Name,
-			FieldPath: alias.FieldPath,
+			Name:        alias.Name,
+			FieldPath:   alias.FieldPath,
+			NameIsAlias: alias.CustomName,
 		})
 	}
 
@@ -472,6 +521,8 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 				continue
 			}
 
+			repeated := field.HasRepeatedLabel()
+
 			if !field.IsScalarType() {
 				// go deep inside.
 				message, err := registry.LookupMessage(item.Message.FQMN(), field.GetTypeName())
@@ -479,12 +530,21 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 					return nil, fmt.Errorf("failed to look up nested message type %q: %s", field.GetTypeName(), err)
 				}
 
-				queue = append(queue, Item{
-					Message:   message,
-					Parts:     append(item.Parts, field.GetName()),
-					FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
-				})
-				continue
+				// if message is a map entry, treat it as a scalar type.
+				if !message.IsMapEntry() {
+					if repeated {
+						continue
+					}
+
+					queue = append(queue, Item{
+						Message:   message,
+						Parts:     append(item.Parts, field.GetName()),
+						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+					})
+					continue
+				} else if !message.Fields[1].IsScalarType() {
+					continue
+				}
 			}
 
 			queryParams = append(queryParams, QueryParameter{
@@ -658,10 +718,11 @@ func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages [
 			Outers:          outerPath,
 			Index:           index,
 		}
-		for _, protoField := range protoMessage.GetField() {
+		for index, protoField := range protoMessage.GetField() {
 			message.Fields = append(message.Fields, &Field{
 				FieldDescriptorProto: protoField,
 				Message:              message,
+				Index:                index,
 			})
 		}
 
@@ -794,4 +855,15 @@ func (r *Registry) UnboundExternalHTTPSpecs() []httpspec.EndpointSpec {
 	})
 
 	return missingMethods
+}
+
+// Iterate iterates over all processed files.
+func (r *Registry) Iterate(cb func(fielPath string, protoFile *File) error) error {
+	for _, filePath := range r.filePaths {
+		if err := cb(filePath, r.files[filePath]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

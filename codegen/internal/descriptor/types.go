@@ -115,6 +115,14 @@ func (m *Message) GoType(currentPackage string) string {
 	return fmt.Sprintf("%s.%s", m.File.Pkg(), name)
 }
 
+func (m *Message) IsMapEntry() bool {
+	if opts := m.GetOptions(); opts != nil && opts.GetMapEntry() {
+		return true
+	}
+
+	return false
+}
+
 // Enum describes a protocol buffer enum types.
 type Enum struct {
 	*descriptorpb.EnumDescriptorProto
@@ -163,6 +171,8 @@ type Service struct {
 	Methods []*Method
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// Index is the index of the service in the proto file.
+	Index int
 }
 
 // FQSN returns the fully qualified service name of this service.
@@ -264,6 +274,8 @@ func (b Body) AssignableExprPrep(msgExpr string, currentPackage string) string {
 type QueryParamAlias struct {
 	// Name is the name that will be read from the query parameters.
 	Name string
+	// CustomName indicates the name is a custom and user-specified name, not a generated name.
+	CustomName bool
 	// FieldPath is a path to a proto field which this parameter is mapped to.
 	FieldPath FieldPath
 }
@@ -372,6 +384,13 @@ type QueryParameter struct {
 
 	// Name is the name of the query parameter.
 	Name string
+
+	// NameIsAlias indicates whether or not the name is a custom alias.
+	NameIsAlias bool
+}
+
+func (q QueryParameter) Target() *Field {
+	return q.FieldPath[len(q.FieldPath)-1].Target
 }
 
 func (q QueryParameter) String() string {
@@ -394,6 +413,8 @@ type Method struct {
 	ResponseType *Message
 	// Bindings are the HTTP endpoint bindings.
 	Bindings []*Binding
+	// Index is the index of the method in the service.
+	Index int
 }
 
 // FQMN returns a fully qualified rpc method name of this method.
@@ -411,6 +432,8 @@ type Field struct {
 	Message *Message
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+	// Index is the index of the field in the message proto descriptor.
+	Index int
 }
 
 // FQFN returns a fully qualified field name of this field.
@@ -428,6 +451,14 @@ func (f *Field) IsScalarType() bool {
 	return true
 }
 
+// HasRepeatedLabel returns whether or not this field has repeated label on it.
+//
+// NOTE: This is not an indication that this field is necessarily an array since
+// the underlying type can be a map entry.
+func (f *Field) HasRepeatedLabel() bool {
+	return f.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
+}
+
 // FieldPath is a path to a field from a request message.
 type FieldPath []FieldPathComponent
 
@@ -438,6 +469,10 @@ func (p FieldPath) String() string {
 		components = append(components, c.Name)
 	}
 	return strings.Join(components, ".")
+}
+
+func (p FieldPath) Target() *Field {
+	return p[len(p)-1].Target
 }
 
 // IsNestedProto3 indicates whether the FieldPath is a nested Proto3 path.
@@ -559,6 +594,62 @@ func (c FieldPathComponent) ValueExpr() string {
 	}
 	return casing.Camel(c.Name)
 }
+
+type PathParameterSeparator uint8
+
+func (p PathParameterSeparator) String() string {
+	switch p {
+	case PathParameterSeparatorCSV:
+		return "csv"
+	case PathParameterSeparatorTSV:
+		return "tsv"
+	case PathParameterSeparatorSSV:
+		return "ssv"
+	case PathParameterSeparatorPipes:
+		return "pipes"
+	default:
+		return "<unknown>"
+	}
+}
+
+func (p PathParameterSeparator) Separator() rune {
+	switch p {
+	case PathParameterSeparatorCSV:
+		return ','
+	case PathParameterSeparatorTSV:
+		return '\t'
+	case PathParameterSeparatorSSV:
+		return ' '
+	case PathParameterSeparatorPipes:
+		return '|'
+	default:
+		return ',' // NB: default to CSV.
+	}
+}
+
+func (p *PathParameterSeparator) Set(value string) error {
+	switch strings.ToLower(value) {
+	case "csv":
+		*p = PathParameterSeparatorCSV
+	case "tsv":
+		*p = PathParameterSeparatorTSV
+	case "ssv":
+		*p = PathParameterSeparatorSSV
+	case "pipes":
+		*p = PathParameterSeparatorPipes
+	default:
+		return fmt.Errorf("unrecognized value: %q. Allowed values are 'cav', 'pipes', 'ssv' and 'tsv'.", value)
+	}
+
+	return nil
+}
+
+const (
+	PathParameterSeparatorCSV = iota
+	PathParameterSeparatorPipes
+	PathParameterSeparatorSSV
+	PathParameterSeparatorTSV
+)
 
 // IsWellKnownType returns true if the provided fully qualified type name is considered 'well-known'.
 func IsWellKnownType(typeName string) bool {

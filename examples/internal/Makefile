@@ -3,6 +3,7 @@ start:
 
 clean:
 	@rm -fr api
+	@rm -fr gen
 
 generate:
 	@rm -fr vendor && mkdir vendor

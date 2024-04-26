@@ -4,15 +4,40 @@ package meshapi.gateway;
 
 import "google/protobuf/descriptor.proto";
 import "meshapi/gateway/gateway.proto";
+import "meshapi/gateway/openapi/openapi.proto";
 
 option go_package = "github.com/meshapi/grpc-rest-gateway/api";
 
+extend google.protobuf.FileOptions {
+	// openapi holds OpenAPI file options.
+	gateway.openapi.Document openapi_doc = 1143;
+}
+
+extend google.protobuf.ServiceOptions {
+	// openapi holds OpenAPI file options.
+	gateway.openapi.Document openapi_service_doc = 1143;
+}
 
 extend google.protobuf.MethodOptions {
 	// http holds HTTP endpoint binding configs.
 	//
   // ID assigned by protobuf-global-extension-registry@google.com for gRPC-Gateway project.
   ProtoEndpointBinding http = 1142;
+
+	// openapi holds OpenAPI method/operation options.
+	gateway.openapi.Operation openapi_operation = 1143;
+}
+
+extend google.protobuf.MessageOptions {
+	gateway.openapi.Schema openapi_schema = 1143;
+}
+
+extend google.protobuf.EnumOptions {
+	gateway.openapi.Schema openapi_enum = 1143;
+}
+
+extend google.protobuf.FieldOptions {
+	gateway.openapi.Schema openapi_field = 1143;
 }
 
 message ProtoEndpointBinding {

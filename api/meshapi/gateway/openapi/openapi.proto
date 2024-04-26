@@ -1,0 +1,874 @@
+syntax = "proto3";
+
+package meshapi.gateway.openapi;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/api/openapi";
+
+// Contact information for the exposed API.
+// See: https://spec.openapis.org/oas/v3.1.0#contact-object
+message Contact {
+	// The identifying name of the contact person/organization.
+	string name = 1;
+	// The URL pointing to the contact information. This MUST be in the form of a URL.
+	string url = 2;
+	// The email address of the contact person/organization. This MUST be in the form of an email address.
+	string email = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
+}
+
+// License information for the exposed API.
+// See: https://spec.openapis.org/oas/v3.1.0#license-object
+message License {
+	// REQUIRED. The license name used for the API.
+	string name = 1;
+	// An SPDX license expression for the API. The identifier field is mutually exclusive of the url field.
+	string identifier = 2;
+	// A URL to the license used for the API. This MUST be in the form of a URL.
+	// The url field is mutually exclusive of the identifier field.
+	string url = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
+}
+
+// Info captures OpenAPI Info object.
+// NOTE: A generated value will be used for the required fields if they are left empty.
+// See: https://spec.openapis.org/oas/v3.1.0#info-object
+message Info {
+	// REQUIRED. The title of the API.
+	string title = 1;
+	// A short summary of the API.
+	string summary = 2;
+	// A description of the API. CommonMark syntax MAY be used for rich text representation.
+	string description = 3;
+	// A URL to the Terms of Service for the API. This MUST be in the form of a URL.
+	string terms_of_service = 4;
+	// The contact information for the exposed API.
+	Contact contact = 5;
+	// The license information for the exposed API.
+	License license = 6;
+	// REQUIRED. The version of the OpenAPI document.
+	string version = 7;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 8;
+}
+
+// An object representing a Server Variable for server URL template substitution.
+// See: https://spec.openapis.org/oas/v3.1.0#server-variable-object
+message ServerVariable {
+	// An enumeration of string values to be used if the substitution options are from a limited set.
+	// The array MUST NOT be empty.
+	repeated string enum_values = 1;
+	// REQUIRED. The default value to use for substitution, which SHALL be sent if an alternate value
+	// is not supplied. Note this behavior is different than the Schema Object’s treatment of default values,
+	// because in those cases parameter values are optional. If the enum is defined, the value MUST exist in
+	// the enum’s values.
+	string default_value = 2;
+	// An optional description for the server variable.
+	// CommonMark syntax MAY be used for rich text representation.
+	string description = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
+}
+
+// An object representing a Server.
+// See: https://spec.openapis.org/oas/v3.1.0#server-object
+message Server {
+	// REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative,
+	// to indicate that the host location is relative to the location where the OpenAPI document is
+	// being served. Variable substitutions will be made when a variable is named in {brackets}.
+	string url = 1;
+	// An optional string describing the host designated by the URL.
+	// CommonMark syntax MAY be used for rich text representation.
+	string description = 2;
+	// A map between a variable name and its value. The value is used for substitution in the
+	// server’s URL template.
+	map<string,ServerVariable> variables = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
+}
+
+// Lists the required security schemes to execute this operation. The name used for each property MUST
+// correspond to a security scheme declared in the Security Schemes under the Components Object.
+//
+// Security Requirement Objects that contain multiple schemes require that all schemes MUST be satisfied
+// for a request to be authorized. This enables support for scenarios where multiple query parameters or
+// HTTP headers are required to convey security information.
+//
+// When a list of Security Requirement Objects is defined on the OpenAPI Object or Operation Object, only
+// one of the Security Requirement Objects in the list needs to be satisfied to authorize the request.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#security-requirement-object
+message SecurityRequirement {
+	// Each name MUST correspond to a security scheme which is declared in the Security Schemes under
+	// the Components Object. If the security scheme is of type "oauth2" or "openIdConnect", then the
+	// value is a list of scope names required for the execution, and the list MAY be empty if authorization
+	// does not require a specified scope. For other security scheme types, the array MAY contain a list of role
+	// names which are required for the execution, but are not otherwise defined or exchanged in-band.
+	string name = 1;
+	repeated string scopes = 2;
+}
+
+// Allows referencing an external resource for extended documentation.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
+message ExternalDocumentation {
+	// A description of the target documentation. CommonMark syntax MAY be used for rich text representation.
+	string description = 1;
+	// REQUIRED. The URL for the target documentation. This MUST be in the form of a URL.
+	string url = 2;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 3;
+}
+
+// Adds metadata to a single tag that is used by the Operation Object. It is not mandatory to have a Tag Object
+// per tag defined in the Operation Object instances.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#tag-object
+message Tag {
+	// REQUIRED. The name of the tag.
+	string name = 1;
+	// A description for the tag. CommonMark syntax MAY be used for rich text representation.
+	string description = 2;
+	// Additional external documentation for this tag.
+	ExternalDocumentation external_docs = 3;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 4;
+}
+
+// See: https://spec.openapis.org/oas/latest.html#discriminator-object
+message Discriminator {
+	// REQUIRED. The name of the property in the payload that will hold the discriminator value.
+	string property_name = 1;
+	// An object to hold mappings between payload values and schema names or references.
+	map<string,string> mapping = 2;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 3;
+}
+
+enum SchemaDataType {
+	UNKNOWN = 0;
+	ARRAY = 1;
+	BOOLEAN = 2;
+	INTEGER = 3;
+	NULL = 4;
+	NUMBER = 5;
+	OBJECT = 6;
+	STRING = 7;
+}
+
+// FieldConfiguration provides additional field level properties used when generating the OpenAPI v3.1 file.
+// These properties are not defined by OpenAPIv3, but they are used to control the generation.
+message FieldConfiguration {
+	// Alternative parameter name when used as path parameter. If set, this will
+	// be used as the complete parameter name when this field is used as a path
+	// parameter. Use this to avoid having auto generated path parameter names
+	// for overlapping paths.
+	string path_param_name = 1;
+
+	// requried marks this field as required.
+	bool required = 2;
+}
+
+// Schema is a representation of OpenAPI v3.1 specification's Schema object.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#schema-object
+message Schema {
+	// Adds support for polymorphism. The discriminator is an object name that is used to
+	// differentiate between other schemas which may satisfy the payload description.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#discriminator-object
+	Discriminator discriminator = 1;
+	reserved 2; // XML
+	// Additional external documentation.
+	ExternalDocumentation external_docs = 3;
+	// extra can be used to add any other field in the schema. Since OpenAPI v3.1 arbitrary fields can be
+	// used in the schema objects. This field can be utilized to add those extra fields. Some of the JSON schema
+	// validation properties or core properties that are not captured as part of the gRPC REST Gateway OpenAPI
+	// objects.
+	map<string, google.protobuf.Value> extra = 4;
+  // Ref is used to define an external reference to include in the message.
+  // This could be a fully qualified proto message reference and start with a '.',
+	// and that type must be available in the proto files or their dependencies.
+	// If no message is identified, the Ref will be used verbatim in the output.
+	//
+  // For example:
+  //  `ref: ".google.protobuf.Timestamp"`.
+	//
+	// NOTE: This reference will only be honored when used in top-level schemas in responses only.
+	string ref = 5;
+	// config is additional schema config related to OpenAPI doc generation.
+	FieldConfiguration config = 6;
+
+	// The "$schema" keyword is both used as a JSON Schema dialect
+	// identifier and as the identifier of a resource which is itself a JSON
+  // Schema, which describes the set of valid schemas written for this
+  // particular dialect.
+	//
+  // The value of this keyword MUST be a URI [RFC3986] (containing a scheme) and this URI MUST be normalized.
+	// The current schema MUST be valid against the meta-schema identified by this URI. 
+	//
+	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-the-schema-keyword
+	string schema = 10;
+  // The title of the schema.
+	string title = 11;
+	// The value of this keyword MUST be a string. This string SHOULD be a valid regular expression,
+	// according to the ECMA 262 regular expression dialect.
+	//
+	// A string instance is considered valid if the regular expression matches the instance successfully.
+	// Recall: regular expressions are not implicitly anchored.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.3.3
+  string pattern = 12;
+	// required is a list of property names that are required in this schema.
+  repeated string required = 13;
+  // Items in enum must be unique
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.1.2
+  repeated string enum = 14;
+	// The value of "multipleOf" MUST be a number, strictly greater than 0.
+	// A numeric instance is valid only if division by this keyword's value results in an integer.
+	// 
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2.1
+  double multiple_of = 15;
+  // Maximum represents an inclusive upper limit for a numeric instance. The
+  // value of MUST be a number, representing an inclusive upper limit for a numeric instance.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2.2
+  double maximum = 16;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2.3
+  double exclusive_maximum = 17;
+  // minimum represents an inclusive lower limit for a numeric instance. The
+  // value of MUST be a number, representing an inclusive lower limit for a numeric instance.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2.4
+  double minimum = 18;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.2.5
+  double exclusive_minimum = 19;
+	// A string instance is valid against this keyword if its length is
+	// less than, or equal to, the value of this keyword.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.3.1
+  uint64 max_length = 20;
+	// A string instance is valid against this keyword if its length is
+	// greater than, or equal to, the value of this keyword.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.3.2
+  uint64 min_length = 21;
+	// An array instance is valid against "maxItems" if its size is
+	// less than, or equal to, the value of this keyword.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.4.1
+  uint64 max_items = 22;
+	// An array instance is valid against "minItems" if its size is
+	// greater than, or equal to, the value of this keyword.
+	//
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.4.2
+  uint64 min_items = 23;
+	// If set to true, all items must be unique.
+  bool unique_items = 24;
+  uint64 max_properties = 25;
+  uint64 min_properties = 26;
+	// Indicates what type this schema holds. In JSON schema draft 2020, this can be a singular value or
+	// a list of values. For simplicity of structure, types is always a list but if it contains only one
+	// item, in the generated file, it will be a single string and not a list.
+	repeated SchemaDataType types = 27;
+  // Supports CommonMark syntax for rich text representation.
+	string description = 28;
+
+	message SchemaList {
+		repeated Schema items = 1;
+	}
+
+	message Item {
+		oneof value {
+			Schema schema = 1;
+			SchemaList list = 2;
+		}
+	}
+
+	// The value of "items" MUST be either a valid JSON Schema or an array of valid JSON Schemas.
+	// This keyword determines how child instances validate for arrays, and does not directly validate
+	// the immediate instance itself.
+	// If "items" is a schema, validation succeeds if all elements in the array successfully
+	// validate against that schema.
+	// If "items" is an array of schemas, validation succeeds if each element of the instance
+	// validates against the schema at the same position, if any.
+	// Omitting this keyword has the same behavior as an empty schema.
+	Item items = 29;
+	// This keyword determines how child instances validate for objects,
+	// and does not directly validate the immediate instance itself.
+	//
+	// Validation succeeds if, for each name that appears in both the instance and as a name
+	// within this keyword's value, the child instance for that name successfully validates
+	// against the corresponding schema.
+	//
+	// Defining any property here for proto messages merges them with the automatically generated ones.
+  map<string, Schema> properties = 30;
+  // This keyword determines how child instances validate for objects, and does not directly validate
+	// the immediate instance itself.
+	//
+	// Validation with "additionalProperties" applies only to the child values of instance names that do
+	// not match any names in "properties", and do not match any regular expression in "patternProperties".
+	//
+	// For all such properties, validation succeeds if the child instance validates against
+	// the "additionalProperties" schema.
+  Schema additional_properties = 31;
+	// There is no restriction placed on the value of this keyword.
+	// This keyword can be used to supply a default JSON value associated with a particular schema.
+	google.protobuf.Value default = 32;
+	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-allof
+	repeated Schema all_of = 33;
+	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-anyof
+	repeated Schema any_of = 34;
+	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-oneof
+	repeated Schema one_of = 35;
+	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-not
+	Schema not = 36;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.4
+	bool ready_only = 37;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.4
+	bool write_only = 38;
+	// See: https://json-schema.org/draft/2020-12/json-schema-validation#section-9.5
+  repeated google.protobuf.Value examples = 39;
+  // Structural validation alone may be insufficient to validate that an instance meets all
+	// the requirements of an application. The "format" keyword is defined to allow interoperable
+	// semantic validation for a fixed subset of values which are accurately described by authoritative
+	// resources, be they RFCs or other external specifications.
+	//
+	// See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8
+  string format = 40;
+	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.3
+	bool deprecated = 41;
+}
+
+// A simple object to allow referencing other components in the OpenAPI document, internally and externally.
+//
+// See: https://spec.openapis.org/oas/latest.html#reference-object
+message Reference {
+	// REQUIRED. The reference identifier. This MUST be in the form of a URI.
+	// For proto messages, a fully qualified message name can be used
+	// (relative links are allowed where proto file is deduced).
+	//
+	// Example: ".google.protobuf.Timestamp"
+	string uri = 1;
+	// A short summary which by default SHOULD override that of the referenced component.
+	// If the referenced object-type does not allow a summary field, then this field has no effect.
+	string summary = 2;
+	// A description which by default SHOULD override that of the referenced component.
+	// CommonMark syntax MAY be used for rich text representation.
+	// If the referenced object-type does not allow a description field, then this field has no effect.
+	string description = 3;
+}
+
+// The Link object represents a possible design-time link for a response. The presence of a link does
+// not guarantee the caller’s ability to successfully invoke it, rather it provides a known relationship
+// and traversal mechanism between responses and other operations.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#link-object
+message Link {
+	// ref is a reference to an existing link object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+
+	oneof operation {
+		// A relative or absolute URI reference to an OAS operation. This field is mutually exclusive of the
+		// operationId field, and MUST point to an Operation Object.
+		// Relative operationRef values MAY be used to locate an existing Operation Object in the OpenAPI definition.
+		string operation_ref = 2;
+		// The name of an existing, resolvable OAS operation, as defined with a unique operationId.
+		// This field is mutually exclusive of the operationRef field.
+		//
+		// NOTE: If a path (relative or absolute) to another service method is used, that operation ID will be substituded.
+		// 	Example: ".google.protobuf.Timestamp"
+		string operation_id = 3;
+	}
+
+	// A map representing parameters to pass to an operation as specified with
+	// operationId or identified via operationRef. The key is the parameter name to be used,
+	// whereas the value can be a constant or an expression to be evaluated and passed to the linked operation.
+	// The parameter name can be qualified using the parameter location [{in}.]{name} for operations that use the
+	// same parameter name in different locations (e.g. path.id).
+	map<string, google.protobuf.Value> parameters = 4;
+	// A literal value or {expression} to use as a request body when calling the target operation.
+	google.protobuf.Value request_body = 5;
+	// A description of the link. CommonMark syntax MAY be used for rich text representation.
+	string description = 6;
+	// A server object to be used by the target operation.
+	Server server = 7;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 8;
+}
+
+// See: https://spec.openapis.org/oas/latest.html#example-object
+message Example {
+	// ref is a reference to an existing example object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// Short description for the example.
+	string summary = 2;
+	// Long description for the example. CommonMark syntax MAY be used for rich text representation.
+	string description = 3;
+	// Embedded literal example. The value field and externalValue field are mutually exclusive.
+	// To represent examples of media types that cannot naturally represented in JSON or YAML,
+	// use a string value to contain the example, escaping where necessary.
+	google.protobuf.Value value = 4;
+	// A URI that points to the literal example. This provides the capability to reference examples that cannot easily
+	// be included in JSON or YAML documents. The value field and externalValue field are mutually exclusive.
+	// See the rules for resolving Relative References.
+	string external_value = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
+}
+
+// A single encoding definition applied to a single schema property.
+//
+// See: https://spec.openapis.org/oas/latest.html#encoding-object
+message Encoding {
+	// The Content-Type for encoding a specific property. Default value depends on the property type:
+	// for object - application/json;
+	// for array – the default is defined based on the inner type;
+	// for all other cases the default is application/octet-stream.
+	// The value can be a specific media type (e.g. application/json),
+	// a wildcard media type (e.g. image/*), or a comma-separated list of the two types.
+	string content_type = 1;
+	// A map allowing additional information to be provided as headers, for example Content-Disposition.
+	// Content-Type is described separately and SHALL be ignored in this section.
+	// This property SHALL be ignored if the request body media type is not a multipart.
+	map<string, Header> headers = 2;
+	// Describes how a specific property value will be serialized depending on its type.
+	// See Parameter Object for details on the style property. The behavior follows the same values as query parameters,
+	// including default values. This property SHALL be ignored if the request body media type is not
+	// application/x-www-form-urlencoded or multipart/form-data.
+	// If a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored.
+	string style = 3;
+	// When this is true, property values of type array or object generate separate parameters for each value of
+	// the array, or key-value-pair of the map. For other types of properties this property has no effect.
+	// When style is form, the default value is true. For all other styles, the default value is false.
+	// This property SHALL be ignored if the request body media type is not
+	// application/x-www-form-urlencoded or multipart/form-data.
+	// If a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored.
+	bool explode = 4;
+	// Determines whether the parameter value SHOULD allow reserved characters,
+	// as defined by [RFC3986] :/?#[]@!$&'()*+,;= to be included without percent-encoding. The default value is false.
+	// This property SHALL be ignored if the request body media type is not
+	// application/x-www-form-urlencoded or multipart/form-data.
+	// If a value is explicitly defined, then the value of contentType (implicit or explicit) SHALL be ignored.
+	bool allow_reserved = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
+}
+
+// Each Media Type Object provides schema and examples for the media type identified by its key.
+//
+// See: https://spec.openapis.org/oas/latest.html#media-type-object
+message MediaType {
+	// The schema defining the content of the request, response, or parameter.
+	Schema schema = 1;
+	// Example of the parameter’s potential value.
+	// The example SHOULD match the specified schema and encoding properties if present.
+	// The example field is mutually exclusive of the examples field. Furthermore,
+	// if referencing a schema that contains an example, the example value SHALL override the
+	// example provided by the schema. To represent examples of media types that cannot naturally be
+	// represented in JSON or YAML, a string value can contain the example with escaping where necessary.
+	google.protobuf.Value example = 2;
+	// Examples of the parameter’s potential value. Each example SHOULD contain a value in the correct format
+	// as specified in the parameter encoding. The examples field is mutually exclusive of the example field.
+	// Furthermore, if referencing a schema that contains an example, the examples value SHALL override
+	// the example provided by the schema.
+	map<string, Example> examples = 3;
+	// A map between a property name and its encoding information. The key, being the property name,
+	// MUST exist in the schema as a property. The encoding object SHALL only apply to requestBody objects when
+	// the media type is multipart or application/x-www-form-urlencoded.
+	map<string, Encoding> encoding = 4;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 5;
+}
+
+// Header object follows the structure of the Parameter object with the following changes:
+// 1. name MUST NOT be specified, it is given in the corresponding headers map. 
+// 2. in MUST NOT be specified, it is implicitly in header.
+// 3. All traits that are affected by the location MUST be applicable to a location of header (for example, style).
+//
+// See: https://spec.openapis.org/oas/v3.1.0#header-object
+message Header {
+	// ref is a reference to an existing header object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// A description of the link. CommonMark syntax MAY be used for rich text representation.
+	string description = 2;
+	// Determines whether this parameter is mandatory.
+	// If the parameter location is "path", this property is REQUIRED and its value MUST be true.
+	// Otherwise, the property MAY be included and its default value is false.
+	bool required = 3;
+	// Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false.
+	bool deprecated = 4;
+	// Sets the ability to pass empty-valued parameters.
+	// This is valid only for query parameters and allows sending a parameter with an empty value.
+	// Default value is false. If style is used, and if behavior is n/a (cannot be serialized),
+	// the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED,
+	// as it is likely to be removed in a later revision.
+	bool allow_empty_value = 5;
+	// Describes how the parameter value will be serialized depending on the type of the parameter value.
+	// Default value for header parameters is "simple".
+	string style = 6;
+	// When this is true, parameter values of type array or object generate separate parameters for each value of
+	// the array or key-value pair of the map. For other types of parameters this property has no effect.
+	// When style is form, the default value is true. For all other styles, the default value is false.
+	bool explode = 7;
+	// The schema defining the type used for the parameter.
+	Schema schema = 8;
+	// Example of the parameter’s potential value.
+	// The example SHOULD match the specified schema and encoding properties if present.
+	// The example field is mutually exclusive of the examples field. Furthermore,
+	// if referencing a schema that contains an example, the example value SHALL override the
+	// example provided by the schema. To represent examples of media types that cannot naturally be
+	// represented in JSON or YAML, a string value can contain the example with escaping where necessary.
+	google.protobuf.Value example = 9;
+	// Examples of the parameter’s potential value. Each example SHOULD contain a value in the correct format
+	// as specified in the parameter encoding. The examples field is mutually exclusive of the example field.
+	// Furthermore, if referencing a schema that contains an example, the examples value SHALL override
+	// the example provided by the schema.
+	map<string, Example> examples = 10;
+
+	// A map containing the representations for the parameter.
+	// The key is the media type and the value describes it. The map MUST only contain one entry.
+	map<string, MediaType> content = 11;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 12;
+}
+
+// Describes a single operation parameter.
+// A unique parameter is defined by a combination of a name and location.
+//
+// See: https://spec.openapis.org/oas/latest.html#parameter-object
+message Parameter {
+	// ref is a reference to an existing parameter object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// REQUIRED. The name of the parameter. Parameter names are case sensitive.
+	// If in is "path", the name field MUST correspond to a template expression occurring within the
+	// path field in the Paths Object. See Path Templating for further information.
+	// If in is "header" and the name field is
+	// "Accept", "Content-Type" or "Authorization", the parameter definition SHALL be ignored.
+	// For all other cases, the name corresponds to the parameter name used by the in property.
+	string name = 2;
+	// REQUIRED. The location of the parameter. Possible values are "query", "header", "path" or "cookie".
+	string in = 3;
+	// A description of the link. CommonMark syntax MAY be used for rich text representation.
+	string description = 4;
+	// Determines whether this parameter is mandatory.
+	// If the parameter location is "path", this property is REQUIRED and its value MUST be true.
+	// Otherwise, the property MAY be included and its default value is false.
+	bool required = 5;
+	// Specifies that a parameter is deprecated and SHOULD be transitioned out of usage. Default value is false.
+	bool deprecated = 6;
+	// Sets the ability to pass empty-valued parameters.
+	// This is valid only for query parameters and allows sending a parameter with an empty value.
+	// Default value is false. If style is used, and if behavior is n/a (cannot be serialized),
+	// the value of allowEmptyValue SHALL be ignored. Use of this property is NOT RECOMMENDED,
+	// as it is likely to be removed in a later revision.
+	bool allow_empty_value = 7;
+	// Describes how the parameter value will be serialized depending on the type of the parameter value.
+	// Default value for header parameters is "simple".
+	string style = 8;
+	// When this is true, parameter values of type array or object generate separate parameters for each value of
+	// the array or key-value pair of the map. For other types of parameters this property has no effect.
+	// When style is form, the default value is true. For all other styles, the default value is false.
+	bool explode = 9;
+  // Determines whether the parameter value SHOULD allow reserved characters, as defined by [RFC3986]
+	// :/?#[]@!$&'()*+,;= to be included without percent-encoding.
+	// This property only applies to parameters with an in value of query. The default value is false.
+	bool allow_reserved = 10;
+	// The schema defining the type used for the parameter.
+	Schema schema = 11;
+	// Example of the parameter’s potential value.
+	// The example SHOULD match the specified schema and encoding properties if present.
+	// The example field is mutually exclusive of the examples field. Furthermore,
+	// if referencing a schema that contains an example, the example value SHALL override the
+	// example provided by the schema. To represent examples of media types that cannot naturally be
+	// represented in JSON or YAML, a string value can contain the example with escaping where necessary.
+	google.protobuf.Value example = 12;
+	// Examples of the parameter’s potential value. Each example SHOULD contain a value in the correct format
+	// as specified in the parameter encoding. The examples field is mutually exclusive of the example field.
+	// Furthermore, if referencing a schema that contains an example, the examples value SHALL override
+	// the example provided by the schema.
+	map<string, Example> examples = 13;
+
+	// A map containing the representations for the parameter.
+	// The key is the media type and the value describes it. The map MUST only contain one entry.
+	map<string, MediaType> content = 14;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 15;
+}
+
+message Response {
+	// ref is a reference to an existing response object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// A description which by default SHOULD override that of the referenced component.
+	// CommonMark syntax MAY be used for rich text representation.
+	// If the referenced object-type does not allow a description field, then this field has no effect.
+	string description = 2;
+	// Maps a header name to its definition. [RFC7230] states header names are case insensitive.
+	// If a response header is defined with the name "Content-Type", it SHALL be ignored.
+	map<string, Header> headers = 3;
+	// A map containing descriptions of potential response payloads.
+	// The key is a media type or media type range and the value describes it.
+	// For responses that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*
+	map<string, MediaType> content = 4;
+	// A map of operations links that can be followed from the response. The key of the map is a short name for the link,
+	// following the naming constraints of the names for Component Objects.
+	map<string, Link> links = 5;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 6;
+}
+
+// Describes a single request body.
+//
+// See: https://spec.openapis.org/oas/latest.html#request-body-object
+message RequestBody {
+	// ref is a reference to an existing request body object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// A brief description of the request body. This could contain examples of use.
+	// CommonMark syntax MAY be used for rich text representation.
+	string description = 2;
+	// REQUIRED. The content of the request body. The key is a media type or media type range and the value describes it.
+	// For requests that match multiple keys, only the most specific key is applicable. e.g. text/plain overrides text/*
+	map<string, MediaType> content = 3;
+	// Determines if the request body is required in the request. Defaults to false.
+	bool required = 4;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 5;
+}
+
+// Defines a security scheme that can be used by the operations.
+//
+// See: https://spec.openapis.org/oas/latest.html#security-scheme-object
+message SecurityScheme {
+	// ref is a reference to an existing response object. If used, all other fields in this object get ignored.
+	Reference ref = 1;
+	// REQUIRED. The type of the security scheme.
+	// Valid values are "apiKey", "http", "mutualTLS", "oauth2", "openIdConnect".
+	string type = 2;
+	// A brief description of the request body. This could contain examples of use.
+	// CommonMark syntax MAY be used for rich text representation.
+	string description = 3;
+	// REQUIRED. The name of the header, query or cookie parameter to be used.
+	string name = 4;
+	// REQUIRED. The location of the API key. Valid values are "query", "header" or "cookie".
+	string in = 5;
+	// REQUIRED. The name of the HTTP Authorization scheme to be used in the
+	// Authorization header as defined in [RFC7235].
+	// The values used SHOULD be registered in the IANA Authentication Scheme registry.
+	string scheme = 6;
+	// A hint to the client to identify how the bearer token is formatted.
+	// Bearer tokens are usually generated by an authorization server,
+	// so this information is primarily for documentation purposes.
+	string bearer_format = 7;
+
+	// Configuration details for a supported OAuth Flow
+	//
+	// See: https://spec.openapis.org/oas/latest.html#oauth-flow-object
+	message OAuthFlow {
+		string authorization_url = 1;
+		string token_url = 2;
+		string refresh_url = 3;
+		map<string, string> scopes = 4;
+		// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+		// standard OpenAPI specification.
+		//
+		// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+		map<string, google.protobuf.Value> extensions = 5;
+	}
+
+	// See: https://spec.openapis.org/oas/latest.html#oauth-flows-object
+	message OAuthFlows {
+		// Configuration for the OAuth Implicit flow
+		OAuthFlow implicit = 1;
+		// Configuration for the OAuth Resource Owner Password flow
+		OAuthFlow password = 2;
+		// Configuration for the OAuth Client Credentials flow. Previously called application in OpenAPI 2.0.
+		OAuthFlow client_credentials = 3;
+		// Configuration for the OAuth Authorization Code flow. Previously called accessCode in OpenAPI 2.0.
+		OAuthFlow authorization_code = 4;
+		// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+		// standard OpenAPI specification.
+		//
+		// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+		map<string, google.protobuf.Value> extensions = 5;
+	}
+
+	// REQUIRED. An object containing configuration information for the flow types supported.
+	OAuthFlows flows = 8;
+	// REQUIRED. OpenId Connect URL to discover OAuth2 configuration values.
+	// This MUST be in the form of a URL. The OpenID Connect standard requires the use of TLS.
+	string open_id_connect_url = 9;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 10;
+}
+
+// Describes a single API operation on a path.
+//
+// NOTE: this operation object is a partial implementation of the OpenAPI Operation object.
+// Fields overridden here will only impact this method but will be used for all different
+// HTTP bindings of the same method.
+//
+// See: https://spec.openapis.org/oas/v3.1.0#operation-object
+message Operation {
+	// A list of tags for API documentation control.
+	// Tags can be used for logical grouping of operations by resources or any other qualifier.
+	repeated string tags = 1;
+	// A short summary of what the operation does.
+	//
+	// Default is the proto docstring for this method.
+	string summary = 2;
+	// A verbose explanation of the operation behavior. CommonMark syntax MAY be used for rich text representation.
+	string description = 3;
+	// Additional external documentation for this operation.
+	ExternalDocumentation external_docs = 4;
+	// Override the operation ID, if left unset, a default value will be provided.
+	string operation_id = 5;
+	// A list of parameters that are applicable for this operation. Note that path and query parameters
+	// get populated by the generator and will override any overlapping keys.
+	//
+	// You might use this to define headers and values that are not defined on the request payload.
+	repeated Parameter parameters = 6;
+	// The list of possible responses returned from executing this operation.
+	//
+	// NOTE: This list is additive meaning that it will override any generated response from the
+	// proto files.
+	map<string, Response> responses = 7;
+	// reserved for callbacks. This feature is currently not implemented.
+	reserved 8;
+	// reserved for requestBodies and responses. Currently, there is not plan to support them.
+	reserved 9 to 10;
+	// Declares this operation to be deprecated.
+	// Consumers SHOULD refrain from usage of the declared operation. Default value is false.
+	bool deprecated = 11;
+	// A declaration of which security mechanisms can be used for this operation.
+	// The list of values includes alternative security requirement objects that can be used.
+	// Only one of the security requirement objects need to be satisfied to authorize a request.
+	// To make security optional, an empty security requirement ({}) can be included in the array.
+	// This definition overrides any declared top-level security.
+	// To remove a top-level security declaration, an empty array can be used.
+	repeated SecurityRequirement security = 12;
+	// An alternative server array to service this operation.
+	// If an alternative server object is specified at the Path Item Object or Root level,
+	// it will be overridden by this value.
+	repeated Server servers = 13;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 14;
+}
+
+// Holds a set of reusable objects for different aspects of the OAS. All objects defined within the
+// components object will have no effect on the API unless they are explicitly referenced from properties
+// outside the components object.
+// 
+// See: https://spec.openapis.org/oas/latest.html#components-object
+message Components {
+	map<string, Schema> schemas = 1;
+	map<string, Response> responses = 2;
+	map<string, Parameter> parameters = 3;
+	map<string, Example> examples = 4;
+	map<string, RequestBody> request_bodies = 5;
+	map<string, Header> headers = 6;
+	map<string, SecurityScheme> security_schemes = 7;
+	map<string, Link> links = 8;
+	reserved 9;  // callbacks can be used in a seed template but are not supported, yet in the configs.
+	reserved 10; // path_items but this generator does not support defining path items explicitly at the moment.
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 11;
+}
+
+// DocumentConfiguration allows for controlling the default responses
+message DocumentConfiguration {
+	// default_responses is used to control the default responses generated in this OpenAPI document.
+	map<string, Response> default_responses = 1;
+}
+
+// This is the root object of the OpenAPI document.
+// See: https://spec.openapis.org/oas/v3.1.0#openapi-object
+message Document {
+	// REQUIRED. Provides metadata about the API. The metadata MAY be used by tooling as required.
+	Info info = 1;
+	repeated Server servers = 2;
+	reserved 3; // reserved for webhooks which are currently not supported.
+	reserved 4; // reserved for paths. At the moment, custom paths are not allowed.
+	Components components = 5;
+	// A declaration of which security mechanisms can be used across the API. The list of values includes
+	// alternative security requirement objects that can be used. Only one of the security requirement objects
+	// need to be satisfied to authorize a request. Individual operations can override this definition. To make
+	// security optional, an empty security requirement ({}) can be included in the array.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#security-requirement-object
+	repeated SecurityRequirement security = 6;
+	// A list of tags used by the document with additional metadata. The order of the tags can be used to
+	// reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must
+	// be declared. The tags that are not declared MAY be organized randomly or based on the tools’ logic.
+	// Each tag name in the list MUST be unique.
+	repeated Tag tags = 7;
+	// Additional external documentation.
+	ExternalDocumentation external_docs = 8;
+	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// standard OpenAPI specification.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
+  map<string, google.protobuf.Value> extensions = 9;
+	// DocumentConfiguration is used to change the behavior of documentation generation such as default responses.
+	DocumentConfiguration config = 10;
+}

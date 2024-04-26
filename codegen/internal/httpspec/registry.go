@@ -38,8 +38,8 @@ func NewRegistry() *Registry {
 	return &Registry{endpoints: map[string]EndpointSpec{}}
 }
 
-// LoadFromFile loads a gateway config file for a proto file at filePath. protoPackage is provided
-// will be used to convert relative selectors to absolute selectors.
+// LoadFromFile loads a gateway config file for a proto file at filePath. if protoPackage is provided
+// it will be used to convert relative selectors to absolute selectors.
 func (r *Registry) LoadFromFile(filePath, protoPackage string) error {
 	file, err := os.Open(filePath)
 	if err != nil {

@@ -1,65 +1,6 @@
 package gengateway
 
-import (
-	"fmt"
-	"strings"
-)
-
-type PathParameterSeparator uint8
-
-func (p PathParameterSeparator) String() string {
-	switch p {
-	case PathParameterSeparatorCSV:
-		return "csv"
-	case PathParameterSeparatorTSV:
-		return "tsv"
-	case PathParameterSeparatorSSV:
-		return "ssv"
-	case PathParameterSeparatorPipes:
-		return "pipes"
-	default:
-		return "<unknown>"
-	}
-}
-
-func (p PathParameterSeparator) Separator() rune {
-	switch p {
-	case PathParameterSeparatorCSV:
-		return ','
-	case PathParameterSeparatorTSV:
-		return '\t'
-	case PathParameterSeparatorSSV:
-		return ' '
-	case PathParameterSeparatorPipes:
-		return '|'
-	default:
-		return ',' // NB: default to CSV.
-	}
-}
-
-func (p *PathParameterSeparator) Set(value string) error {
-	switch strings.ToLower(value) {
-	case "csv":
-		*p = PathParameterSeparatorCSV
-	case "tsv":
-		*p = PathParameterSeparatorTSV
-	case "ssv":
-		*p = PathParameterSeparatorSSV
-	case "pipes":
-		*p = PathParameterSeparatorPipes
-	default:
-		return fmt.Errorf("unrecognized value: '%s'. Allowed values are 'cav', 'pipes', 'ssv' and 'tsv'.", value)
-	}
-
-	return nil
-}
-
-const (
-	PathParameterSeparatorCSV = iota
-	PathParameterSeparatorPipes
-	PathParameterSeparatorSSV
-	PathParameterSeparatorTSV
-)
+import "github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 
 // Options are the options for the code generator.
 type Options struct {
@@ -73,7 +14,7 @@ type Options struct {
 	AllowDeleteBody bool
 
 	// RepeatedPathParameterSeparator determines how repeated fields should be split when used in path segments.
-	RepeatedPathParameterSeparator PathParameterSeparator
+	RepeatedPathParameterSeparator descriptor.PathParameterSeparator
 
 	// AllowPatchFeature determines whether to use PATCH feature involving update masks
 	// (using using google.protobuf.FieldMask).
@@ -95,7 +36,7 @@ func DefaultOptions() Options {
 		RegisterFunctionSuffix:         "Handler",
 		UseHTTPRequestContext:          true,
 		AllowDeleteBody:                false,
-		RepeatedPathParameterSeparator: PathParameterSeparatorCSV,
+		RepeatedPathParameterSeparator: descriptor.PathParameterSeparatorCSV,
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
 		Standalone:                     false,
