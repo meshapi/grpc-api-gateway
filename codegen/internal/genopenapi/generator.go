@@ -45,7 +45,8 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		messages:        map[string]*internal.OpenAPIMessageSpec{},
 		enums:           map[string]*internal.OpenAPIEnumSpec{},
 		schemas: map[string]internal.OpenAPISchema{
-			fqmnAny: internal.AnySchema(),
+			fqmnAny:      internal.AnySchema(),
+			fqmnHTTPBody: internal.HTTPBodySchema(),
 		},
 		services: map[string]*internal.OpenAPIServiceSpec{},
 	}
@@ -143,6 +144,11 @@ func (s *Session) addService(service *descriptor.Service) error {
 		}
 
 		for _, binding := range method.Bindings {
+			// NOTE: Ignore any binding that only supports websockets.
+			if binding.NeedsWebsocket() && !binding.NeedsSSE() && !binding.NeedsChunkedTransfer() {
+				continue
+			}
+
 			pathParamAliasMap = s.updatePathParameterAliasesMap(pathParamAliasMap, binding)
 
 			path := renderPath(binding, pathParamAliasMap)

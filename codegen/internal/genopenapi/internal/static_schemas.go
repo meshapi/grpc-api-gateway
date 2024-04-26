@@ -10,8 +10,9 @@ type ErrorResponse struct {
 }
 
 var (
-	anySchema     OpenAPISchema
-	errorResponse ErrorResponse
+	anySchema      OpenAPISchema
+	httpBodySchema OpenAPISchema
+	errorResponse  ErrorResponse
 )
 
 func AnySchema() OpenAPISchema {
@@ -33,6 +34,19 @@ func AnySchema() OpenAPISchema {
 	}
 
 	return anySchema
+}
+
+func HTTPBodySchema() OpenAPISchema {
+	if httpBodySchema.Schema == nil {
+		httpBodySchema.Schema = &openapiv3.Schema{
+			Object: openapiv3.SchemaCore{
+				Type:   openapiv3.TypeSet{openapiv3.TypeString},
+				Format: "byte",
+			},
+		}
+	}
+
+	return httpBodySchema
 }
 
 func DefaultErrorResponse() ErrorResponse {

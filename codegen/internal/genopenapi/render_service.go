@@ -226,7 +226,7 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 		}
 	}
 
-	return &openapiv3.Ref[openapiv3.RequestBody]{
+	request := &openapiv3.Ref[openapiv3.RequestBody]{
 		Data: openapiv3.RequestBody{
 			Object: openapiv3.RequestBodyCore{
 				Content: map[string]*openapiv3.MediaType{
@@ -239,7 +239,13 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 				Required: true,
 			},
 		},
-	}, nil
+	}
+
+	if binding.Method.GetClientStreaming() {
+		request.Data.Object.Description += streamingInputDescription
+	}
+
+	return request, nil
 }
 
 func (s *Session) renderPathParameter(param *descriptor.Parameter) (*openapiv3.Parameter, error) {
@@ -495,21 +501,35 @@ func (s *Session) addDefaultSuccessResponse(binding *descriptor.Binding, operati
 		}
 	}
 
-	operation.Responses[httpStatusOK] = &openapiv3.Ref[openapiv3.Response]{
+	mediaType := &openapiv3.MediaType{
+		Object: openapiv3.MediaTypeCore{
+			Schema:  schema,
+			Example: nil,
+		},
+	}
+
+	response := &openapiv3.Ref[openapiv3.Response]{
 		Data: openapiv3.Response{
 			Object: openapiv3.ResponseCore{
 				Description: defaultSuccessfulResponse,
-				Content: map[string]*openapiv3.MediaType{
-					mimeTypeJSON: {
-						Object: openapiv3.MediaTypeCore{
-							Schema:  schema,
-							Example: nil,
-						},
-					},
-				},
+				Content:     map[string]*openapiv3.MediaType{},
 			},
 		},
 	}
+
+	if binding.Method.GetServerStreaming() {
+		response.Data.Object.Description += streamingResponsesDescription
+		if binding.StreamConfig.AllowSSE {
+			response.Data.Object.Content[mimeTypeSSE] = mediaType
+		}
+		if binding.StreamConfig.AllowChunkedTransfer {
+			response.Data.Object.Content[mimeTypeJSON] = mediaType
+		}
+	} else {
+		response.Data.Object.Content[mimeTypeJSON] = mediaType
+	}
+
+	operation.Responses[httpStatusOK] = response
 	return nil
 }
 
