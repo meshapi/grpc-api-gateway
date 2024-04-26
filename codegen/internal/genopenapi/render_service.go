@@ -2,6 +2,7 @@ package genopenapi
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/api"
@@ -20,6 +21,19 @@ func (s *Session) renderOperation(
 	binding *descriptor.Binding,
 	defaultResponses internal.DefaultResponses) (*openapiv3.Operation, error) {
 	operation := &openapiv3.Operation{}
+
+	switch s.OperationIDMode {
+	case OperationIDModeFQN:
+		operation.Object.OperationID = binding.Method.FQMN()[1:] // NB: remove the leading dot.
+	case OperationIDModeServiceAndMethod:
+		operation.Object.OperationID = binding.Method.Service.GetName() + "_" + binding.Method.GetName()
+	case OperationIDModeMethod:
+		operation.Object.OperationID = binding.Method.GetName()
+	}
+
+	if binding.Index > 0 {
+		operation.Object.OperationID += strconv.Itoa(binding.Index + 1)
+	}
 
 	if !s.DisableServiceTags {
 		tag := binding.Method.Service.GetName()

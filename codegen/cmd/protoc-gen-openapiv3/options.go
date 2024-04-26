@@ -31,6 +31,12 @@ func prepareOptions() *genopenapi.Options {
 		"use 'merge' to merge all definitions into one file, 'proto' to generate one file per proto file,"+
 			" 'service' to generate a separate document per gRPC service.")
 
+	flag.Var(
+		&generatorOptions.OperationIDMode, "operation_id_mode",
+		"controls the mode of operation ids in the OpenAPI document."+
+			" use 'service+method' for '<Service>_<Method>', 'method' for just the method name "+
+			"and 'fqn' for the fully qualified name.")
+
 	flag.StringVar(
 		&generatorOptions.OutputFileName, "output_filename", generatorOptions.OutputFileName,
 		"only applicable when using output mode 'merge'. It sets the file name of the generated OpenAPI document.")

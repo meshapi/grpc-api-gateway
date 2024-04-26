@@ -191,3 +191,39 @@ func (s *SelectorSlice) Set(value string) error {
 	*s = strings.Split(value, ",")
 	return nil
 }
+
+type OperationIDMode uint8
+
+const (
+	OperationIDModeFQN OperationIDMode = iota
+	OperationIDModeServiceAndMethod
+	OperationIDModeMethod
+)
+
+func (o OperationIDMode) String() string {
+	switch o {
+	case OperationIDModeFQN:
+		return "fqn"
+	case OperationIDModeServiceAndMethod:
+		return "service+method"
+	case OperationIDModeMethod:
+		return "method"
+	default:
+		return "n/a"
+	}
+}
+
+func (o *OperationIDMode) Set(value string) error {
+	switch strings.ToLower(value) {
+	case "method":
+		*o = OperationIDModeMethod
+	case "service+method":
+		*o = OperationIDModeServiceAndMethod
+	case "fqn":
+		*o = OperationIDModeFQN
+	default:
+		return fmt.Errorf("unrecognized value for operation id mode, expected 'simple' or 'fqn', got: %s", value)
+	}
+
+	return nil
+}

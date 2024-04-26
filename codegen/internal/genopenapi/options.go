@@ -23,6 +23,9 @@ type Options struct {
 	// per proto file.
 	OutputMode OutputMode
 
+	// OperationIDMode determines the mode of operation IDs that get generated.
+	OperationIDMode OperationIDMode
+
 	// OutputFileName is the OpenAPI output file name after merging all files.
 	// Only applicable when output mode is "merge".
 	OutputFileName string
@@ -123,5 +126,6 @@ func DefaultOptions() Options {
 		VisibilitySelectors:            nil,
 		PreserveProtoOrder:             false,
 		MergeWithOverwrite:             true,
+		OperationIDMode:                OperationIDModeServiceAndMethod,
 	}
 }
