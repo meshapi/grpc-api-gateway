@@ -8,6 +8,11 @@
 *.so
 *.dylib
 
+# IDEs
+.vscode
+.nvimrc
+.vimrc
+
 # Test binary, built with `go test -c`
 *.test
 
