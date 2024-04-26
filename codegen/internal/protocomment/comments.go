@@ -140,7 +140,7 @@ func (r *Registry) evaluateOrGetFile(file *descriptor.File) *File {
 
 	indexedFile := &File{}
 
-	for _, sci := range file.SourceCodeInfo.Location {
+	for _, sci := range file.GetSourceCodeInfo().GetLocation() {
 		if len(sci.Path) == 0 {
 			continue
 		}

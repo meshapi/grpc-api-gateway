@@ -21,7 +21,8 @@ type Session struct {
 	*Generator
 	Document *openapiv3.Document
 
-	includedSchemas map[string]struct{}
+	includedSchemas                      map[string]struct{}
+	includedDefaultErrorStatusDependency bool
 }
 
 func (g *Generator) newSession(doc *openapiv3.Document) *Session {
@@ -186,7 +187,7 @@ func (s *Session) resolveRefReferencesInDefaultResponses(responses internal.Defa
 				continue
 			}
 
-			if ref := schema.Object.Ref; ref == "" && schema.Object.Ref[0] == '.' {
+			if ref := schema.Object.Ref; ref != "" && schema.Object.Ref[0] == '.' {
 				record, ok := s.schemaNames[ref]
 				if !ok {
 					continue

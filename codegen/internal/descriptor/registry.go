@@ -14,9 +14,12 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
+	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
+	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // Registry is a registry of information extracted from pluginpb.CodeGeneratorRequest.
@@ -101,7 +104,30 @@ func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 		}
 	}
 
+	r.loadRPCStatus()
 	return nil
+}
+
+// loadRPCStatus loads the rpc.Status object so that it can be found in the registry.
+func (r *Registry) loadRPCStatus() {
+	protoFiles := [2]*descriptorpb.FileDescriptorProto{
+		protodesc.ToFileDescriptorProto((&anypb.Any{}).ProtoReflect().Descriptor().ParentFile()),
+		protodesc.ToFileDescriptorProto((&statuspb.Status{}).ProtoReflect().Descriptor().ParentFile()),
+	}
+
+	for _, protoFile := range protoFiles {
+		if _, exists := r.files[protoFile.GetName()]; exists {
+			continue
+		}
+
+		f := &File{
+			FileDescriptorProto: protoFile,
+		}
+		r.files[protoFile.GetName()] = f
+		r.filePaths = append(r.filePaths, protoFile.GetName())
+		r.loadMessagesInFile(f, nil, protoFile.MessageType)
+		r.loadEnumsInFile(f, nil, protoFile.EnumType)
+	}
 }
 
 func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.File) error {

@@ -75,7 +75,43 @@ func (s *Session) renderOperation(
 		}
 	}
 
+	if err := s.addDefaultErrorResponse(&operation.Object); err != nil {
+		return nil, err
+	}
+
 	return operation, nil
+}
+
+func (s *Session) addDefaultErrorResponse(operation *openapiv3.OperationCore) error {
+	if s.DisableDefaultResponses || operation.Responses != nil && operation.Responses[httpStatusDefault] != nil {
+		return nil
+	}
+
+	response := internal.DefaultErrorResponse()
+	if !response.ReferenceIsResolved {
+		ref, err := s.schemaNameForFQN(rpcStatusProto)
+		if err != nil {
+			return fmt.Errorf("unexpected error: %w", err)
+		}
+		internal.SetErrorResponseRef(refPrefix + ref)
+	}
+
+	if operation.Responses == nil {
+		operation.Responses = map[string]*openapiv3.Ref[openapiv3.Response]{
+			httpStatusDefault: response.Response,
+		}
+	} else {
+		operation.Responses[httpStatusDefault] = response.Response
+	}
+
+	if !s.includedDefaultErrorStatusDependency {
+		if err := s.includeMessage(rpcStatusProto); err != nil {
+			return fmt.Errorf("unexpected error importing rpc.Status: %w", err)
+		}
+		s.includedDefaultErrorStatusDependency = true
+	}
+
+	return nil
 }
 
 func (s *Session) addDefaultResponses(responses internal.DefaultResponses, operation *openapiv3.OperationCore) error {
