@@ -269,6 +269,29 @@ func (g *Generator) getSchemaForMessage(protoPackage, fqmn string) (internal.Ope
 	return result, nil
 }
 
+func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Tag, error) {
+	opts, ok := g.services[service.FQSN()]
+	if ok {
+		tags, err := openapimap.Tags(opts.Document.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map tags: %w", err)
+		}
+
+		return tags, nil
+	}
+
+	protoOptions, ok := proto.GetExtension(service.GetOptions(), api.E_OpenapiServiceDoc).(*openapi.Document)
+	if ok && protoOptions != nil {
+		tags, err := openapimap.Tags(protoOptions.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map tags: %w", err)
+		}
+		return tags, nil
+	}
+
+	return nil, nil
+}
+
 func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.File) (internal.OpenAPISpec, error) {
 	// TODO: allow the plugin to set the config path
 	result := internal.OpenAPISpec{}

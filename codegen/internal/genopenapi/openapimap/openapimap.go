@@ -148,7 +148,7 @@ func Info(info *openapi.Info) (*openapiv3.Info, error) {
 	return result, nil
 }
 
-func Tags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
+func Tags(tags []*openapi.Tag) ([]*openapiv3.Tag, error) {
 	if len(tags) == 0 {
 		return nil, nil
 	}
@@ -158,7 +158,7 @@ func Tags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 	var externalDocs *openapiv3.ExternalDocumentation
 	var err error
 
-	result := make([]openapiv3.Tag, len(tags))
+	result := make([]*openapiv3.Tag, len(tags))
 	for index, tag := range tags {
 		extensions, err = Extensions(tag.Extensions)
 		if err != nil {
@@ -170,7 +170,7 @@ func Tags(tags []*openapi.Tag) ([]openapiv3.Tag, error) {
 			return nil, fmt.Errorf("invalid external doc in tag at index %d: %w", index, err)
 		}
 
-		result[index] = openapiv3.Tag{
+		result[index] = &openapiv3.Tag{
 			Object: openapiv3.TagCore{
 				Name:         tag.Name,
 				Description:  tag.Description,

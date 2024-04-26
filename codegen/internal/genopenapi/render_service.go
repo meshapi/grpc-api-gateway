@@ -36,14 +36,7 @@ func (s *Session) renderOperation(
 	}
 
 	if !s.DisableServiceTags {
-		tag := binding.Method.Service.GetName()
-		if s.IncludePackageInTags {
-			if pkg := binding.Method.Service.File.GetPackage(); pkg != "" {
-				tag = pkg + "." + tag
-			}
-		}
-
-		operation.Object.Tags = append(operation.Object.Tags, tag)
+		operation.Object.Tags = append(operation.Object.Tags, s.tagNameForService(binding.Method.Service))
 	}
 
 	// handle path parameters

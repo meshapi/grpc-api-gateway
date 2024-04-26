@@ -205,11 +205,69 @@ func (s *Session) addService(service *descriptor.Service) error {
 				operation.Object.Description = description
 			}
 
+			if s.UseGoTemplate {
+				if operation.Object.Summary != "" {
+					operation.Object.Summary = s.evaluateCommentWithTemplate(operation.Object.Summary, binding)
+				}
+				if operation.Object.Description != "" {
+					operation.Object.Description = s.evaluateCommentWithTemplate(operation.Object.Description, binding)
+				}
+			}
+
 			*operationPtr = operation
 
 		}
 	}
+
+	if !s.DisableServiceTags {
+		// when generating per service, the tags will
+		if err := s.includeServiceTags(service); err != nil {
+			return fmt.Errorf("failed to add service tags to document: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func (s *Session) includeServiceTags(service *descriptor.Service) error {
+	tags, err := s.tagsForService(service)
+	if err != nil {
+		return fmt.Errorf("failed to map tags: %w", err)
+	}
+
+	if len(tags) == 0 {
+		s.Document.Object.Tags = append(s.Document.Object.Tags, &openapiv3.Tag{
+			Object: openapiv3.TagCore{
+				Name: s.tagNameForService(service),
+			},
+		})
+		return nil
+	}
+
+	if s.UseGoTemplate {
+		for _, tag := range tags {
+			if tag.Object.Description != "" {
+				tag.Object.Description = s.evaluateCommentWithTemplate(tag.Object.Description, service)
+			}
+			if tag.Object.ExternalDocs != nil && tag.Object.ExternalDocs.Object.Description != "" {
+				tag.Object.ExternalDocs.Object.Description = s.evaluateCommentWithTemplate(
+					tag.Object.ExternalDocs.Object.Description, service)
+			}
+		}
+	}
+	s.Document.Object.Tags = append(s.Document.Object.Tags, tags...)
+
+	return nil
+}
+
+func (s *Session) tagNameForService(service *descriptor.Service) string {
+	tag := service.GetName()
+	if s.IncludePackageInTags {
+		if pkg := service.File.GetPackage(); pkg != "" {
+			return pkg + "." + tag
+		}
+	}
+	return tag
 }
 
 func (s *Session) addMessageAndEnums(file *descriptor.File) error {

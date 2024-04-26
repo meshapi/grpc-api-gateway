@@ -2,9 +2,12 @@ package genopenapi
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/api"
@@ -136,9 +139,43 @@ func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (s
 		result += "- " + value + ": " + g.renderComment(comments.Values[int32(index)])
 	}
 
-	// TODO: handle the template doc.
-
 	return result, nil
+}
+
+func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
+	tpl, err := template.New("").Funcs(template.FuncMap{
+		"import": func(name string) string {
+			file, err := os.ReadFile(name)
+			if err != nil {
+				return err.Error()
+			}
+
+			return g.evaluateCommentWithTemplate(string(file), data)
+		},
+		"fieldcomments": func(field *descriptor.Field) string {
+			return strings.ReplaceAll(g.renderComment(g.commentRegistry.LookupField(field)), "\n", "<br>")
+		},
+		"arg": func(name string) string {
+			for _, v := range g.GoTemplateArgs {
+				if v.Key == name {
+					return v.Value
+				}
+			}
+			return fmt.Sprintf("Go template argument %q not found", name)
+		},
+	}).Parse(body)
+	if err != nil {
+		// If there is an error parsing the templating insert the error as string in the comment
+		// to make it easier to debug the template error.
+		return err.Error()
+	}
+	var tmp bytes.Buffer
+	if err := tpl.Execute(&tmp, data); err != nil {
+		// If there is an error executing the templating insert the error as string in the comment
+		// to make it easier to debug the error.
+		return err.Error()
+	}
+	return tmp.String()
 }
 
 func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
@@ -219,7 +256,11 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 			return nil, err
 		}
 
-		return schema, nil
+		generatedSchema = schema
+	}
+
+	if g.UseGoTemplate && generatedSchema.Object.Description != "" {
+		generatedSchema.Object.Description = g.evaluateCommentWithTemplate(generatedSchema.Object.Description, enum)
 	}
 
 	return generatedSchema, nil
@@ -343,6 +384,10 @@ func (g *Generator) renderFieldSchema(
 		fieldSchema.Object.Description = g.renderComment(comments)
 	}
 
+	if g.UseGoTemplate && fieldSchema.Object.Description != "" {
+		fieldSchema.Object.Description = g.evaluateCommentWithTemplate(fieldSchema.Object.Description, field)
+	}
+
 	return fieldSchema, dependency, nil
 }
 
@@ -459,8 +504,12 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 
 	// handle the title, description and summary here.
 	comment := g.commentRegistry.LookupMessage(message)
-	if comment != nil {
+	if comment != nil && schema.Object.Description == "" {
 		schema.Object.Description = g.renderComment(comment.Location)
+	}
+
+	if g.UseGoTemplate && schema.Object.Description != "" {
+		schema.Object.Description = g.evaluateCommentWithTemplate(schema.Object.Description, message)
 	}
 
 	for index, field := range message.Fields {

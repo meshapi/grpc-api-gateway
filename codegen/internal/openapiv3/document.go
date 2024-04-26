@@ -45,7 +45,7 @@ type DocumentCore struct {
 	Paths                 map[string]*Path       `json:"paths,omitempty" yaml:"paths,omitempty"`
 	Components            *Components            `json:"components,omitempty" yaml:"components,omitempty"`
 	Security              []map[string][]string  `json:"security,omitempty" yaml:"security,omitempty"`
-	Tags                  []Tag                  `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Tags                  []*Tag                 `json:"tags,omitempty" yaml:"tags,omitempty"`
 	ExternalDocumentation *ExternalDocumentation `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 }
 
