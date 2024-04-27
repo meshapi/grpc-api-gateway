@@ -1,19 +1,22 @@
 // Package fqn contains tools to efficiently parse and operate on fully qualified names of format a.b.c or .a.b.c
-package fqn
+package dotpath
 
 import (
 	"strings"
 )
 
+// Instance holds a dotpath string view.
 type Instance struct {
 	ref   *string
 	parts []int
 }
 
+// IsAbsolute indicates whether this path is an absolute path. Absolute paths start with '.'
 func (i Instance) IsAbsolute() bool {
 	return len(i.parts) > 0 && i.parts[0] == 0
 }
 
+// Index returns path segment at index.
 func (i Instance) Index(index int) string {
 	start := 0
 	if index > 0 {
@@ -27,6 +30,7 @@ func (i Instance) Index(index int) string {
 	return (*i.ref)[start:i.parts[index]]
 }
 
+// Parts returns all segments, akin to strings.Split(input, ".") but it differs in implementation.
 func (i Instance) Parts() []string {
 	l := len(i.parts)
 	result := make([]string, l+1)
@@ -40,6 +44,12 @@ func (i Instance) Parts() []string {
 	return result
 }
 
+// PartsAtDepth returns parts at a specific depth.
+// At depth d, the leftmost d segments are excluded.
+//
+// For instance:
+//
+// If the path is "a.b.c", the parts at depth 1 are ["b", "c"].
 func (i Instance) PartsAtDepth(d int) []string {
 	l := len(i.parts)
 	if d == l {
@@ -60,18 +70,20 @@ func (i Instance) PartsAtDepth(d int) []string {
 	return result
 }
 
-// MaxDepth returns the maximum depth this FQN has. Note that this depth is the largest depth index, not the count.
+// MaxDepth returns the maximum depth this path has.
+//
+// Note that this depth is the largest depth index, not the count.
 func (i Instance) MaxDepth() int {
 	return len(i.parts)
 }
 
-// Len returns the number of segments in the dot-separated qualified name.
-func (i Instance) Len() int {
+// NumberOfSegments returns the number of segments in the dot-separated qualified name.
+func (i Instance) NumberOfSegments() int {
 	return len(i.parts) + 1
 }
 
-// StringAtDepth returns the string at a certain depth from the right side.
-// For instance, depth of 0 for a.b.c is c and depth of 2 is a.b.c
+// StringAtDepth returns the string at a specific depth from the right side.
+// For instance, a depth of 0 for "a.b.c" returns "c" and a depth of 2 returns "a.b.c".
 func (i Instance) StringAtDepth(d int) string {
 	l := len(i.parts)
 

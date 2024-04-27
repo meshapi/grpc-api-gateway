@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
 )
 
 func (g *Generator) fieldName(field *descriptor.Field) string {
@@ -48,9 +48,9 @@ func resolveNamesUniqueWithContext(messages []string, extraContext int, componen
 	packagesByDepth := make(map[int][]string)
 	uniqueNames := make(map[string]string, len(messages))
 
-	fqnItems := make([]fqn.Instance, len(messages))
+	fqnItems := make([]dotpath.Instance, len(messages))
 	for index := range messages {
-		fqnItems[index] = fqn.Parse(&messages[index])
+		fqnItems[index] = dotpath.Parse(&messages[index])
 	}
 
 	for _, item := range fqnItems {

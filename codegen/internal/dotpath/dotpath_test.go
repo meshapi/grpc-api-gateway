@@ -1,11 +1,11 @@
-package fqn_test
+package dotpath_test
 
 import (
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
 )
 
 func TestFQN(t *testing.T) {
@@ -23,7 +23,7 @@ func TestFQN(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.Input, func(t *testing.T) {
-			item := fqn.Parse(&tt.Input)
+			item := dotpath.Parse(&tt.Input)
 
 			stringParts := strings.Split(tt.Input, ".")
 
@@ -74,6 +74,6 @@ func BenchmarkSplitAdd(b *testing.B) {
 func BenchmarkParts(b *testing.B) {
 	str := "a.b.c.d.e.f"
 	for i := 0; i < b.N; i++ {
-		fqn.Parse(&str).Index(1)
+		dotpath.Parse(&str).Index(1)
 	}
 }

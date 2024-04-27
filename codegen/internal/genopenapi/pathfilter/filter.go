@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
 )
 
 type Instance struct {
@@ -21,12 +21,12 @@ func New() *Instance {
 }
 
 func (i *Instance) PutString(key string) {
-	i.Put(fqn.Parse(&key))
+	i.Put(dotpath.Parse(&key))
 }
 
-func (i *Instance) Put(key fqn.Instance) {
+func (i *Instance) Put(key dotpath.Instance) {
 	cursor := i
-	for index := 0; index < key.Len(); index++ {
+	for index := 0; index < key.NumberOfSegments(); index++ {
 		key := key.Index(index)
 		if cursor.children == nil {
 			cursor.children = make(map[string]*Instance, 1)
@@ -43,16 +43,16 @@ func (i *Instance) Put(key fqn.Instance) {
 }
 
 func (i *Instance) HasString(key string) (bool, *Instance) {
-	return i.Has(fqn.Parse(&key))
+	return i.Has(dotpath.Parse(&key))
 }
 
-func (i *Instance) Has(key fqn.Instance) (bool, *Instance) {
+func (i *Instance) Has(key dotpath.Instance) (bool, *Instance) {
 	if i.children == nil {
 		return false, nil
 	}
 
 	cursor := i
-	for index := 0; index < key.Len(); index++ {
+	for index := 0; index < key.NumberOfSegments(); index++ {
 		instance, ok := cursor.children[key.Index(index)]
 		if !ok {
 			return false, nil
