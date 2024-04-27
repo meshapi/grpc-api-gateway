@@ -46,7 +46,7 @@ func TestFQN(t *testing.T) {
 			// for every string, say a.b.c, where parts are [a b c]
 			// at each index, joining all items from that index to the end should
 			// create expected depth L-1-index. For instance, at index 1, b.c would be
-			// expected string at depth of 3-1-1 = 1.
+			// the expected string at depth of 3-1-1 = 1.
 			for i := range stringParts {
 				depth := len(stringParts) - 1 - i
 

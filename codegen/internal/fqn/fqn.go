@@ -1,4 +1,4 @@
-// Package fqn contains tools to efficiently parse and operate on fully qualified names of format .a.b.c
+// Package fqn contains tools to efficiently parse and operate on fully qualified names of format a.b.c or .a.b.c
 package fqn
 
 import (
@@ -8,6 +8,10 @@ import (
 type Instance struct {
 	ref   *string
 	parts []int
+}
+
+func (i Instance) IsAbsolute() bool {
+	return len(i.parts) > 0 && i.parts[0] == 0
 }
 
 func (i Instance) Index(index int) string {
@@ -61,6 +65,7 @@ func (i Instance) MaxDepth() int {
 	return len(i.parts)
 }
 
+// Len returns the number of segments in the dot-separated qualified name.
 func (i Instance) Len() int {
 	return len(i.parts) + 1
 }
@@ -80,7 +85,7 @@ func (i Instance) StringAtDepth(d int) string {
 // Parse takes a string pointer, keeps it as a reference.
 //
 // NOTE: This tool is meant to use pointers in order to avoid copying data, because of this
-// no updates to the input string can happen after calling Parse for the duration the lifetime of this object.
+// no updates to the input string can happen after calling Parse for the lifetime of this object.
 func Parse(source *string) Instance {
 	parts := make([]int, strings.Count(*source, "."))
 
@@ -101,4 +106,9 @@ func Parse(source *string) Instance {
 		ref:   source,
 		parts: parts,
 	}
+}
+
+// ParseString is similar to Parse but it safely copies the string which is less efficient but is safe.
+func ParseString(source string) Instance {
+	return Parse(&source)
 }
