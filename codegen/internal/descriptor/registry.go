@@ -13,6 +13,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/grpclog"
@@ -782,14 +783,12 @@ func (r *Registry) LookupMessage(location, name string) (*Message, error) {
 		location = "." + location
 	}
 
-	components := strings.Split(location, ".")
-	for len(components) > 0 {
-		fqmn := strings.Join(append(components, name), ".")
-		if m, ok := r.messages[fqmn]; ok {
+	locationPath := dotpath.Parse(&location)
+	for i := 0; i < locationPath.NumberOfSegments(); i++ {
+		prefix := locationPath.TrimmedSuffix(i)
+		if m, ok := r.messages[prefix+"."+name]; ok {
 			return m, nil
 		}
-
-		components = components[:len(components)-1]
 	}
 
 	return nil, fmt.Errorf("no message found: %s", name)
@@ -820,14 +819,13 @@ func (r *Registry) LookupEnum(location, name string) (*Enum, error) {
 	if !strings.HasPrefix(location, ".") {
 		location = "." + location
 	}
-	components := strings.Split(location, ".")
 
-	for len(components) > 0 {
-		fqen := strings.Join(append(components, name), ".")
-		if e, ok := r.enums[fqen]; ok {
+	locationPath := dotpath.Parse(&location)
+	for i := 0; i < locationPath.NumberOfSegments(); i++ {
+		prefix := locationPath.TrimmedSuffix(i)
+		if e, ok := r.enums[prefix+"."+name]; ok {
 			return e, nil
 		}
-		components = components[:len(components)-1]
 	}
 
 	return nil, fmt.Errorf("no enum found: %s", name)

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/casing"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	"github.com/meshapi/grpc-rest-gateway/trie"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -87,17 +88,27 @@ type Message struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+
+	path dotpath.Instance
+}
+
+func (m *Message) Path() dotpath.Instance {
+	if !m.path.HasRef() {
+		components := []string{""}
+		if m.File.Package != nil {
+			components = append(components, m.File.GetPackage())
+		}
+		components = append(components, m.Outers...)
+		components = append(components, m.GetName())
+		m.path = dotpath.ParseString(strings.Join(components, "."))
+	}
+
+	return m.path
 }
 
 // FQMN returns a fully qualified message name of this message.
 func (m *Message) FQMN() string {
-	components := []string{""}
-	if m.File.Package != nil {
-		components = append(components, m.File.GetPackage())
-	}
-	components = append(components, m.Outers...)
-	components = append(components, m.GetName())
-	return strings.Join(components, ".")
+	return m.Path().String()
 }
 
 // GoType returns a go type name for the message type.
@@ -134,17 +145,27 @@ type Enum struct {
 	Index int
 	// ForcePrefixedName when set to true, prefixes a type with a package prefix.
 	ForcePrefixedName bool
+
+	path dotpath.Instance
+}
+
+func (e *Enum) Path() dotpath.Instance {
+	if !e.path.HasRef() {
+		components := []string{""}
+		if e.File.Package != nil {
+			components = append(components, e.File.GetPackage())
+		}
+		components = append(components, e.Outers...)
+		components = append(components, e.GetName())
+		e.path = dotpath.ParseString(strings.Join(components, "."))
+	}
+
+	return e.path
 }
 
 // FQEN returns a fully qualified enum name of this enum.
 func (e *Enum) FQEN() string {
-	components := []string{""}
-	if e.File.Package != nil {
-		components = append(components, e.File.GetPackage())
-	}
-	components = append(components, e.Outers...)
-	components = append(components, e.GetName())
-	return strings.Join(components, ".")
+	return e.Path().String()
 }
 
 // GoType returns a go type name for the enum type.
@@ -173,16 +194,26 @@ type Service struct {
 	ForcePrefixedName bool
 	// Index is the index of the service in the proto file.
 	Index int
+
+	path dotpath.Instance
+}
+
+func (s *Service) Path() dotpath.Instance {
+	if !s.path.HasRef() {
+		components := []string{""}
+		if s.File.Package != nil {
+			components = append(components, s.File.GetPackage())
+		}
+		components = append(components, s.GetName())
+		s.path = dotpath.ParseString(strings.Join(components, "."))
+	}
+
+	return s.path
 }
 
 // FQSN returns the fully qualified service name of this service.
 func (s *Service) FQSN() string {
-	components := []string{""}
-	if s.File.Package != nil {
-		components = append(components, s.File.GetPackage())
-	}
-	components = append(components, s.GetName())
-	return strings.Join(components, ".")
+	return s.Path().String()
 }
 
 // InstanceName returns object name of the service with package prefix if needed
@@ -415,14 +446,24 @@ type Method struct {
 	Bindings []*Binding
 	// Index is the index of the method in the service.
 	Index int
+
+	path dotpath.Instance
+}
+
+func (m *Method) Path() dotpath.Instance {
+	if !m.path.HasRef() {
+		var components []string
+		components = append(components, m.Service.FQSN())
+		components = append(components, m.GetName())
+		m.path = dotpath.ParseString(strings.Join(components, "."))
+	}
+
+	return m.path
 }
 
 // FQMN returns a fully qualified rpc method name of this method.
 func (m *Method) FQMN() string {
-	var components []string
-	components = append(components, m.Service.FQSN())
-	components = append(components, m.GetName())
-	return strings.Join(components, ".")
+	return m.Path().String()
 }
 
 // Field wraps descriptorpb.FieldDescriptorProto for richer features.
@@ -434,11 +475,21 @@ type Field struct {
 	ForcePrefixedName bool
 	// Index is the index of the field in the message proto descriptor.
 	Index int
+
+	path dotpath.Instance
+}
+
+func (f *Field) Path() dotpath.Instance {
+	if !f.path.HasRef() {
+		f.path = dotpath.ParseString(strings.Join([]string{f.Message.FQMN(), f.GetName()}, "."))
+	}
+
+	return f.path
 }
 
 // FQFN returns a fully qualified field name of this field.
 func (f *Field) FQFN() string {
-	return strings.Join([]string{f.Message.FQMN(), f.GetName()}, ".")
+	return f.Path().String()
 }
 
 // IsScalarType returns whether or not this field points to a scalar type.
