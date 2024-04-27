@@ -94,6 +94,38 @@ func (i Instance) StringAtDepth(d int) string {
 	return (*i.ref)[i.parts[l-d-1]+1:]
 }
 
+// TrimmedSuffix returns the path trimmed of n segments from the right.
+// For instance, for n=0 and n=1 in path "a.b.c", trimmed result would be a.b.c and a.b
+func (i Instance) TrimmedSuffix(n int) string {
+	l := len(i.parts)
+
+	if n == 0 {
+		return *i.ref
+	}
+
+	return (*i.ref)[:i.parts[l-n]]
+}
+
+// String returns the full underlying path.
+func (i Instance) String() string {
+	return *i.ref
+}
+
+// PathWithoutLeadingDot returns the path with the leading dot trimmed.
+func (i Instance) PathWithoutLeadingDot() string {
+	if len(i.parts) > 0 && i.parts[0] == 0 {
+		return (*i.ref)[1:]
+	}
+
+	return *i.ref
+}
+
+// HasRef returns whether or not this instance has an underlying string reference, if the result is false
+// calling other methods can lead to a panic.
+func (i Instance) HasRef() bool {
+	return i.ref != nil
+}
+
 // Parse takes a string pointer, keeps it as a reference.
 //
 // NOTE: This tool is meant to use pointers in order to avoid copying data, because of this

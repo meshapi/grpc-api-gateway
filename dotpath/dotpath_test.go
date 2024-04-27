@@ -60,6 +60,13 @@ func TestFQN(t *testing.T) {
 				if expectedStringAtDepth != receivedString {
 					t.Fatalf("expected[depth=%d] %s, received %s", depth, expectedStringAtDepth, receivedString)
 				}
+
+				expectedTrimmedString := strings.Join(stringParts[:len(stringParts)-i], ".")
+				trimmedString := item.TrimmedSuffix(i)
+				if trimmedString != expectedTrimmedString {
+					t.Fatalf(
+						"trimmed string at [n=%d] should be %s but is %s", i, trimmedString, receivedString)
+				}
 			}
 		})
 	}
