@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 )
 
 func TestFQN(t *testing.T) {

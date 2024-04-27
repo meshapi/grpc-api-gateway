@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 )
 
 type Instance struct {

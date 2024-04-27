@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/dotpath"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 )
 
 func (g *Generator) fieldName(field *descriptor.Field) string {
