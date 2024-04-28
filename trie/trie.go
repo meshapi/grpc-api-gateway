@@ -1,3 +1,8 @@
+// Package trie contains a trie implementation for selectors and dotted paths.
+//
+// WARNING: this package is primarily intended for internal use by the generated gateway code. In order to improve
+// efficiency of the utilities in this package, unsafe approaches such as taking a string pointer, is used which can
+// lead to panics if not used in a specific way.
 package trie
 
 import (
