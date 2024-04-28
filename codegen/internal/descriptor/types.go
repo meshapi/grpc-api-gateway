@@ -378,34 +378,34 @@ func (b *Binding) HasAnyStreamingMethod() bool {
 
 // QueryParameterFilter returns a trie that filters out field paths that are not available to be used as query
 // parameter.
-func (b *Binding) QueryParameterFilter() *trie.DoubleArray {
-	var seqs [][]string
+func (b *Binding) QueryParameterFilter() *trie.Node {
+	node := trie.New()
 
 	if b.Body != nil {
-		seqs = append(seqs, strings.Split(b.Body.FieldPath.String(), "."))
+		node.AddString(b.Body.FieldPath.String())
 		for _, comp := range b.Body.FieldPath {
 			if comp.Target.JsonName != nil {
-				seqs = append(seqs, strings.Split(comp.Target.GetJsonName(), "."))
+				node.AddString(comp.Target.GetJsonName())
 			}
 		}
 	}
 
 	for _, p := range b.PathParameters {
-		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
+		node.AddString(p.FieldPath.String())
 		if p.Target.JsonName != nil {
-			seqs = append(seqs, strings.Split(p.Target.GetJsonName(), "."))
+			node.AddString(p.Target.GetJsonName())
 		}
 	}
 
 	for _, p := range b.QueryParameterCustomization.Aliases {
-		seqs = append(seqs, strings.Split(p.FieldPath.String(), "."))
+		node.AddString(p.FieldPath.String())
 	}
 
 	for _, p := range b.QueryParameterCustomization.IgnoredFields {
-		seqs = append(seqs, strings.Split(p.String(), "."))
+		node.AddString(p.String())
 	}
 
-	return trie.New(seqs)
+	return node
 }
 
 // QueryParameter describes a query paramter.

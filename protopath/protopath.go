@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/protoconvert"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/grpclog"
@@ -22,12 +23,11 @@ import (
 
 // PopulateFieldFromPath sets a value in a nested Protobuf structure.
 func PopulateFieldFromPath(msg proto.Message, fieldPathString string, value string) error {
-	fieldPath := strings.Split(fieldPathString, ".")
-	return PopulateFieldValueFromPath(msg.ProtoReflect(), fieldPath, []string{value})
+	return PopulateFieldValueFromPath(msg.ProtoReflect(), dotpath.Parse(&fieldPathString), []string{value})
 }
 
-func PopulateFieldValueFromPath(msgValue protoreflect.Message, fieldPath []string, values []string) error {
-	if len(fieldPath) < 1 {
+func PopulateFieldValueFromPath(msgValue protoreflect.Message, fieldPath dotpath.Instance, values []string) error {
+	if fieldPath.NumberOfSegments() < 1 {
 		return errors.New("no field path")
 	}
 	if len(values) < 1 {
@@ -35,7 +35,8 @@ func PopulateFieldValueFromPath(msgValue protoreflect.Message, fieldPath []strin
 	}
 
 	var fieldDescriptor protoreflect.FieldDescriptor
-	for i, fieldName := range fieldPath {
+	for i := 0; i < fieldPath.NumberOfSegments(); i++ {
+		fieldName := fieldPath.Index(i)
 		fields := msgValue.Descriptor().Fields()
 
 		// Get field by name
@@ -45,13 +46,13 @@ func PopulateFieldValueFromPath(msgValue protoreflect.Message, fieldPath []strin
 			if fieldDescriptor == nil {
 				// We're not returning an error here because this could just be
 				// an extra query parameter that isn't part of the request.
-				grpclog.Infof("field not found in %q: %q", msgValue.Descriptor().FullName(), strings.Join(fieldPath, "."))
+				grpclog.Infof("field not found in %q: %q", msgValue.Descriptor().FullName(), fieldPath.String())
 				return nil
 			}
 		}
 
 		// If this is the last element, we're done
-		if i == len(fieldPath)-1 {
+		if i == fieldPath.NumberOfSegments()-1 {
 			break
 		}
 

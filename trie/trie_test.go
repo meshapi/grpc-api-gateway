@@ -1,372 +1,42 @@
 package trie_test
 
 import (
-	"reflect"
+	"strconv"
 	"testing"
 
-	trie "github.com/meshapi/grpc-rest-gateway/trie"
+	"github.com/meshapi/grpc-rest-gateway/trie"
 )
 
-func TestMaxCommonPrefix(t *testing.T) {
-	for _, spec := range []struct {
-		da     trie.DoubleArray
-		tokens []string
-		want   bool
+func TestTrie(t *testing.T) {
+	testCases := []struct {
+		Inputs      []string
+		ExpectTrue  []string
+		ExpectFalse []string
 	}{
 		{
-			da:     trie.DoubleArray{},
-			tokens: nil,
-			want:   false,
+			Inputs:      []string{"a.b.c", "a.d"},
+			ExpectTrue:  []string{"a.b.c", "a.d", "a.d.something_else"},
+			ExpectFalse: []string{"a", "a.b", "d", "x"},
 		},
-		{
-			da:     trie.DoubleArray{},
-			tokens: []string{"foo"},
-			want:   false,
-		},
-		{
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-				},
-				Base:  []int{1, 1, 0},
-				Check: []int{0, 1, 2},
-			},
-			tokens: nil,
-			want:   false,
-		},
-		{
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-				},
-				Base:  []int{1, 1, 0},
-				Check: []int{0, 1, 2},
-			},
-			tokens: []string{"foo"},
-			want:   true,
-		},
-		{
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-				},
-				Base:  []int{1, 1, 0},
-				Check: []int{0, 1, 2},
-			},
-			tokens: []string{"bar"},
-			want:   false,
-		},
-		{
-			// foo|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 1, 2, 0, 0},
-				Check: []int{0, 1, 1, 2, 3},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^foo$
-				// 4: ^bar$
-			},
-			tokens: []string{"foo"},
-			want:   true,
-		},
-		{
-			// foo|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 1, 2, 0, 0},
-				Check: []int{0, 1, 1, 2, 3},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^foo$
-				// 4: ^bar$
-			},
-			tokens: []string{"bar"},
-			want:   true,
-		},
-		{
-			// foo|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 1, 2, 0, 0},
-				Check: []int{0, 1, 1, 2, 3},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^foo$
-				// 4: ^bar$
-			},
-			tokens: []string{"something-else"},
-			want:   false,
-		},
-		{
-			// foo|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 1, 2, 0, 0},
-				Check: []int{0, 1, 1, 2, 3},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^foo$
-				// 4: ^bar$
-			},
-			tokens: []string{"foo", "bar"},
-			want:   true,
-		},
-		{
-			// foo|foo\.bar|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 3, 1, 0, 4, 0, 0},
-				Check: []int{0, 1, 1, 3, 2, 2, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^bar$
-				// 4: ^foo.bar
-				// 5: ^foo$
-				// 6: ^foo.bar$
-			},
-			tokens: []string{"foo"},
-			want:   true,
-		},
-		{
-			// foo|foo\.bar|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 3, 1, 0, 4, 0, 0},
-				Check: []int{0, 1, 1, 3, 2, 2, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^bar$
-				// 4: ^foo.bar
-				// 5: ^foo$
-				// 6: ^foo.bar$
-			},
-			tokens: []string{"foo", "bar"},
-			want:   true,
-		},
-		{
-			// foo|foo\.bar|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 3, 1, 0, 4, 0, 0},
-				Check: []int{0, 1, 1, 3, 2, 2, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^bar$
-				// 4: ^foo.bar
-				// 5: ^foo$
-				// 6: ^foo.bar$
-			},
-			tokens: []string{"bar"},
-			want:   true,
-		},
-		{
-			// foo|foo\.bar|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 3, 1, 0, 4, 0, 0},
-				Check: []int{0, 1, 1, 3, 2, 2, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^bar$
-				// 4: ^foo.bar
-				// 5: ^foo$
-				// 6: ^foo.bar$
-			},
-			tokens: []string{"something-else"},
-			want:   false,
-		},
-		{
-			// foo|foo\.bar|bar
-			da: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 3, 1, 0, 4, 0, 0},
-				Check: []int{0, 1, 1, 3, 2, 2, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^bar$
-				// 4: ^foo.bar
-				// 5: ^foo$
-				// 6: ^foo.bar$
-			},
-			tokens: []string{"foo", "bar", "baz"},
-			want:   true,
-		},
-	} {
-		got := spec.da.HasCommonPrefix(spec.tokens)
-		if got != spec.want {
-			t.Errorf("%#v.HasCommonPrefix(%v) = %v; want %v", spec.da, spec.tokens, got, spec.want)
-		}
 	}
-}
 
-func TestAdd(t *testing.T) {
-	for _, spec := range []struct {
-		tokens [][]string
-		want   trie.DoubleArray
-	}{
-		{
-			want: trie.DoubleArray{
-				Encoding: make(map[string]int),
-			},
-		},
-		{
-			tokens: [][]string{{"foo"}},
-			want: trie.DoubleArray{
-				Encoding: map[string]int{"foo": 0},
-				Base:     []int{1, 1, 0},
-				Check:    []int{0, 1, 2},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^foo$
-			},
-		},
-		{
-			tokens: [][]string{{"foo"}, {"bar"}},
-			want: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-				},
-				Base:  []int{1, 1, 2, 0, 0},
-				Check: []int{0, 1, 1, 2, 3},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^bar
-				// 3: ^foo$
-				// 4: ^bar$
-			},
-		},
-		{
-			tokens: [][]string{{"foo", "bar"}, {"foo", "baz"}},
-			want: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-					"baz": 2,
-				},
-				Base:  []int{1, 1, 1, 2, 0, 0},
-				Check: []int{0, 1, 2, 2, 3, 4},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^foo.bar
-				// 3: ^foo.baz
-				// 4: ^foo.bar$
-				// 5: ^foo.baz$
-			},
-		},
-		{
-			tokens: [][]string{{"foo", "bar"}, {"foo", "baz"}, {"qux"}},
-			want: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-					"baz": 2,
-					"qux": 3,
-				},
-				Base:  []int{1, 1, 1, 2, 3, 0, 0, 0},
-				Check: []int{0, 1, 2, 2, 1, 3, 4, 5},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^foo.bar
-				// 3: ^foo.baz
-				// 4: ^qux
-				// 5: ^foo.bar$
-				// 6: ^foo.baz$
-				// 7: ^qux$
-			},
-		},
-		{
-			tokens: [][]string{
-				{"foo", "bar"},
-				{"foo", "baz", "bar"},
-				{"qux", "foo"},
-			},
-			want: trie.DoubleArray{
-				Encoding: map[string]int{
-					"foo": 0,
-					"bar": 1,
-					"baz": 2,
-					"qux": 3,
-				},
-				Base:  []int{1, 1, 1, 5, 8, 0, 3, 0, 5, 0},
-				Check: []int{0, 1, 2, 2, 1, 3, 4, 7, 5, 9},
-				// 0: ^
-				// 1: ^foo
-				// 2: ^foo.bar
-				// 3: ^foo.baz
-				// 4: ^qux
-				// 5: ^foo.bar$
-				// 6: ^foo.baz.bar
-				// 7: ^foo.baz.bar$
-				// 8: ^qux.foo
-				// 9: ^qux.foo$
-			},
-		},
-	} {
-		da := trie.New(spec.tokens)
-		if got, want := da.Encoding, spec.want.Encoding; !reflect.DeepEqual(got, want) {
-			t.Errorf("da.Encoding = %v; want %v; tokens = %#v", got, want, spec.tokens)
-		}
-		if got, want := da.Base, spec.want.Base; !compareArray(got, want) {
-			t.Errorf("da.Base = %v; want %v; tokens = %#v", got, want, spec.tokens)
-		}
-		if got, want := da.Check, spec.want.Check; !compareArray(got, want) {
-			t.Errorf("da.Check = %v; want %v; tokens = %#v", got, want, spec.tokens)
-		}
-	}
-}
+	for index, tt := range testCases {
+		t.Run(strconv.Itoa(index), func(t *testing.T) {
+			node := trie.New(tt.Inputs...)
 
-func compareArray(got, want []int) bool {
-	var i int
-	for i = 0; i < len(got) && i < len(want); i++ {
-		if got[i] != want[i] {
-			return false
-		}
+			for _, value := range tt.ExpectTrue {
+				if !node.HasCommonPrefixString(value) {
+					t.Logf("expected Has(%q) == true but received false", value)
+					t.Fail()
+				}
+			}
+
+			for _, value := range tt.ExpectFalse {
+				if node.HasCommonPrefixString(value) {
+					t.Logf("expected Has(%q) == false but received true", value)
+					t.Fail()
+				}
+			}
+		})
 	}
-	if i < len(want) {
-		return false
-	}
-	for ; i < len(got); i++ {
-		if got[i] != 0 {
-			return false
-		}
-	}
-	return true
 }

@@ -352,7 +352,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 
 			// if query param is already used by another target, error out.
 			alreadyBound := (binding.Body != nil && len(binding.Body.FieldPath) == 0) ||
-				queryParamFilter.HasCommonPrefix(strings.Split(queryParam.Selector, "."))
+				queryParamFilter.HasCommonPrefix(dotpath.Parse(&queryParam.Selector))
 			if alreadyBound {
 				return fmt.Errorf(
 					"cannot use selector %q for query parameter %q because it will already be read from payload/path params",
@@ -507,7 +507,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	// Item is the queue item for processing messages that have query parameters.
 	type Item struct {
 		Message   *Message
-		Parts     []string
+		Prefix    string
 		FieldPath FieldPath
 	}
 
@@ -518,7 +518,13 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	for index := 0; index < len(queue); index++ {
 		item := queue[index]
 		for _, field := range item.Message.Fields {
-			if queryFilter.HasCommonPrefix(append(item.Parts, field.GetName())) {
+			var name string
+			if item.Prefix != "" {
+				name = item.Prefix + "." + field.GetName()
+			} else {
+				name = field.GetName()
+			}
+			if queryFilter.HasCommonPrefixString(name) {
 				continue
 			}
 
@@ -539,7 +545,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 
 					queue = append(queue, Item{
 						Message:   message,
-						Parts:     append(item.Parts, field.GetName()),
+						Prefix:    name,
 						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
 					})
 					continue
@@ -549,7 +555,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 			}
 
 			queryParams = append(queryParams, QueryParameter{
-				Name:      strings.Join(append(item.Parts, field.GetName()), "."),
+				Name:      name,
 				FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
 			})
 		}

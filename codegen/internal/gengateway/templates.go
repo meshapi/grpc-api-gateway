@@ -48,7 +48,7 @@ func (b binding) GetBodyFieldStructName() (string, error) {
 }
 
 func (b binding) QueryParameterFilter() queryParameterFilter {
-	return queryParameterFilter{DoubleArray: b.Binding.QueryParameterFilter()}
+	return queryParameterFilter{Node: b.Binding.QueryParameterFilter()}
 }
 
 // HasEnumPathParam returns true if the path parameter slice contains a parameter
@@ -105,16 +105,19 @@ func (b binding) FieldMaskField() string {
 
 // queryParameterFilter is a wrapper of trie.DoubleArray which provides String() to output DoubleArray.Encoding in a stable and predictable format.
 type queryParameterFilter struct {
-	*trie.DoubleArray
+	*trie.Node
 }
 
 func (f queryParameterFilter) String() string {
-	encodings := make([]string, len(f.Encoding))
-	for str, enc := range f.Encoding {
-		encodings[enc] = fmt.Sprintf("%q: %d", str, enc)
-	}
-	e := strings.Join(encodings, ", ")
-	return fmt.Sprintf("&trie.DoubleArray{Encoding: map[string]int{%s}, Base: %#v, Check: %#v}", e, f.Base, f.Check)
+	builder := &strings.Builder{}
+	builder.WriteString("trie.New(")
+	f.Iterate(func(key string) {
+		builder.WriteByte('"')
+		builder.WriteString(key)
+		builder.WriteString(`",`)
+	})
+	builder.WriteString(")")
+	return builder.String()
 }
 
 func prepareHTTPPath(path *httprule.Template) string {
