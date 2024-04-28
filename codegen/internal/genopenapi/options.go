@@ -95,6 +95,9 @@ type Options struct {
 
 	// MergeWithOverwrite will overwrite lists instead of appending.
 	MergeWithOverwrite bool
+
+	// SkipEmptyFiles avoids writing OpenAPI document files if the file does not contain at least one model or path.
+	SkipEmptyFiles bool
 }
 
 // DefaultOptions returns the default options.
@@ -127,5 +130,6 @@ func DefaultOptions() Options {
 		PreserveProtoOrder:             false,
 		MergeWithOverwrite:             true,
 		OperationIDMode:                OperationIDModeServiceAndMethod,
+		SkipEmptyFiles:                 false,
 	}
 }

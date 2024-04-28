@@ -23,6 +23,7 @@ type Session struct {
 
 	includedSchemas                      map[string]struct{}
 	includedDefaultErrorStatusDependency bool
+	hasAnyGeneratedObject                bool
 }
 
 func (g *Generator) newSession(doc *openapiv3.Document) *Session {
@@ -34,6 +35,7 @@ func (g *Generator) newSession(doc *openapiv3.Document) *Session {
 }
 
 func (s *Session) includeMessage(fqmn string) error {
+	s.hasAnyGeneratedObject = true
 	if _, ok := s.includedSchemas[fqmn]; ok {
 		return nil
 	}
@@ -65,6 +67,7 @@ func (s *Session) includeMessage(fqmn string) error {
 }
 
 func (s *Session) includeEnum(fqen string) error {
+	s.hasAnyGeneratedObject = true
 	if _, ok := s.includedSchemas[fqen]; ok {
 		return nil
 	}
@@ -236,10 +239,6 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 		}
 	} else if doc.Object.Info.Object.Version == "" {
 		doc.Object.Info.Object.Version = "version not set"
-	}
-
-	if err := doc.Object.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid OpenAPI file: %w", err)
 	}
 
 	content := &bytes.Buffer{}

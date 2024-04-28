@@ -120,5 +120,9 @@ func prepareOptions() *genopenapi.Options {
 		&generatorOptions.MergeWithOverwrite, "merge_with_overwrite", generatorOptions.MergeWithOverwrite,
 		"when this option is enabled, arrays get overwritten instead of appended.")
 
+	flag.BoolVar(
+		&generatorOptions.SkipEmptyFiles, "skip_empty_files", generatorOptions.SkipEmptyFiles,
+		"when enabled, OpenAPI documents that do not contain at least one generated schema/path get skipped.")
+
 	return &generatorOptions
 }

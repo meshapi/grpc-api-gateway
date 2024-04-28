@@ -77,17 +77,26 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				doc.Document = &openapiv3.Document{}
 			}
 
+			if doc.Document.Object.Components == nil {
+				doc.Document.Object.Components = &openapiv3.Components{}
+			}
 			session := g.newSession(doc.Document)
 
-			err := session.addMessageAndEnums(file)
-			if err != nil {
-				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			if !g.IncludeServicesOnly {
+				err := session.addMessageAndEnums(file)
+				if err != nil {
+					return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+				}
 			}
 
 			for _, service := range file.Services {
 				if err := session.addService(service); err != nil {
 					return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
 				}
+			}
+
+			if g.SkipEmptyFiles && !session.hasAnyGeneratedObject {
+				continue
 			}
 
 			// Merge with the root document if needed.
@@ -111,6 +120,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 }
 
 func (s *Session) addService(service *descriptor.Service) error {
+	s.hasAnyGeneratedObject = true
 	if s.Document.Object.Paths == nil {
 		s.Document.Object.Paths = make(map[string]*openapiv3.Path)
 	}
@@ -271,10 +281,6 @@ func (s *Session) tagNameForService(service *descriptor.Service) string {
 }
 
 func (s *Session) addMessageAndEnums(file *descriptor.File) error {
-	if s.Document.Object.Components == nil {
-		s.Document.Object.Components = &openapiv3.Components{}
-	}
-
 	for _, message := range file.Messages {
 		// Skip all messages that are generated to be used as MapEntry objects.
 		if message.IsMapEntry() {

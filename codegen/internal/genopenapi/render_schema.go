@@ -98,6 +98,10 @@ func (g *Generator) getCustomizedFieldSchema(
 
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
 func (g *Generator) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
+	if g.IgnoreComments {
+		return ""
+	}
+
 	// get leading comments.
 	leadingComments := strings.NewReader(location.GetLeadingComments())
 	trailingComments := strings.NewReader(location.GetTrailingComments())
@@ -143,6 +147,10 @@ func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (s
 }
 
 func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
+	if g.IgnoreComments {
+		return ""
+	}
+
 	tpl, err := template.New("").Funcs(template.FuncMap{
 		"import": func(name string) string {
 			file, err := os.ReadFile(name)
