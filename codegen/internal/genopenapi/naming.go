@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/dotpath"
 )
 
@@ -17,23 +18,23 @@ func (g *Generator) fieldName(field *descriptor.Field) string {
 	panic("unsupported field type " + g.FieldNameMode.String() + " received")
 }
 
-func (g *Generator) resolveMessageNames(messages []string) map[string]string {
+func (g *Generator) resolveTypeNames(protoTypes []internal.ProtoTypeName) map[string]string {
 	switch g.SchemaNamingStrategy {
 	case SchemaNamingStrategyFQN:
-		return resolveNamesFQN(messages)
+		return resolveNamesFQN(protoTypes)
 	case SchemaNamingStrategySimple:
-		return resolveNamesUniqueWithContext(messages, 0, ".")
+		return resolveNamesUniqueWithContext(protoTypes, 0, ".")
 	case SchemaNamingStrategySimpleWithVersion:
-		return resolveNamesUniqueWithContext(messages, 1, ".")
+		return resolveNamesUniqueWithContext(protoTypes, 1, ".")
 	}
 
 	return nil
 }
 
-func resolveNamesFQN(messages []string) map[string]string {
-	result := make(map[string]string, len(messages))
-	for _, message := range messages {
-		result[message] = message[1:] // strip the leading dot here.
+func resolveNamesFQN(types []internal.ProtoTypeName) map[string]string {
+	result := make(map[string]string, len(types))
+	for _, protoType := range types {
+		result[protoType.FQN] = protoType.FQN[1:] // strip the leading dot here.
 	}
 
 	return result
@@ -44,13 +45,13 @@ func resolveNamesFQN(messages []string) map[string]string {
 // take the shortest suffix slice from each components slice that is unique among all
 // messages, and convert it into a component name by taking extraContext additional
 // components into consideration and joining all components with componentSeparator.
-func resolveNamesUniqueWithContext(messages []string, extraContext int, componentSeparator string) map[string]string {
+func resolveNamesUniqueWithContext(types []internal.ProtoTypeName, extraContext int, componentSeparator string) map[string]string {
 	packagesByDepth := make(map[int][]string)
-	uniqueNames := make(map[string]string, len(messages))
+	uniqueNames := make(map[string]string, len(types))
 
-	fqnItems := make([]dotpath.Instance, len(messages))
-	for index := range messages {
-		fqnItems[index] = dotpath.Parse(&messages[index])
+	fqnItems := make([]dotpath.Instance, len(types))
+	for index := range types {
+		fqnItems[index] = dotpath.Parse(&types[index].FQN)
 	}
 
 	for _, item := range fqnItems {
@@ -71,13 +72,14 @@ func resolveNamesUniqueWithContext(messages []string, extraContext int, componen
 
 	for index, item := range fqnItems {
 		depth := 0
+		desiredContext := extraContext + int(types[index].OuterLength)
 		for ; depth < item.MaxDepth(); depth++ {
-			if depth >= extraContext && count(packagesByDepth[depth], item.StringAtDepth(depth)) == 1 {
+			if depth >= desiredContext && count(packagesByDepth[depth], item.StringAtDepth(depth)) == 1 {
 				break
 			}
 		}
 
-		uniqueNames[messages[index]] = strings.Join(item.PartsAtDepth(depth), componentSeparator)
+		uniqueNames[types[index].FQN] = strings.Join(item.PartsAtDepth(depth), componentSeparator)
 	}
 
 	return uniqueNames

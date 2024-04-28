@@ -57,7 +57,7 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		}
 	}
 
-	messages := []string{}
+	protoTypes := []internal.ProtoTypeName{}
 	err := g.registry.Iterate(func(filePath string, protoFile *descriptor.File) error {
 		// first try to load the configFromFile file here.
 		configFromFile, err := g.loadConfigForFile(filePath, protoFile)
@@ -117,11 +117,11 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		}
 
 		for _, message := range protoFile.Messages {
-			messages = append(messages, message.FQMN())
+			protoTypes = append(protoTypes, internal.ProtoTypeName{FQN: message.FQMN(), OuterLength: uint8(len(message.Outers))})
 		}
 
 		for _, enum := range protoFile.Enums {
-			messages = append(messages, enum.FQEN())
+			protoTypes = append(protoTypes, internal.ProtoTypeName{FQN: enum.FQEN(), OuterLength: uint8(len(enum.Outers))})
 		}
 
 		return nil
@@ -131,7 +131,7 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		return err
 	}
 
-	g.schemaNames = g.resolveMessageNames(messages)
+	g.schemaNames = g.resolveTypeNames(protoTypes)
 	return nil
 }
 
