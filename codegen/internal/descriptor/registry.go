@@ -13,6 +13,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/grpclog"
@@ -351,7 +352,7 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 
 			// if query param is already used by another target, error out.
 			alreadyBound := (binding.Body != nil && len(binding.Body.FieldPath) == 0) ||
-				queryParamFilter.HasCommonPrefix(strings.Split(queryParam.Selector, "."))
+				queryParamFilter.HasCommonPrefix(dotpath.Parse(&queryParam.Selector))
 			if alreadyBound {
 				return fmt.Errorf(
 					"cannot use selector %q for query parameter %q because it will already be read from payload/path params",
@@ -506,7 +507,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	// Item is the queue item for processing messages that have query parameters.
 	type Item struct {
 		Message   *Message
-		Parts     []string
+		Prefix    string
 		FieldPath FieldPath
 	}
 
@@ -517,7 +518,13 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 	for index := 0; index < len(queue); index++ {
 		item := queue[index]
 		for _, field := range item.Message.Fields {
-			if queryFilter.HasCommonPrefix(append(item.Parts, field.GetName())) {
+			var name string
+			if item.Prefix != "" {
+				name = item.Prefix + "." + field.GetName()
+			} else {
+				name = field.GetName()
+			}
+			if queryFilter.HasCommonPrefixString(name) {
 				continue
 			}
 
@@ -538,7 +545,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 
 					queue = append(queue, Item{
 						Message:   message,
-						Parts:     append(item.Parts, field.GetName()),
+						Prefix:    name,
 						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
 					})
 					continue
@@ -548,7 +555,7 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 			}
 
 			queryParams = append(queryParams, QueryParameter{
-				Name:      strings.Join(append(item.Parts, field.GetName()), "."),
+				Name:      name,
 				FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
 			})
 		}
@@ -782,14 +789,12 @@ func (r *Registry) LookupMessage(location, name string) (*Message, error) {
 		location = "." + location
 	}
 
-	components := strings.Split(location, ".")
-	for len(components) > 0 {
-		fqmn := strings.Join(append(components, name), ".")
-		if m, ok := r.messages[fqmn]; ok {
+	locationPath := dotpath.Parse(&location)
+	for i := 0; i < locationPath.NumberOfSegments(); i++ {
+		prefix := locationPath.TrimmedSuffix(i)
+		if m, ok := r.messages[prefix+"."+name]; ok {
 			return m, nil
 		}
-
-		components = components[:len(components)-1]
 	}
 
 	return nil, fmt.Errorf("no message found: %s", name)
@@ -820,14 +825,13 @@ func (r *Registry) LookupEnum(location, name string) (*Enum, error) {
 	if !strings.HasPrefix(location, ".") {
 		location = "." + location
 	}
-	components := strings.Split(location, ".")
 
-	for len(components) > 0 {
-		fqen := strings.Join(append(components, name), ".")
-		if e, ok := r.enums[fqen]; ok {
+	locationPath := dotpath.Parse(&location)
+	for i := 0; i < locationPath.NumberOfSegments(); i++ {
+		prefix := locationPath.TrimmedSuffix(i)
+		if e, ok := r.enums[prefix+"."+name]; ok {
 			return e, nil
 		}
-		components = components[:len(components)-1]
 	}
 
 	return nil, fmt.Errorf("no enum found: %s", name)

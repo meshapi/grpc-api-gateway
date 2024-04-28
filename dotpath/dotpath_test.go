@@ -1,11 +1,11 @@
-package fqn_test
+package dotpath_test
 
 import (
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/fqn"
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 )
 
 func TestFQN(t *testing.T) {
@@ -23,7 +23,7 @@ func TestFQN(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.Input, func(t *testing.T) {
-			item := fqn.Parse(&tt.Input)
+			item := dotpath.Parse(&tt.Input)
 
 			stringParts := strings.Split(tt.Input, ".")
 
@@ -46,7 +46,7 @@ func TestFQN(t *testing.T) {
 			// for every string, say a.b.c, where parts are [a b c]
 			// at each index, joining all items from that index to the end should
 			// create expected depth L-1-index. For instance, at index 1, b.c would be
-			// expected string at depth of 3-1-1 = 1.
+			// the expected string at depth of 3-1-1 = 1.
 			for i := range stringParts {
 				depth := len(stringParts) - 1 - i
 
@@ -59,6 +59,13 @@ func TestFQN(t *testing.T) {
 				receivedString := item.StringAtDepth(depth)
 				if expectedStringAtDepth != receivedString {
 					t.Fatalf("expected[depth=%d] %s, received %s", depth, expectedStringAtDepth, receivedString)
+				}
+
+				expectedTrimmedString := strings.Join(stringParts[:len(stringParts)-i], ".")
+				trimmedString := item.TrimmedSuffix(i)
+				if trimmedString != expectedTrimmedString {
+					t.Fatalf(
+						"trimmed string at [n=%d] should be %s but is %s", i, trimmedString, receivedString)
 				}
 			}
 		})
@@ -74,6 +81,6 @@ func BenchmarkSplitAdd(b *testing.B) {
 func BenchmarkParts(b *testing.B) {
 	str := "a.b.c.d.e.f"
 	for i := 0; i < b.N; i++ {
-		fqn.Parse(&str).Index(1)
+		dotpath.Parse(&str).Index(1)
 	}
 }

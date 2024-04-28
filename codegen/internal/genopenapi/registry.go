@@ -138,28 +138,28 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src internal.SourceInfo) error {
 	for _, messageConfig := range configs {
 		// Resolve the selector to an absolute path.
-		if strings.HasPrefix(messageConfig.Selector, ".") {
+		if strings.HasPrefix(messageConfig.Selector, "~.") {
 			if src.ProtoPackage == "" {
 				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", messageConfig.Selector)
 			}
-			messageConfig.Selector = src.ProtoPackage + messageConfig.Selector
+
+			messageConfig.Selector = "." + src.ProtoPackage + messageConfig.Selector[1:]
 		}
 
-		messageConfig.Selector = "." + messageConfig.Selector
-
 		// assert that selector resolves to a proto message.
-		if _, err := g.registry.LookupMessage("", messageConfig.Selector); err != nil {
+		msg, err := g.registry.LookupMessage(src.ProtoPackage, messageConfig.Selector)
+		if err != nil {
 			return fmt.Errorf(
 				"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.messages[messageConfig.Selector]; alreadyExists {
+		if existingConfig, alreadyExists := g.messages[msg.FQMN()]; alreadyExists {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
 				messageConfig.Selector, existingConfig.Filename, src.Filename)
 		}
 
-		g.messages[messageConfig.Selector] = &internal.OpenAPIMessageSpec{
+		g.messages[msg.FQMN()] = &internal.OpenAPIMessageSpec{
 			OpenAPIMessageSpec: messageConfig,
 			SourceInfo:         src,
 		}
@@ -171,28 +171,27 @@ func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src int
 func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.SourceInfo) error {
 	for _, enumConfig := range configs {
 		// Resolve the selector to an absolute path.
-		if strings.HasPrefix(enumConfig.Selector, ".") {
+		if strings.HasPrefix(enumConfig.Selector, "~.") {
 			if src.ProtoPackage == "" {
 				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", enumConfig.Selector)
 			}
-			enumConfig.Selector = src.ProtoPackage + enumConfig.Selector
+			enumConfig.Selector = "." + src.ProtoPackage + enumConfig.Selector[1:]
 		}
 
-		enumConfig.Selector = "." + enumConfig.Selector
-
 		// assert that selector resolves to a proto enum.
-		if _, err := g.registry.LookupEnum("", enumConfig.Selector); err != nil {
+		enum, err := g.registry.LookupEnum(src.ProtoPackage, enumConfig.Selector)
+		if err != nil {
 			return fmt.Errorf(
 				"could not find proto enum %q referenced in file: %s", enumConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.enums[enumConfig.Selector]; alreadyExists {
+		if existingConfig, alreadyExists := g.enums[enum.FQEN()]; alreadyExists {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for enum %q: both %q and %q contain bindings for this selector",
 				enumConfig.Selector, existingConfig.Filename, src.Filename)
 		}
 
-		g.enums[enumConfig.Selector] = &internal.OpenAPIEnumSpec{
+		g.enums[enum.FQEN()] = &internal.OpenAPIEnumSpec{
 			OpenAPIEnumSpec: enumConfig,
 			SourceInfo:      src,
 		}
@@ -204,14 +203,16 @@ func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.
 func (g *Generator) addServiceConfigs(configs []*api.OpenAPIServiceSpec, src internal.SourceInfo) error {
 	for _, serviceConfig := range configs {
 		// Resolve the selector to an absolute path.
-		if strings.HasPrefix(serviceConfig.Selector, ".") {
+		if strings.HasPrefix(serviceConfig.Selector, "~.") {
 			if src.ProtoPackage == "" {
 				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", serviceConfig.Selector)
 			}
-			serviceConfig.Selector = src.ProtoPackage + serviceConfig.Selector
+			serviceConfig.Selector = src.ProtoPackage + serviceConfig.Selector[1:]
 		}
 
-		serviceConfig.Selector = "." + serviceConfig.Selector
+		if !strings.HasPrefix(serviceConfig.Selector, ".") {
+			serviceConfig.Selector = "." + serviceConfig.Selector
+		}
 
 		if existingConfig, alreadyExists := g.services[serviceConfig.Selector]; alreadyExists {
 			return fmt.Errorf(

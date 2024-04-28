@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/protopath"
 	"github.com/meshapi/grpc-rest-gateway/trie"
 	"google.golang.org/protobuf/proto"
@@ -12,7 +13,7 @@ import (
 // QueryParameterParseOptions hold all inputs for parsing query parameters.
 type QueryParameterParseOptions struct {
 	// Filter holds a trie that can block already bound or otherwise ignored query paramters.
-	Filter *trie.DoubleArray
+	Filter *trie.Node
 
 	// Aliases is a table of arbitrary names mapped to field keys.
 	Aliases map[string]string
@@ -52,7 +53,7 @@ func (*DefaultQueryParser) Parse(msg proto.Message, values url.Values, input Que
 		} else if input.LimitToAliases {
 			continue
 		}
-		fieldPath := strings.Split(key, ".")
+		fieldPath := dotpath.Parse(&key)
 		if !ok && input.Filter.HasCommonPrefix(fieldPath) {
 			continue
 		}

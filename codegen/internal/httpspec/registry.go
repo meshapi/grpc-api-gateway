@@ -154,11 +154,11 @@ func (r *Registry) processConfig(config *api.Config, src SourceInfo) error {
 
 	for _, endpoint := range config.Gateway.GetEndpoints() {
 		// If selector starts with '.', it indicates it is relative to the proto package.
-		if strings.HasPrefix(endpoint.Selector, ".") {
+		if strings.HasPrefix(endpoint.Selector, "~.") {
 			if src.ProtoPackage == "" {
 				return fmt.Errorf("no proto package context is available, cannot use relative selector: %s", endpoint.Selector)
 			}
-			endpoint.Selector = src.ProtoPackage + endpoint.Selector
+			endpoint.Selector = src.ProtoPackage + endpoint.Selector[1:]
 		}
 
 		if err := validateBinding(endpoint); err != nil {
@@ -166,8 +166,9 @@ func (r *Registry) processConfig(config *api.Config, src SourceInfo) error {
 		}
 
 		// add a leading dot to the selector to make it easy to look up FQMNs.
-		// TODO(peyman) is this necessary.
-		endpoint.Selector = "." + endpoint.Selector
+		if !strings.HasPrefix(endpoint.Selector, ".") {
+			endpoint.Selector = "." + endpoint.Selector
+		}
 
 		if existingBinding, ok := r.endpoints[endpoint.Selector]; ok {
 			return fmt.Errorf(
