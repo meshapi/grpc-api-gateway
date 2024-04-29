@@ -98,7 +98,7 @@ func (s *Session) renderOperation(
 }
 
 func (s *Session) addDefaultErrorResponse(operation *openapiv3.OperationCore) error {
-	if s.DisableDefaultResponses || operation.Responses != nil && operation.Responses[httpStatusDefault] != nil {
+	if s.DisableDefaultErrors || operation.Responses != nil && operation.Responses[httpStatusDefault] != nil {
 		return nil
 	}
 

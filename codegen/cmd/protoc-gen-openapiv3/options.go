@@ -80,6 +80,10 @@ func prepareOptions() *genopenapi.Options {
 		"if set, default error response does not get generated. Useful when custom error structure is used.")
 
 	flag.BoolVar(
+		&generatorOptions.DisableDefaultResponses, "disable_default_responses", generatorOptions.DisableDefaultResponses,
+		"if set, default success response does not get generated. Useful when non 200 status codes are needed.")
+
+	flag.BoolVar(
 		&generatorOptions.UseEnumNumbers, "use_enum_numbers", generatorOptions.UseEnumNumbers,
 		"if set, enums in the OpenAPI use the numerical values instead of string values.")
 

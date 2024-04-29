@@ -229,7 +229,7 @@ func (r *Registry) loadServices(file *File) error {
 					binding = httpspec.EndpointSpec{
 						Binding: &api.EndpointBinding{
 							Selector: "",
-							Pattern:  &api.EndpointBinding_Post{Post: fmt.Sprintf("/%s/%s", service.FQSN(), protoMethod.GetName())},
+							Pattern:  &api.EndpointBinding_Post{Post: fmt.Sprintf("/%s/%s", service.FQSN()[1:], protoMethod.GetName())},
 							Body:     "*",
 						},
 						SourceInfo: httpspec.SourceInfo{
