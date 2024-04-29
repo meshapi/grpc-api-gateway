@@ -534,6 +534,14 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 			repeated := field.HasRepeatedLabel()
 
 			if !field.IsScalarType() {
+				if field.GetTypeName() == ".google.protobuf.FieldMask" {
+					queryParams = append(queryParams, QueryParameter{
+						Name:      name,
+						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+					})
+					continue
+				}
+
 				// go deep inside.
 				message, err := registry.LookupMessage(item.Message.FQMN(), field.GetTypeName())
 				if err != nil {

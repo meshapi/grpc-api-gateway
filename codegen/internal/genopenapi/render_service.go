@@ -2,6 +2,7 @@ package genopenapi
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -53,6 +54,13 @@ func (s *Session) renderOperation(
 
 	// handle query parameters
 	for _, queryParam := range binding.QueryParameters {
+		if s.AllowPatchFeature && binding.HTTPMethod == http.MethodPatch {
+			target := queryParam.Target()
+			if target.GetTypeName() == fqmnFieldMask && target.GetName() == fieldNameUpdateMask {
+				continue
+			}
+		}
+
 		parameter, err := s.renderQueryParameter(&queryParam)
 		if err != nil {
 			return nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
@@ -384,7 +392,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		if descriptor.IsWellKnownType(field.GetTypeName()) {
+		if descriptor.IsWellKnownType(field.GetTypeName()) || field.GetTypeName() == fqmnFieldMask {
 			if repeated {
 				return nil, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
 			}
