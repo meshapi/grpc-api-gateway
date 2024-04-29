@@ -6,9 +6,6 @@ import (
 
 // Options are the options for the code generator.
 type Options struct {
-	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
-	AllowDeleteBody bool
-
 	// RepeatedPathParameterSeparator determines how repeated fields should be split when used in path segments.
 	RepeatedPathParameterSeparator descriptor.PathParameterSeparator
 
@@ -103,7 +100,6 @@ type Options struct {
 // DefaultOptions returns the default options.
 func DefaultOptions() Options {
 	return Options{
-		AllowDeleteBody:                false,
 		RepeatedPathParameterSeparator: descriptor.PathParameterSeparatorCSV,
 		AllowPatchFeature:              true,
 		IncludeServicesOnly:            false,

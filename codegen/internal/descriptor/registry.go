@@ -331,6 +331,9 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 			}
 		}
 
+		if !r.AllowDeleteBody && input.Method == http.MethodDelete && input.Body != "" {
+			return fmt.Errorf("must not set request body when http method is DELETE except allow_delete_body option is true: %q", input.Path)
+		}
 		binding.Body, err = r.mapBody(md, input.Body)
 		if err != nil {
 			return fmt.Errorf("failed to parse request body selector %q: %w", input.Body, err)

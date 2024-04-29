@@ -10,10 +10,6 @@ import (
 func prepareOptions() *genopenapi.Options {
 	generatorOptions := genopenapi.DefaultOptions()
 
-	flag.BoolVar(
-		&generatorOptions.AllowDeleteBody, "allow_delete_body", generatorOptions.AllowDeleteBody,
-		"unless set, HTTP DELETE methods may not have a body.")
-
 	flag.Var(
 		&generatorOptions.RepeatedPathParameterSeparator, "repeated_path_param_separator",
 		"configures how repeated fields should be split. Allowed values are 'csv', 'pipes', 'ssv', and 'tsv'.")

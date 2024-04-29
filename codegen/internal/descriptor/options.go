@@ -24,6 +24,9 @@ type RegistryOptions struct {
 
 	// GenerateUnboundMethods controls whether or not unannotated RPC methods should be created as part of the proxy.
 	GenerateUnboundMethods bool
+
+	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
+	AllowDeleteBody bool
 }
 
 // GatewayFileLoadOptions holds the gateway config file loading options.
@@ -65,6 +68,7 @@ func DefaultRegistryOptions() RegistryOptions {
 	return RegistryOptions{
 		GatewayFileLoadOptions: defaultGatewayLoadOptions(),
 		SearchPath:             ".",
+		AllowDeleteBody:        false,
 	}
 }
 
@@ -88,4 +92,8 @@ func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
 	flags.BoolVar(
 		&r.GenerateUnboundMethods, "generate_unbound_methods", r.GenerateUnboundMethods,
 		"controls whether or not unannotated RPC methods should be created as part of the proxy.")
+
+	flag.BoolVar(
+		&r.AllowDeleteBody, "allow_delete_body", r.AllowDeleteBody,
+		"unless set, HTTP DELETE methods may not have a body")
 }
