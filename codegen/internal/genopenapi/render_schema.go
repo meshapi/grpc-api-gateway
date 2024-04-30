@@ -547,10 +547,10 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 			if field.GetProto3Optional() {
 				g.makeFieldSchemaNullable(fieldSchema)
 			}
-		} else if g.FieldNullableMode == FieldNullableModeNotRequired {
+		} else if g.FieldNullableMode == FieldNullableModeNonRequired {
 			if field.GetProto3Optional() {
 				g.makeFieldSchemaNullable(fieldSchema)
-			} else if _, isRequired := requiredSet[g.fieldName(field)]; isRequired {
+			} else if _, isRequired := requiredSet[fieldName]; !isRequired {
 				g.makeFieldSchemaNullable(fieldSchema)
 			}
 		}

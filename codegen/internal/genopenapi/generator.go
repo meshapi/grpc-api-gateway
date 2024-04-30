@@ -5,10 +5,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/meshapi/grpc-rest-gateway/api"
+	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
+	"google.golang.org/protobuf/proto"
 )
 
 type Generator struct {
@@ -52,53 +56,88 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 	}
 }
 
-func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
-	var files []*descriptor.ResponseFile
-
-	if err := g.loadFromDescriptorRegistry(); err != nil {
-		return nil, err
-	}
+func (g *Generator) generateOutputModeMerge(targets []*descriptor.File) (*descriptor.ResponseFile, error) {
+	doc := g.prepareDocument(g.rootDocument.Document)
+	session := g.newSession(doc)
 
 	for _, file := range targets {
-		// we need to create a session based on the super session and then pass it down.
-		// for now, for simplicity, we won't create this session and instead directly pass it down.
-		// var doc *openapi.Document
+		if !g.IncludeServicesOnly {
+			err := session.addMessageAndEnums(file)
+			if err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			}
+		}
 
-		switch g.OutputMode {
-		case OutputModeMerge:
-			//doc = g.openapiRegistry.RootDocument
-		case OutputModePerService:
-			// loop over the services and add them one by one.
-		case OutputModePerProtoFile:
-			// TODO: if the document dose not have any schema or paths that was generated,
-			// we should avoid generating the file.
+		for _, service := range file.Services {
+			if err := session.addService(service); err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
+			}
+		}
+	}
+
+	if g.OmitEmptyFiles && !session.hasAnyGeneratedObject {
+		return nil, nil
+	}
+
+	file, err := g.writeDocument(g.OutputFileName+openAPIOutputSuffix, doc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write OpenAPI doc: %w", err)
+	}
+
+	return file, nil
+}
+
+// prepareDocument initializes the document ensuring it has allocated essential parts of the document.
+// if document is nill, a new instance will be allocated.
+func (g *Generator) prepareDocument(doc *openapiv3.Document) *openapiv3.Document {
+	if doc == nil {
+		doc = &openapiv3.Document{}
+	}
+	if doc.Object.Components == nil {
+		doc.Object.Components = &openapiv3.Components{}
+	}
+	return doc
+}
+
+func (g *Generator) documentForService(service *descriptor.Service) (*openapiv3.Document, error) {
+	var doc *openapiv3.Document
+	var err error
+
+	if spec := g.services[service.FQSN()]; spec != nil && spec.Document != nil {
+		doc, err = openapimap.Document(spec.Document)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to map OpenAPI doc for service %q from config file %s: %w", service.FQSN(), spec.Filename, err)
+		}
+	}
+
+	protoSpec, ok := proto.GetExtension(service.GetOptions(), api.E_OpenapiServiceDoc).(*openapi.Document)
+	if ok && protoSpec != nil {
+		protoDoc, err := openapimap.Document(protoSpec)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map OpenAPI doc for proto service %q: %w", service.FQSN(), err)
+		}
+		if doc == nil {
+			doc = protoDoc
+		} else if err := g.mergeObjects(doc, protoDoc); err != nil {
+			return nil, err
+		}
+	}
+
+	return doc, nil
+}
+
+func (g *Generator) generateOutputModePerService(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
+	var files []*descriptor.ResponseFile
+	for _, file := range targets {
+		if !g.IncludeServicesOnly && len(file.Messages)+len(file.Enums) > 0 {
 			doc := g.LookupFile(file)
-			if doc.Document == nil {
-				doc.Document = &openapiv3.Document{}
-			}
-
-			if doc.Document.Object.Components == nil {
-				doc.Document.Object.Components = &openapiv3.Components{}
-			}
+			doc.Document = g.prepareDocument(doc.Document)
 			session := g.newSession(doc.Document)
-
-			if !g.IncludeServicesOnly {
-				err := session.addMessageAndEnums(file)
-				if err != nil {
-					return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
-				}
+			err := session.addMessageAndEnums(file)
+			if err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
 			}
-
-			for _, service := range file.Services {
-				if err := session.addService(service); err != nil {
-					return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
-				}
-			}
-
-			if g.OmitEmptyFiles && !session.hasAnyGeneratedObject {
-				continue
-			}
-
 			// Merge with the root document if needed.
 			if g.rootDocument.Document != nil {
 				if err := g.mergeObjects(doc.Document, g.rootDocument.Document); err != nil {
@@ -114,9 +153,121 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 			files = append(files, file)
 		}
 
+		for _, service := range file.Services {
+			doc, err := g.documentForService(service)
+			if err != nil {
+				return nil, err
+			}
+
+			doc = g.prepareDocument(doc)
+			fileConfig := g.LookupFile(file)
+			if fileConfig.Document != nil {
+				if err := g.mergeObjects(doc, fileConfig.Document); err != nil {
+					return nil, err
+				}
+			}
+			session := g.newSession(doc)
+			if !g.IncludeServicesOnly {
+				err := session.addMessageAndEnums(file)
+				if err != nil {
+					return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+				}
+			}
+
+			if err := session.addService(service); err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
+			}
+
+			if g.OmitEmptyFiles && !session.hasAnyGeneratedObject {
+				continue
+			}
+
+			// Merge with the root document if needed.
+			if g.rootDocument.Document != nil {
+				if err := g.mergeObjects(doc, g.rootDocument.Document); err != nil {
+					return nil, fmt.Errorf("failed to merge OpenAPI documents: %w", err)
+				}
+			}
+
+			file, err := g.writeDocument(service.FQSN()[1:]+openAPIOutputSuffix, doc)
+			if err != nil {
+				return nil, fmt.Errorf("failed to write OpenAPI doc: %w", err)
+			}
+
+			files = append(files, file)
+		}
 	}
 
 	return files, nil
+}
+
+func (g *Generator) generateOutputModePerProto(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
+	var files []*descriptor.ResponseFile
+	for _, file := range targets {
+		doc := g.prepareDocument(g.LookupFile(file).Document)
+		session := g.newSession(doc)
+
+		if !g.IncludeServicesOnly {
+			err := session.addMessageAndEnums(file)
+			if err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI for %q: %w", file.GetName(), err)
+			}
+		}
+
+		for _, service := range file.Services {
+			if err := session.addService(service); err != nil {
+				return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
+			}
+		}
+
+		if g.OmitEmptyFiles && !session.hasAnyGeneratedObject {
+			continue
+		}
+
+		// Merge with the root document if needed.
+		if g.rootDocument.Document != nil {
+			if err := g.mergeObjects(doc, g.rootDocument.Document); err != nil {
+				return nil, fmt.Errorf("failed to merge OpenAPI documents: %w", err)
+			}
+		}
+
+		file, err := g.writeDocument(file.GeneratedFilenamePrefix+openAPIOutputSuffix, doc)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write OpenAPI doc: %w", err)
+		}
+
+		files = append(files, file)
+	}
+
+	return files, nil
+}
+
+func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
+	if err := g.loadFromDescriptorRegistry(); err != nil {
+		return nil, err
+	}
+
+	var files []*descriptor.ResponseFile
+	var err error
+
+	switch g.OutputMode {
+	case OutputModeMerge:
+		var file *descriptor.ResponseFile
+		file, err = g.generateOutputModeMerge(targets)
+		if file != nil {
+			files = []*descriptor.ResponseFile{file}
+		}
+	case OutputModePerService:
+		files, err = g.generateOutputModePerService(targets)
+	case OutputModePerProtoFile:
+		files, err = g.generateOutputModePerProto(targets)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return files, err
 }
 
 func (s *Session) addService(service *descriptor.Service) error {
@@ -203,6 +354,8 @@ func (s *Session) addService(service *descriptor.Service) error {
 			}
 
 			if customizedOperation != nil {
+				// TODO: if the customized operation has any default response, it needs to get processed
+				// and prioritized.
 				if err := s.mergeObjectsOverride(operation, customizedOperation); err != nil {
 					return err
 				}

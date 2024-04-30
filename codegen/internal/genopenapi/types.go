@@ -269,7 +269,7 @@ type FieldNullableMode uint8
 const (
 	FieldNullableModeDisabled FieldNullableMode = iota
 	FieldNullableModeOptionalLabel
-	FieldNullableModeNotRequired
+	FieldNullableModeNonRequired
 )
 
 func (f FieldNullableMode) String() string {
@@ -278,7 +278,7 @@ func (f FieldNullableMode) String() string {
 		return "disabled"
 	case FieldNullableModeOptionalLabel:
 		return "optional"
-	case FieldNullableModeNotRequired:
+	case FieldNullableModeNonRequired:
 		return "non_required"
 	}
 
@@ -292,7 +292,7 @@ func (f *FieldNullableMode) Set(value string) error {
 	case "optional":
 		*f = FieldNullableModeOptionalLabel
 	case "non_required":
-		*f = FieldNullableModeNotRequired
+		*f = FieldNullableModeNonRequired
 	default:
 		return fmt.Errorf("unrecognized value %q, expected 'disabled', 'optional' or 'non_required'", value)
 	}
