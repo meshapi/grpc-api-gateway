@@ -304,6 +304,14 @@ func (s *Session) addService(service *descriptor.Service) error {
 			return fmt.Errorf("failed to map method configs to OpenAPI operation object for %q: %w", method.FQMN(), err)
 		}
 
+		operationResponses := defaultResponses
+		if customizedOperation != nil && len(customizedOperation.Object.Responses) > 0 {
+			operationResponses, err = s.defaultResponsesForMethod(customizedOperation, defaultResponses)
+			if err != nil {
+				return err
+			}
+		}
+
 		for _, binding := range method.Bindings {
 			// NOTE: Ignore any binding that only supports websockets.
 			if binding.NeedsWebsocket() && !binding.NeedsSSE() && !binding.NeedsChunkedTransfer() {
@@ -348,14 +356,12 @@ func (s *Session) addService(service *descriptor.Service) error {
 				s.Document.Object.Paths[path] = pathObject
 			}
 
-			operation, err := s.renderOperation(binding, defaultResponses)
+			operation, err := s.renderOperation(binding, operationResponses)
 			if err != nil {
 				return fmt.Errorf("failed to render method %q: %w", method.FQMN(), err)
 			}
 
 			if customizedOperation != nil {
-				// TODO: if the customized operation has any default response, it needs to get processed
-				// and prioritized.
 				if err := s.mergeObjectsOverride(operation, customizedOperation); err != nil {
 					return err
 				}
@@ -390,6 +396,34 @@ func (s *Session) addService(service *descriptor.Service) error {
 	}
 
 	return nil
+}
+
+// defaultResponsesForMethod builds the default responses for a specific method so that it can be shared with all
+// of its bindings (operations).
+//
+// NOTE: It expects all inputs to be valid non-zero pointers and it will remove the respones from the customized
+// operation object.
+func (s *Session) defaultResponsesForMethod(
+	customizedOperation *openapiv3.Operation,
+	defaultResponses internal.DefaultResponses) (internal.DefaultResponses, error) {
+
+	operationResponses := internal.DefaultResponses{}
+	for key := range customizedOperation.Object.Responses {
+		operationResponses[key] = &internal.DefaultResponse{
+			Response: customizedOperation.Object.Responses[key],
+		}
+	}
+	if err := s.resolveRefReferencesInDefaultResponses(operationResponses); err != nil {
+		return nil, fmt.Errorf("failed to resolve references in custom responses: %w", err)
+	}
+	for key := range defaultResponses {
+		if _, exists := operationResponses[key]; exists {
+			continue
+		}
+		operationResponses[key] = defaultResponses[key]
+	}
+	customizedOperation.Object.Responses = nil
+	return operationResponses, nil
 }
 
 func (s *Session) includeServiceTags(service *descriptor.Service) error {
