@@ -93,8 +93,14 @@ type Options struct {
 	// MergeWithOverwrite will overwrite lists instead of appending.
 	MergeWithOverwrite bool
 
-	// SkipEmptyFiles avoids writing OpenAPI document files if the file does not contain at least one model or path.
-	SkipEmptyFiles bool
+	// OmitEmptyFiles avoids writing OpenAPI document files if the file does not contain at least one model or path.
+	OmitEmptyFiles bool
+
+	// FieldNullableMode configures the generation of nullable fields in the OpenAPI schemas.
+	FieldNullableMode FieldNullableMode
+
+	// FieldRequiredMode configures the generation of required field in the OpenAPI schemas.
+	FieldRequiredMode FieldRequiredMode
 }
 
 // DefaultOptions returns the default options.
@@ -126,6 +132,8 @@ func DefaultOptions() Options {
 		PreserveProtoOrder:             false,
 		MergeWithOverwrite:             true,
 		OperationIDMode:                OperationIDModeServiceAndMethod,
-		SkipEmptyFiles:                 false,
+		OmitEmptyFiles:                 false,
+		FieldNullableMode:              FieldNullableModeOptionalLabel,
+		FieldRequiredMode:              FieldRequiredModeDisabled,
 	}
 }

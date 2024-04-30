@@ -121,8 +121,21 @@ func prepareOptions() *genopenapi.Options {
 		"when this option is enabled, arrays get overwritten instead of appended.")
 
 	flag.BoolVar(
-		&generatorOptions.SkipEmptyFiles, "skip_empty_files", generatorOptions.SkipEmptyFiles,
+		&generatorOptions.OmitEmptyFiles, "omit_empty_files", generatorOptions.OmitEmptyFiles,
 		"when enabled, OpenAPI documents that do not contain at least one generated schema/path get skipped.")
+
+	flag.Var(
+		&generatorOptions.FieldRequiredMode, "field_required_mode",
+		"can be used to automatically mark fields as required. 'disabled' (default) does not automatically"+
+			"mark any field, 'not_optional' marks any field that is not labled as optional as required and"+
+			"'not_optional_scalar' is similar to the previous mode but only for scalar types (not message).")
+
+	flag.Var(
+		&generatorOptions.FieldNullableMode, "field_nullable_mode",
+		"can be used to generate nullable OpenAPI fields using 'anyOf' or type array for scalar types."+
+			" 'disabled' does not generate nullable fields at all,"+
+			" 'optional' adds generates nullable fields when proto3 optional label is used"+
+			" and 'not_required' adds nullable field when a field is not explicitly marked as required and can be null.")
 
 	return &generatorOptions
 }

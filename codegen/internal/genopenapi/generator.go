@@ -95,7 +95,7 @@ func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.Response
 				}
 			}
 
-			if g.SkipEmptyFiles && !session.hasAnyGeneratedObject {
+			if g.OmitEmptyFiles && !session.hasAnyGeneratedObject {
 				continue
 			}
 

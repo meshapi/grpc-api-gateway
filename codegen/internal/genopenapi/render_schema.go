@@ -147,10 +147,6 @@ func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (s
 }
 
 func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
-	if g.IgnoreComments {
-		return ""
-	}
-
 	tpl, err := template.New("").Funcs(template.FuncMap{
 		"import": func(name string) string {
 			file, err := os.ReadFile(name)
@@ -520,6 +516,8 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 		schema.Object.Description = g.evaluateCommentWithTemplate(schema.Object.Description, message)
 	}
 
+	requiredSet := internal.RequiredSetFromSlice(schema.Object.Required)
+
 	for index, field := range message.Fields {
 		customFieldSchema, err := g.getCustomizedFieldSchema(field, messageConfig)
 		if err != nil {
@@ -541,13 +539,63 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 		}
 
 		fieldName := g.fieldName(field)
-		schema.Object.Properties[fieldName] = fieldSchema
-		if customFieldSchema.Required {
-			schema.Object.Required = append(schema.Object.Required, fieldName)
+		if customFieldSchema.Required || g.fieldIsDeemedRequired(field) {
+			requiredSet = internal.AppendToRequiredSet(requiredSet, fieldName)
 		}
+
+		if g.FieldNullableMode == FieldNullableModeOptionalLabel {
+			if field.GetProto3Optional() {
+				g.makeFieldSchemaNullable(fieldSchema)
+			}
+		} else if g.FieldNullableMode == FieldNullableModeNotRequired {
+			if field.GetProto3Optional() {
+				g.makeFieldSchemaNullable(fieldSchema)
+			} else if _, isRequired := requiredSet[g.fieldName(field)]; isRequired {
+				g.makeFieldSchemaNullable(fieldSchema)
+			}
+		}
+		schema.Object.Properties[fieldName] = fieldSchema
 	}
 
+	schema.Object.Required = internal.RequiredSliceFromRequiredSet(requiredSet)
+
 	return internal.OpenAPISchema{Schema: schema, Dependencies: dependencies}, nil
+}
+
+// makeFieldSchemaNullable updates the field schema so that it accepts null as a value.
+// if ref is available, oneOf will be used, otherwise, a null type will be appended to the type array unless the type
+// array already includes the null value.
+func (g *Generator) makeFieldSchemaNullable(schema *openapiv3.Schema) {
+	if schema.Object.Ref != "" {
+		schema.Object.OneOf = []*openapiv3.Schema{
+			{Object: openapiv3.SchemaCore{Ref: schema.Object.Ref}},
+			{Object: openapiv3.SchemaCore{Type: openapiv3.TypeSet{openapiv3.TypeNull}}},
+		}
+		schema.Object.Ref = ""
+		return
+
+	}
+
+	for index := range schema.Object.Type {
+		if schema.Object.Type[index] == openapiv3.TypeNull {
+			return
+		}
+	}
+	schema.Object.Type = append(schema.Object.Type, openapiv3.TypeNull)
+}
+
+// fieldIsDeemedRequired uses the field required mode option to determine if the current field should be deemed requried
+// or not.
+func (g *Generator) fieldIsDeemedRequired(field *descriptor.Field) bool {
+	if g.FieldRequiredMode == FieldRequiredModeDisabled {
+		return false
+	}
+
+	if g.FieldRequiredMode == FieldRequiredModeRequireNonOptionalScalar {
+		return !field.GetProto3Optional() && field.IsScalarType()
+	}
+
+	return !field.GetProto3Optional()
 }
 
 func openAPITypeAndFormatForScalarTypes(t descriptorpb.FieldDescriptorProto_Type) (string, string) {
