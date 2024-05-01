@@ -64,7 +64,11 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
 	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
-		filePath := filepath.Join(r.SearchPath, r.GatewayFileLoadOptions.GlobalGatewayConfigFile)
+
+		filePath := r.GatewayFileLoadOptions.GlobalGatewayConfigFile
+		if !filepath.IsAbs(filePath) {
+			filePath = filepath.Join(r.SearchPath, filePath)
+		}
 		if err := r.httpSpecRegistry.LoadFromFile(filePath, ""); err != nil {
 			return fmt.Errorf("failed to load global gateway config file: %w", err)
 		}

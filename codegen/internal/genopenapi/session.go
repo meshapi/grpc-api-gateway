@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
@@ -225,6 +226,17 @@ func (g *Generator) addSchemaDependencyForFQN(
 	}
 }
 
+func (g *Generator) mergeDocumentWithSeedFile(doc *openapiv3.Document) (map[string]any, error) {
+	seedContent, err := g.readOpenAPISeedFile()
+	if err != nil {
+		return nil, err
+	}
+	if err := mergo.Map(&seedContent, doc); err != nil {
+		return nil, fmt.Errorf("failed to merge seed content with generated OpenAPI document: %w", err)
+	}
+	return seedContent, nil
+}
+
 func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
@@ -248,14 +260,30 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 	case OutputFormatYAML:
 		encoder := yaml.NewEncoder(content)
 		encoder.SetIndent(2)
-		if err := encoder.Encode(doc); err != nil {
+		var content any = doc
+		if g.OpenAPISeedFile != "" {
+			seedContent, err := g.mergeDocumentWithSeedFile(doc)
+			if err != nil {
+				return nil, err
+			}
+			content = seedContent
+		}
+		if err := encoder.Encode(content); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to yaml: %w", err)
 		}
 		extension = extYAML
 	case OutputFormatJSON:
 		encoder := json.NewEncoder(content)
 		encoder.SetIndent("", "  ")
-		if err := encoder.Encode(doc); err != nil {
+		var content any = doc
+		if g.OpenAPISeedFile != "" {
+			seedContent, err := g.mergeDocumentWithSeedFile(doc)
+			if err != nil {
+				return nil, err
+			}
+			content = seedContent
+		}
+		if err := encoder.Encode(content); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to json: %w", err)
 		}
 		extension = extJSON

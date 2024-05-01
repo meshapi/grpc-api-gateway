@@ -22,9 +22,43 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 )
 
+func (g *Generator) readOpenAPISeedFile() (map[string]any, error) {
+	seedFile, err := os.Open(g.configFilePath(g.Options.OpenAPISeedFile))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open seed file: %w", err)
+	}
+	defer seedFile.Close()
+
+	var value map[string]any
+
+	extension := filepath.Ext(g.Options.OpenAPISeedFile)
+	switch strings.ToLower(extension) {
+	case ".json":
+		err = json.NewDecoder(seedFile).Decode(&value)
+	case ".yml", ".yaml":
+		err = yaml.NewDecoder(seedFile).Decode(&value)
+	default:
+		return nil, fmt.Errorf("could not recognize file type of the OpenAPI seed file %q", g.OpenAPISeedFile)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OpenAPI seed file %q: %w", g.Options.OpenAPISeedFile, err)
+	}
+
+	return value, nil
+}
+
+// configFilePath uses the config search path to find the final path for a config file.
+func (g *Generator) configFilePath(fileName string) string {
+	if filepath.IsAbs(fileName) {
+		return fileName
+	}
+	return filepath.Join(g.ConfigSearchPath, fileName)
+}
+
 func (g *Generator) loadFromDescriptorRegistry() error {
 	if g.GlobalOpenAPIConfigFile != "" {
-		configPath := filepath.Join(g.ConfigSearchPath, g.GlobalOpenAPIConfigFile)
+		configPath := g.configFilePath(g.GlobalOpenAPIConfigFile)
 		doc, err := g.loadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("failed to load global OpenAPI config file: %w", err)
@@ -306,7 +340,7 @@ func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.Fil
 	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
-		configFilePath := filepath.Join(g.ConfigSearchPath, configPath+"."+ext)
+		configFilePath := g.configFilePath(configPath + "." + ext)
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {

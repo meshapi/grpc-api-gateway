@@ -99,7 +99,7 @@ func prepareOptions() *genopenapi.Options {
 			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
 
 	flag.StringVar(
-		&generatorOptions.OpenAPISeedFile, "openapi_template", generatorOptions.OpenAPISeedFile,
+		&generatorOptions.OpenAPISeedFile, "openapi_seed_file", generatorOptions.OpenAPISeedFile,
 		"if set, this OpenAPI file (yaml or json) gets used as a template and will get merged with the generated files."+
 			" Useful to set values unavailable in the OpenAPI generation configs or to repeat document"+
 			" values in all generated files.")
