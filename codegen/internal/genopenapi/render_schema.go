@@ -18,6 +18,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 	"google.golang.org/genproto/googleapis/api/annotations"
+	"google.golang.org/genproto/googleapis/api/visibility"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -182,6 +183,26 @@ func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
 	return tmp.String()
 }
 
+func (g *Generator) isVisible(v *visibility.VisibilityRule) bool {
+	if v == nil {
+		return true
+	}
+
+	restrictions := strings.Split(strings.TrimSpace(v.Restriction), ",")
+	// No restrictions results in the element always being visible
+	if len(restrictions) == 0 {
+		return true
+	}
+
+	for _, restriction := range restrictions {
+		if g.VisibilitySelectors[strings.TrimSpace(restriction)] {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
 	enumConfig := g.enums[enum.FQEN()]
 	schema, err := g.getCustomizedEnumSchema(enum, enumConfig)
@@ -190,10 +211,13 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 	}
 
 	if g.UseEnumNumbers {
-		values := make([]string, len(enum.Value))
+		values := make([]string, 0, len(enum.Value))
 		hasDefault := false
-		for index, evdp := range enum.Value {
-			values[index] = strconv.FormatInt(int64(evdp.GetNumber()), 10)
+		for _, evdp := range enum.Value {
+			if !g.isVisible(internal.GetEnumVisibilityRule(evdp)) {
+				continue
+			}
+			values = append(values, strconv.FormatInt(int64(evdp.GetNumber()), 10))
 			if evdp.GetNumber() == 0 {
 				hasDefault = true
 			}
@@ -228,10 +252,14 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 		return generatedSchema, nil
 	}
 
-	values := make([]string, len(enum.Value))
+	values := make([]string, 0, len(enum.Value))
 	defaultIndex := -1
 	for index, evdp := range enum.Value {
-		values[index] = evdp.GetName()
+		if !g.isVisible(internal.GetEnumVisibilityRule(evdp)) {
+			continue
+		}
+
+		values = append(values, evdp.GetName())
 		if evdp.GetNumber() == 0 {
 			defaultIndex = index
 		}

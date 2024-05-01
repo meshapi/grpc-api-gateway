@@ -181,14 +181,21 @@ func (t *TemplateArgs) Set(value string) error {
 	return nil
 }
 
-type SelectorSlice []string
+type SelectorSlice map[string]bool
 
 func (s SelectorSlice) String() string {
-	return strings.Join(s, ",")
+	values := []string{}
+	for key := range s {
+		values = append(values, key)
+	}
+	return strings.Join(values, ",")
 }
 
 func (s *SelectorSlice) Set(value string) error {
-	*s = strings.Split(value, ",")
+	*s = make(SelectorSlice)
+	for _, part := range strings.Split(value, ",") {
+		(*s)[strings.TrimSpace(part)] = true
+	}
 	return nil
 }
 
