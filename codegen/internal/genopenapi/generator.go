@@ -111,6 +111,15 @@ func (g *Generator) documentForService(service *descriptor.Service) (*openapiv3.
 	var err error
 
 	if spec := g.services[service.FQSN()]; spec != nil && spec.Document != nil {
+		// for the sake of building document for the service, ignore tags since they require special processing that
+		// takes place when adding the service. Refer to 'tagsForService' method.
+		if len(spec.Document.Tags) > 0 {
+			tags := spec.Document.Tags
+			spec.Document.Tags = nil
+			defer func() {
+				spec.Document.Tags = tags
+			}()
+		}
 		doc, err = openapimap.Document(spec.Document)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -124,6 +133,15 @@ func (g *Generator) documentForService(service *descriptor.Service) (*openapiv3.
 
 	protoSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
 	if ok && protoSpec != nil {
+		// for the sake of building document for the service, ignore tags since they require special processing that
+		// takes place when adding the service. Refer to 'tagsForService' method.
+		if len(protoSpec.Tags) > 0 {
+			tags := protoSpec.Tags
+			protoSpec.Tags = nil
+			defer func() {
+				protoSpec.Tags = tags
+			}()
+		}
 		protoDoc, err := openapimap.Document(protoSpec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map OpenAPI doc for proto service %q: %w", service.FQSN(), err)
@@ -417,7 +435,6 @@ func (s *Session) addService(service *descriptor.Service) error {
 	}
 
 	if !s.DisableServiceTags {
-		// when generating per service, the tags will
 		if err := s.includeServiceTags(service); err != nil {
 			return fmt.Errorf("failed to add service tags to document: %w", err)
 		}
