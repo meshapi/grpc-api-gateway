@@ -1,4 +1,4 @@
 {{if .Method.GetServerStreaming}}
 {{else}}
-func local_request_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}(ctx context.Context, marshaler gateway.Marshaler, server {{.Method.Service.InstanceName}}Server, req *http.Request, pathParams httprouter.Params) (proto.Message, gateway.ServerMetadata, error)
+func local_request_{{.Method.Service.GetName}}_{{.Method.GetName}}_{{.Index}}(ctx context.Context, marshaler gateway.Marshaler, server {{.Method.Service.InstanceName}}Server, req *http.Request, pathParams gateway.Params) (proto.Message, gateway.ServerMetadata, error)
 {{end}}

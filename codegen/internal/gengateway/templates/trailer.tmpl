@@ -40,7 +40,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}(ctx context.Context, mux *
 func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context, mux *gateway.ServeMux, client {{$svc.InstanceName}}Client) {
 	{{range $m := $svc.Methods}}
 	{{range $b := $m.Bindings}}
-	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}", func(w http.ResponseWriter, req *http.Request, pathParams httprouter.Params) {
+	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}", func(w http.ResponseWriter, req *http.Request, pathParams gateway.Params) {
 	{{- if $UseRequestContext }}
 		ctx, cancel := context.WithCancel(req.Context())
 	{{- else -}}
