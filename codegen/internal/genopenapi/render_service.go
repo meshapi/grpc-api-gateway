@@ -622,8 +622,6 @@ func renderPath(binding *descriptor.Binding, aliasMap map[string]string) string 
 				}
 			}
 			writer.WriteString("/{" + segment.Value + "}")
-		case httprule.SegmentTypeWildcard:
-			_, _ = fmt.Fprintf(writer, "/?")
 		default:
 			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
 		}

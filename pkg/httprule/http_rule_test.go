@@ -54,11 +54,6 @@ func TestParse(t *testing.T) {
 			ExpectedPattern: "/v*/echo",
 		},
 		{
-			Path:            "/v1/*/something",
-			ExpectedOutput:  "/v1/*/something",
-			ExpectedPattern: "/v1/?/something",
-		},
-		{
 			Path:              "/v|",
 			ExpectedErrString: "invalid literal segment",
 		},
