@@ -89,10 +89,6 @@ type Options struct {
 	// VisibilitySelectors are a list of visibility selectors.
 	VisibilitySelectors SelectorMap
 
-	// PreserveProtoOrder adds the methods in the same order as they appear in the gRPC service instead of
-	// alphabetically.
-	PreserveProtoOrder bool
-
 	// MergeWithOverwrite will overwrite lists instead of appending.
 	MergeWithOverwrite bool
 
@@ -132,7 +128,6 @@ func DefaultOptions() Options {
 		OpenAPISeedFile:                "",
 		OmitEnumDefaultValue:           false,
 		VisibilitySelectors:            nil,
-		PreserveProtoOrder:             false,
 		MergeWithOverwrite:             true,
 		OperationIDMode:                OperationIDModeServiceAndMethod,
 		OmitEmptyFiles:                 false,

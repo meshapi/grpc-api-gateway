@@ -113,10 +113,6 @@ func prepareOptions() *genopenapi.Options {
 		"comma-separated list of included visibility labels. Example: INTERNAL,PARTNERS")
 
 	flag.BoolVar(
-		&generatorOptions.PreserveProtoOrder, "preserve_proto_order", generatorOptions.PreserveProtoOrder,
-		"if set, adds paths in the same order as they appear in the proto files.")
-
-	flag.BoolVar(
 		&generatorOptions.MergeWithOverwrite, "merge_with_overwrite", generatorOptions.MergeWithOverwrite,
 		"when this option is enabled, arrays get overwritten instead of appended.")
 
