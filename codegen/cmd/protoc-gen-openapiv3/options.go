@@ -137,5 +137,9 @@ func prepareOptions() *genopenapi.Options {
 			" 'optional' adds generates nullable fields when proto3 optional label is used"+
 			" and 'not_required' adds nullable field when a field is not explicitly marked as required and can be null.")
 
+	flag.BoolVar(
+		&generatorOptions.LocalPackageMode, "local_package_mode", generatorOptions.LocalPackageMode,
+		"if enabled, limits each config file (save for the global config) to the local proto package.")
+
 	return &generatorOptions
 }

@@ -71,6 +71,9 @@ type Options struct {
 	// ConfigSearchPath holds the search path to use for looking up OpenAPI configs.
 	ConfigSearchPath string
 
+	// LocalPackageMode limits the config files to only targetting objects from their own proto package.
+	LocalPackageMode bool
+
 	// OpenAPIConfigFilePattern holds the file pattern for loading OpenAPI config files.
 	//
 	// This pattern must not include the extension and the priority is yaml, yml and finally json.
@@ -135,5 +138,6 @@ func DefaultOptions() Options {
 		OmitEmptyFiles:                 false,
 		FieldNullableMode:              FieldNullableModeOptionalLabel,
 		FieldRequiredMode:              FieldRequiredModeDisabled,
+		LocalPackageMode:               false,
 	}
 }

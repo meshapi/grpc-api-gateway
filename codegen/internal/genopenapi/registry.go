@@ -191,7 +191,15 @@ func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src int
 				"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.messages[msg.FQMN()]; alreadyExists {
+		if g.LocalPackageMode && src.ProtoPackage != "" && msg.File.GetPackage() != src.ProtoPackage {
+			return fmt.Errorf(
+				"adding message %q from another proto package is not allowed,"+
+					" use disable_package_restriction=true, define this config in the global file"+
+					" or in the same proto package as the target message: %s", msg.File.GetPackage(), src.Filename)
+		}
+
+		// if the config already exists and its definition is not from the same file, return an error.
+		if existingConfig, exists := g.messages[msg.FQMN()]; exists && existingConfig.Filename != src.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
 				messageConfig.Selector, existingConfig.Filename, src.Filename)
@@ -223,7 +231,15 @@ func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.
 				"could not find proto enum %q referenced in file: %s", enumConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.enums[enum.FQEN()]; alreadyExists {
+		if g.LocalPackageMode && src.ProtoPackage != "" && enum.File.GetPackage() != src.ProtoPackage {
+			return fmt.Errorf(
+				"adding enum %q from another proto package is not allowed,"+
+					" use disable_package_restriction=true, define this config in the global file"+
+					" or in the same proto package as the target enum: %s", enum.File.GetPackage(), src.Filename)
+		}
+
+		// if the config already exists and its definition is not from the same file, return an error.
+		if existingConfig, exists := g.enums[enum.FQEN()]; exists && src.Filename != existingConfig.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for enum %q: both %q and %q contain bindings for this selector",
 				enumConfig.Selector, existingConfig.Filename, src.Filename)
@@ -252,7 +268,7 @@ func (g *Generator) addServiceConfigs(configs []*api.OpenAPIServiceSpec, src int
 			serviceConfig.Selector = "." + serviceConfig.Selector
 		}
 
-		if existingConfig, alreadyExists := g.services[serviceConfig.Selector]; alreadyExists {
+		if existingConfig, exists := g.services[serviceConfig.Selector]; exists && src.Filename != existingConfig.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for service %q: both %q and %q contain bindings for this selector",
 				serviceConfig.Selector, existingConfig.Filename, src.Filename)
