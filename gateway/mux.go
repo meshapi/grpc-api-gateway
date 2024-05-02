@@ -23,6 +23,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type Params = httprouter.Params
+
 // HeaderMatcherFunc checks whether a header key should be forwarded to/from gRPC context.
 type HeaderMatcherFunc func(string) (string, bool)
 
