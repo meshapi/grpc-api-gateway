@@ -11,12 +11,12 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -179,7 +179,10 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {
-				grpclog.Infof("looked for file %s, it was not found", configFilePath)
+				if genlog.HasLevel(genlog.LevelTrace) {
+					genlog.Log(genlog.LevelTrace, "looked for file %q, it was not found", configFilePath)
+				}
+
 				continue
 			}
 
@@ -250,7 +253,10 @@ func (r *Registry) loadServices(file *File) error {
 					}
 				} else {
 					if r.WarnOnUnboundMethods {
-						grpclog.Warningf("No HTTP binding specification found for method: %s.%s", service.GetName(), protoMethod.GetName())
+						genlog.Log(
+							genlog.LevelWarning,
+							"No HTTP binding specification found for method: %s.%s",
+							service.GetName(), protoMethod.GetName())
 					}
 					continue
 				}

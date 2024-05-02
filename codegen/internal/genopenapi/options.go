@@ -100,6 +100,10 @@ type Options struct {
 
 	// FieldRequiredMode configures the generation of required field in the OpenAPI schemas.
 	FieldRequiredMode FieldRequiredMode
+
+	// WarnOnBrokenSelectors writes a warning instead of reporting errors when selectors to unmatching proto types is
+	// used in config files.
+	WarnOnBrokenSelectors bool
 }
 
 // DefaultOptions returns the default options.

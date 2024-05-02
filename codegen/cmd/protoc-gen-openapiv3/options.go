@@ -137,5 +137,9 @@ func prepareOptions() *genopenapi.Options {
 		&generatorOptions.LocalPackageMode, "local_package_mode", generatorOptions.LocalPackageMode,
 		"if enabled, limits each config file (save for the global config) to the local proto package.")
 
+	flag.BoolVar(
+		&generatorOptions.WarnOnBrokenSelectors, "warn_on_broken_selectors", generatorOptions.WarnOnBrokenSelectors,
+		"if enabled, lowers the severity of unrecognized selectors in config files to logging at warning level.")
+
 	return &generatorOptions
 }

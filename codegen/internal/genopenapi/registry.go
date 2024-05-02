@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
@@ -16,6 +15,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
@@ -186,6 +186,14 @@ func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src int
 		// assert that selector resolves to a proto message.
 		msg, err := g.registry.LookupMessage(src.ProtoPackage, messageConfig.Selector)
 		if err != nil {
+			if g.WarnOnBrokenSelectors {
+				genlog.Log(
+					genlog.LevelWarning,
+					"could not find proto message %q referenced in file: %s",
+					messageConfig.Selector, src.Filename)
+				continue
+			}
+
 			return fmt.Errorf(
 				"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
 		}
@@ -226,6 +234,14 @@ func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.
 		// assert that selector resolves to a proto enum.
 		enum, err := g.registry.LookupEnum(src.ProtoPackage, enumConfig.Selector)
 		if err != nil {
+			if g.WarnOnBrokenSelectors {
+				genlog.Log(
+					genlog.LevelWarning,
+					"could not find proto message %q referenced in file: %s",
+					enumConfig.Selector, src.Filename)
+				continue
+			}
+
 			return fmt.Errorf(
 				"could not find proto enum %q referenced in file: %s", enumConfig.Selector, src.Filename)
 		}
@@ -365,7 +381,10 @@ func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.Fil
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {
-				grpclog.Infof("looked for file %s, it was not found", configFilePath)
+				if genlog.HasLevel(genlog.LevelTrace) {
+					genlog.Log(genlog.LevelTrace, "looked for file %q, it was not found", configFilePath)
+				}
+
 				continue
 			}
 
