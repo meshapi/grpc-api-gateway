@@ -7,6 +7,7 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
@@ -35,6 +36,8 @@ type Generator struct {
 	schemas map[string]internal.OpenAPISchema
 	// services holds a reference to the service and any matched configuration for it.
 	services map[string]*internal.OpenAPIServiceSpec
+
+	configPathBuilder configpath.Builder
 }
 
 func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
@@ -259,12 +262,17 @@ func (g *Generator) generateOutputModePerProto(targets []*descriptor.File) ([]*d
 }
 
 func (g *Generator) Generate(targets []*descriptor.File) ([]*descriptor.ResponseFile, error) {
+	var files []*descriptor.ResponseFile
+	var err error
+
+	g.configPathBuilder, err = configpath.NewBuilder(g.OpenAPIConfigFilePattern)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse OpenAPI config file pattern: %w", err)
+	}
+
 	if err := g.loadFromDescriptorRegistry(); err != nil {
 		return nil, err
 	}
-
-	var files []*descriptor.ResponseFile
-	var err error
 
 	switch g.OutputMode {
 	case OutputModeMerge:

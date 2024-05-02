@@ -43,6 +43,8 @@ type Registry struct {
 	RegistryOptions
 
 	filePaths []string
+
+	configPathBuilder configpath.Builder
 }
 
 // NewRegistry creates and initializes a new registry.
@@ -63,6 +65,12 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 }
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
+	configPathBuilder, err := configpath.NewBuilder(r.GatewayFileLoadOptions.FilePattern)
+	if err != nil {
+		return fmt.Errorf("failed to parse gateway config file pattern: %w", err)
+	}
+	r.configPathBuilder = configPathBuilder
+
 	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
 
 		filePath := r.GatewayFileLoadOptions.GlobalGatewayConfigFile
@@ -158,7 +166,7 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 			return nil
 		}
 
-		path, err := configpath.Build(filePath, r.GatewayFileLoadOptions.FilePattern)
+		path, err := r.configPathBuilder.Build(filePath)
 		if err != nil {
 			return fmt.Errorf("failed to determine config file path: %w", err)
 		}

@@ -15,7 +15,6 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
@@ -194,7 +193,7 @@ func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src int
 		if g.LocalPackageMode && src.ProtoPackage != "" && msg.File.GetPackage() != src.ProtoPackage {
 			return fmt.Errorf(
 				"adding message %q from another proto package is not allowed,"+
-					" use disable_package_restriction=true, define this config in the global file"+
+					" use local_package_mode=false, define this config in the global file"+
 					" or in the same proto package as the target message: %s", msg.File.GetPackage(), src.Filename)
 		}
 
@@ -234,7 +233,7 @@ func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.
 		if g.LocalPackageMode && src.ProtoPackage != "" && enum.File.GetPackage() != src.ProtoPackage {
 			return fmt.Errorf(
 				"adding enum %q from another proto package is not allowed,"+
-					" use disable_package_restriction=true, define this config in the global file"+
+					" use local_package_mode=false, define this config in the global file"+
 					" or in the same proto package as the target enum: %s", enum.File.GetPackage(), src.Filename)
 		}
 
@@ -351,13 +350,12 @@ func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Ta
 }
 
 func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.File) (internal.OpenAPISpec, error) {
-	// TODO: allow the plugin to set the config path
 	result := internal.OpenAPISpec{}
 	if g.OpenAPIConfigFilePattern == "" {
 		return result, nil
 	}
 
-	configPath, err := configpath.Build(protoFilePath, g.OpenAPIConfigFilePattern)
+	configPath, err := g.configPathBuilder.Build(protoFilePath)
 	if err != nil {
 		return result, fmt.Errorf("failed to determine config file path: %w", err)
 	}
