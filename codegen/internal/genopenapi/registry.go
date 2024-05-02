@@ -123,7 +123,11 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 			}
 		}
 
-		configFromProto, ok := proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
+		var configFromProto *openapi.Document
+		var ok bool
+		if protoFile.Options != nil && proto.HasExtension(protoFile.Options, api.E_OpenapiDoc) {
+			configFromProto, ok = proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
+		}
 		if ok && configFromProto != nil {
 			docFromProto, err := openapimap.Document(configFromProto)
 			if err != nil {
@@ -315,7 +319,10 @@ func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Ta
 		return tags, nil
 	}
 
-	protoOptions, ok := proto.GetExtension(service.GetOptions(), api.E_OpenapiServiceDoc).(*openapi.Document)
+	if service.Options == nil || !proto.HasExtension(service.Options, api.E_OpenapiServiceDoc) {
+		return nil, nil
+	}
+	protoOptions, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
 	if ok && protoOptions != nil {
 		tags, err := openapimap.Tags(protoOptions.Tags)
 		if err != nil {

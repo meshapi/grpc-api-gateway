@@ -69,6 +69,10 @@ func (g *Generator) generateOutputModeMerge(targets []*descriptor.File) (*descri
 		}
 
 		for _, service := range file.Services {
+			if !g.isVisible(internal.GetServiceVisibilityRule(service)) {
+				continue
+			}
+
 			if err := session.addService(service); err != nil {
 				return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
 			}
@@ -111,7 +115,11 @@ func (g *Generator) documentForService(service *descriptor.Service) (*openapiv3.
 		}
 	}
 
-	protoSpec, ok := proto.GetExtension(service.GetOptions(), api.E_OpenapiServiceDoc).(*openapi.Document)
+	if service.Options == nil || !proto.HasExtension(service.Options, api.E_OpenapiServiceDoc) {
+		return doc, nil
+	}
+
+	protoSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
 	if ok && protoSpec != nil {
 		protoDoc, err := openapimap.Document(protoSpec)
 		if err != nil {
@@ -154,6 +162,10 @@ func (g *Generator) generateOutputModePerService(targets []*descriptor.File) ([]
 		}
 
 		for _, service := range file.Services {
+			if !g.isVisible(internal.GetServiceVisibilityRule(service)) {
+				continue
+			}
+
 			doc, err := g.documentForService(service)
 			if err != nil {
 				return nil, err
@@ -215,6 +227,10 @@ func (g *Generator) generateOutputModePerProto(targets []*descriptor.File) ([]*d
 		}
 
 		for _, service := range file.Services {
+			if !g.isVisible(internal.GetServiceVisibilityRule(service)) {
+				continue
+			}
+
 			if err := session.addService(service); err != nil {
 				return nil, fmt.Errorf("error generating OpenAPI definitions for service %q: %w", service.FQSN(), err)
 			}
@@ -283,6 +299,10 @@ func (s *Session) addService(service *descriptor.Service) error {
 	}
 
 	for _, method := range service.Methods {
+		if !s.isVisible(internal.GetMethodVisibilityRule(method)) {
+			continue
+		}
+
 		summary, description := "", ""
 
 		if comments != nil && comments.Methods != nil {

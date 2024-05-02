@@ -181,9 +181,9 @@ func (t *TemplateArgs) Set(value string) error {
 	return nil
 }
 
-type SelectorSlice map[string]bool
+type SelectorMap map[string]bool
 
-func (s SelectorSlice) String() string {
+func (s SelectorMap) String() string {
 	values := []string{}
 	for key := range s {
 		values = append(values, key)
@@ -191,8 +191,8 @@ func (s SelectorSlice) String() string {
 	return strings.Join(values, ",")
 }
 
-func (s *SelectorSlice) Set(value string) error {
-	*s = make(SelectorSlice)
+func (s *SelectorMap) Set(value string) error {
+	*s = make(SelectorMap)
 	for _, part := range strings.Split(value, ",") {
 		(*s)[strings.TrimSpace(part)] = true
 	}

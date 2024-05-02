@@ -68,7 +68,12 @@ func (g *Generator) getCustomizedFieldSchema(
 		}
 	}
 
-	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
+	var protoSchema *openapi.Schema
+	var ok bool
+	if field.Options != nil && proto.HasExtension(field.Options, api.E_OpenapiField) {
+		protoSchema, ok = proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
+	}
+	if ok && protoSchema != nil {
 		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
 			return result, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
@@ -184,23 +189,22 @@ func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
 }
 
 func (g *Generator) isVisible(v *visibility.VisibilityRule) bool {
-	if v == nil {
+	if v == nil || v.Restriction == "" {
 		return true
 	}
 
-	restrictions := strings.Split(strings.TrimSpace(v.Restriction), ",")
-	// No restrictions results in the element always being visible
-	if len(restrictions) == 0 {
-		return true
-	}
-
-	for _, restriction := range restrictions {
-		if g.VisibilitySelectors[strings.TrimSpace(restriction)] {
+	startIndex := 0
+	for {
+		index := strings.IndexRune(v.Restriction[startIndex:], ',')
+		if index == -1 {
+			break
+		}
+		if g.VisibilitySelectors[strings.TrimSpace(v.Restriction[startIndex:startIndex+index])] {
 			return true
 		}
+		startIndex = startIndex + index + 1
 	}
-
-	return false
+	return g.VisibilitySelectors[strings.TrimSpace(v.Restriction[startIndex:])]
 }
 
 func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
@@ -424,6 +428,12 @@ func (g *Generator) renderFieldSchema(
 }
 
 func setFieldAnnotations(field *descriptor.Field, customizationObject *internal.FieldSchemaCustomization) {
+	if field.Options == nil {
+		return
+	}
+	if !proto.HasExtension(field.Options, annotations.E_FieldBehavior) {
+		return
+	}
 	items, ok := proto.GetExtension(field.Options, annotations.E_FieldBehavior).([]annotations.FieldBehavior)
 	if !ok || len(items) == 0 {
 		return
@@ -456,6 +466,10 @@ func (g *Generator) getCustomizedMessageSchema(
 		schema = schemaFromConfig
 	}
 
+	if message.Options == nil || !proto.HasExtension(message.Options, api.E_OpenapiSchema) {
+		return schema, nil
+	}
+
 	if protoSchema, ok := proto.GetExtension(message.Options, api.E_OpenapiSchema).(*openapi.Schema); ok && protoSchema != nil {
 		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
@@ -486,6 +500,10 @@ func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *inter
 		}
 
 		schema = schemaFromConfig
+	}
+
+	if enum.Options == nil || !proto.HasExtension(enum.Options, api.E_OpenapiEnum) {
+		return schema, nil
 	}
 
 	if protoSchema, ok := proto.GetExtension(enum.Options, api.E_OpenapiEnum).(*openapi.Schema); ok && protoSchema != nil {
@@ -547,6 +565,10 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 	requiredSet := internal.RequiredSetFromSlice(schema.Object.Required)
 
 	for index, field := range message.Fields {
+		if !g.isVisible(internal.GetFieldVisibilityRule(field)) {
+			continue
+		}
+
 		customFieldSchema, err := g.getCustomizedFieldSchema(field, messageConfig)
 		if err != nil {
 			return internal.OpenAPISchema{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)

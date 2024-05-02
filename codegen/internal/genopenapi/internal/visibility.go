@@ -24,6 +24,40 @@ func GetServiceVisibilityRule(service *descriptor.Service) *visibility.Visibilit
 	return opts
 }
 
+func GetFieldVisibilityRule(field *descriptor.Field) *visibility.VisibilityRule {
+	if field.Options == nil {
+		return nil
+	}
+
+	if !proto.HasExtension(field.Options, visibility.E_FieldVisibility) {
+		return nil
+	}
+
+	opts, ok := proto.GetExtension(field.Options, visibility.E_FieldVisibility).(*visibility.VisibilityRule)
+	if !ok {
+		return nil
+	}
+
+	return opts
+}
+
+func GetMethodVisibilityRule(method *descriptor.Method) *visibility.VisibilityRule {
+	if method.Options == nil {
+		return nil
+	}
+
+	if !proto.HasExtension(method.Options, visibility.E_MethodVisibility) {
+		return nil
+	}
+
+	opts, ok := proto.GetExtension(method.Options, visibility.E_MethodVisibility).(*visibility.VisibilityRule)
+	if !ok {
+		return nil
+	}
+
+	return opts
+}
+
 func GetEnumVisibilityRule(value *descriptorpb.EnumValueDescriptorProto) *visibility.VisibilityRule {
 	if value.Options == nil {
 		return nil

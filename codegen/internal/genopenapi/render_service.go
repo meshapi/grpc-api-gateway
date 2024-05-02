@@ -577,6 +577,9 @@ func (s *Session) updatePathParameterAliasesMap(table map[string]string, binding
 			}
 		}
 
+		if field.Options == nil || !proto.HasExtension(field.Options, api.E_OpenapiField) {
+			continue
+		}
 		fieldConfig, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
 		if !ok || fieldConfig == nil {
 			continue
@@ -642,6 +645,10 @@ func (g *Generator) getCustomizedMethodOperation(method *descriptor.Method) (*op
 
 			operation = result
 		}
+	}
+
+	if method.Options == nil || !proto.HasExtension(method.Options, api.E_OpenapiOperation) {
+		return operation, nil
 	}
 
 	protoConfig, ok := proto.GetExtension(method.Options, api.E_OpenapiOperation).(*openapi.Operation)

@@ -84,7 +84,7 @@ type Options struct {
 	OmitEnumDefaultValue bool
 
 	// VisibilitySelectors are a list of visibility selectors.
-	VisibilitySelectors SelectorSlice
+	VisibilitySelectors SelectorMap
 
 	// PreserveProtoOrder adds the methods in the same order as they appear in the gRPC service instead of
 	// alphabetically.

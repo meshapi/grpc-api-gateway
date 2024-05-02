@@ -127,7 +127,11 @@ func (s *Session) defaultResponsesForService(service *descriptor.Service) (inter
 	if doc := s.services[service.FQSN()]; doc != nil {
 		fromConfig = doc.GetDocument().GetConfig().GetDefaultResponses()
 	}
-	serviceSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
+	var serviceSpec *openapi.Document
+	var ok bool
+	if service.Options != nil && proto.HasExtension(service.Options, api.E_OpenapiServiceDoc) {
+		serviceSpec, ok = proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
+	}
 	if ok && serviceSpec != nil {
 		fromProto = serviceSpec.GetConfig().GetDefaultResponses()
 	}
