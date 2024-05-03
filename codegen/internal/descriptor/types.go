@@ -764,25 +764,25 @@ var (
 	}
 
 	proto2ConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
-		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "gateway.Float64P",
-		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "gateway.Float32P",
-		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "gateway.Int64P",
-		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "gateway.Uint64P",
-		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "gateway.Int32P",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "gateway.Uint64P",
-		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "gateway.Uint32P",
-		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "gateway.BoolP",
-		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "gateway.StringP",
+		descriptorpb.FieldDescriptorProto_TYPE_DOUBLE:  "protoconvert.Float64P",
+		descriptorpb.FieldDescriptorProto_TYPE_FLOAT:   "protoconvert.Float32P",
+		descriptorpb.FieldDescriptorProto_TYPE_INT64:   "protoconvert.Int64P",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT64:  "protoconvert.Uint64P",
+		descriptorpb.FieldDescriptorProto_TYPE_INT32:   "protoconvert.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED64: "protoconvert.Uint64P",
+		descriptorpb.FieldDescriptorProto_TYPE_FIXED32: "protoconvert.Uint32P",
+		descriptorpb.FieldDescriptorProto_TYPE_BOOL:    "protoconvert.BoolP",
+		descriptorpb.FieldDescriptorProto_TYPE_STRING:  "protoconvert.StringP",
 		// FieldDescriptorProto_TYPE_GROUP
 		// FieldDescriptorProto_TYPE_MESSAGE
 		// FieldDescriptorProto_TYPE_BYTES
 		// TODO(yugui) Handle bytes
-		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "gateway.Uint32P",
-		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "gateway.EnumP",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "gateway.Int32P",
-		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "gateway.Int64P",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "gateway.Int32P",
-		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "gateway.Int64P",
+		descriptorpb.FieldDescriptorProto_TYPE_UINT32:   "protoconvert.Uint32P",
+		descriptorpb.FieldDescriptorProto_TYPE_ENUM:     "protoconvert.EnumP",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED32: "protoconvert.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_SFIXED64: "protoconvert.Int64P",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT32:   "protoconvert.Int32P",
+		descriptorpb.FieldDescriptorProto_TYPE_SINT64:   "protoconvert.Int64P",
 	}
 
 	proto2RepeatedConvertFuncs = map[descriptorpb.FieldDescriptorProto_Type]string{
