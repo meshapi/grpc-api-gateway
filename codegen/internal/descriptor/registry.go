@@ -16,6 +16,8 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protodesc"
@@ -204,6 +206,9 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 	pkg := GoPackage{
 		Path: string(protoFile.GoImportPath),
 		Name: string(protoFile.GoPackageName),
+	}
+	if r.Standalone {
+		pkg.Alias = "ext" + cases.Title(language.AmericanEnglish).String(pkg.Name)
 	}
 
 	// if package cannot be reserved, keep iterating until it can.
@@ -749,16 +754,18 @@ func parseAdditionalEndpointPattern(spec *api.AdditionalEndpointBinding) (string
 func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages []*descriptorpb.DescriptorProto) {
 	for index, protoMessage := range messages {
 		message := &Message{
-			DescriptorProto: protoMessage,
-			File:            file,
-			Outers:          outerPath,
-			Index:           index,
+			DescriptorProto:   protoMessage,
+			File:              file,
+			Outers:            outerPath,
+			Index:             index,
+			ForcePrefixedName: r.Standalone,
 		}
 		for index, protoField := range protoMessage.GetField() {
 			message.Fields = append(message.Fields, &Field{
 				FieldDescriptorProto: protoField,
 				Message:              message,
 				Index:                index,
+				ForcePrefixedName:    r.Standalone,
 			})
 		}
 
@@ -780,6 +787,7 @@ func (r *Registry) loadEnumsInFile(file *File, outerPath []string, enums []*desc
 			File:                file,
 			Outers:              outerPath,
 			Index:               index,
+			ForcePrefixedName:   r.Standalone,
 		}
 		file.Enums = append(file.Enums, enum)
 		r.enums[enum.FQEN()] = enum

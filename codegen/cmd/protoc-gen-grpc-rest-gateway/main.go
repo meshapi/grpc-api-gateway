@@ -57,6 +57,7 @@ func main() {
 		}
 
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+		registryOptions.Standalone = generatorOptions.Standalone
 
 		descriptorRegistry := descriptor.NewRegistry(registryOptions)
 

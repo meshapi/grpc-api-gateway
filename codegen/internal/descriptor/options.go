@@ -27,6 +27,9 @@ type RegistryOptions struct {
 
 	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
 	AllowDeleteBody bool
+
+	// Standalone mode is to prepare for generation of Go files as a standalone package.
+	Standalone bool
 }
 
 // GatewayFileLoadOptions holds the gateway config file loading options.

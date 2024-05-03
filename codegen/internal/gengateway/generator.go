@@ -124,6 +124,10 @@ func (g *Generator) generate(file *descriptor.File) (string, error) {
 		imports = append(imports, pkg)
 	}
 
+	if g.Standalone {
+		imports = append(imports, file.GoPkg)
+	}
+
 	for _, svc := range file.Services {
 		for _, m := range svc.Methods {
 			imports = append(imports, g.addEnumPathParamImports(file, m, pkgSeen)...)
