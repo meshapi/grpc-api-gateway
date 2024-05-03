@@ -566,9 +566,15 @@ func (s *ServeMux) ForwardWebsocketServerStreaming(
 			protoRes.Reset()
 			err := stream.RecvMsg(protoRes)
 			if err == io.EOF {
+				if err := ws.SendClose(); err != nil {
+					grpclog.Infof("Failed to send websocket close message: %v", err)
+				}
 				break
 			}
 			if err != nil {
+				if err := ws.SendClose(); err != nil {
+					grpclog.Infof("Failed to send websocket close message: %v", err)
+				}
 				grpclog.Infof("Failed to receive message from gRPC stream: %v", err)
 				break
 			}

@@ -21,6 +21,9 @@ type Connection interface {
 	// libraries and stats handlers may use the message lazily.
 	SendMessage(data []byte) error
 
+	// SendClose should send a close message to the client.
+	SendClose() error
+
 	// ReceiveMessage blocks until it receives a message into m or the stream is
 	// done. It returns io.EOF when the client has performed a CloseSend. On
 	// any non-EOF error, the stream is aborted and the error contains the
