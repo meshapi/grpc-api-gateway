@@ -2,17 +2,12 @@ package descriptor
 
 import (
 	"flag"
-
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 )
 
 // RegistryOptions holds all the options for the descriptor registry.
 type RegistryOptions struct {
 	// GatewayFileLoadOptions holds gateway config file loading options.
 	GatewayFileLoadOptions GatewayFileLoadOptions
-
-	// PluginClient will be used (if specified) to find gateway config files.
-	PluginClient *plugin.Client
 
 	// SearchPath is the directory that is used to look for gateway configuration files.
 	//
@@ -76,8 +71,6 @@ func DefaultRegistryOptions() RegistryOptions {
 }
 
 // AddFlags adds command line flags to update this gateway loading options.
-//
-// NOTE: This function does not handle setting up the plugin client.
 func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
 	r.GatewayFileLoadOptions.addFlags(flags)
 
