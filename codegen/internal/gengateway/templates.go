@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -127,14 +126,12 @@ func prepareHTTPPath(path *httprule.Template) string {
 		return "/"
 	}
 
-	for index, segment := range path.Segments {
+	for _, segment := range path.Segments {
 		switch segment.Type {
 		case httprule.SegmentTypeLiteral:
 			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
 		case httprule.SegmentTypeSelector:
 			_, _ = fmt.Fprintf(writer, "/:%s", segment.Value)
-		case httprule.SegmentTypeWildcard:
-			_, _ = fmt.Fprintf(writer, "/:_segment_"+strconv.Itoa(index))
 		case httprule.SegmentTypeCatchAllSelector:
 			_, _ = fmt.Fprintf(writer, "/*%s", segment.Value)
 		default:
@@ -158,8 +155,6 @@ func prepareHTTPPattern(path *httprule.Template) string {
 			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
 		case httprule.SegmentTypeSelector:
 			_, _ = fmt.Fprintf(writer, "/{%s}", segment.Value)
-		case httprule.SegmentTypeWildcard:
-			_, _ = fmt.Fprintf(writer, "/?")
 		case httprule.SegmentTypeCatchAllSelector:
 			_, _ = fmt.Fprintf(writer, "/{%s=*}", segment.Value)
 		default:

@@ -45,7 +45,6 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"google.golang.org/grpc/grpclog",
 		"google.golang.org/grpc/metadata",
 		"google.golang.org/grpc/status",
-		"github.com/julienschmidt/httprouter",
 	} {
 		pkg := descriptor.GoPackage{
 			Path: pkgpath,
@@ -123,6 +122,10 @@ func (g *Generator) generate(file *descriptor.File) (string, error) {
 	for _, pkg := range g.baseImports {
 		pkgSeen[pkg.Path] = true
 		imports = append(imports, pkg)
+	}
+
+	if g.Standalone {
+		imports = append(imports, file.GoPkg)
 	}
 
 	for _, svc := range file.Services {

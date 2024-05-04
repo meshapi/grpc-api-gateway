@@ -154,7 +154,6 @@ func (r *Registry) evaluateOrGetFile(file *descriptor.File) *File {
 			if len(sci.Path)%2 != 0 {
 				continue
 			}
-			// TODO: additionally ditch the terminal types we won't accept.
 
 			if indexedFile.Messages == nil {
 				indexedFile.Messages = make(map[int32]*Message)
@@ -211,7 +210,6 @@ func (r *Registry) resolveOuters(pkg string, file *File, outers []string) *Messa
 	root := "." + pkg
 
 	for _, name := range outers {
-		// TODO: if fqn package is used, we can simple avoid the outer parts.
 		fqmn := root + "." + name
 		msg, err := r.descriptorRegistry.LookupMessage("", fqmn)
 		if err != nil {

@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-rest-gateway/api/Config.schema.json
 gateway:
   endpoints:
-    - selector: '.QueryParamsTest.Echo'
+    - selector: '~.QueryParamsTest.Echo'
       get: '/query/auto-map-all'
       additional_bindings:
         - get: '/query/alias-override'

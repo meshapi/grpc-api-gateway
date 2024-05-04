@@ -6,9 +6,6 @@ import (
 
 // Options are the options for the code generator.
 type Options struct {
-	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
-	AllowDeleteBody bool
-
 	// RepeatedPathParameterSeparator determines how repeated fields should be split when used in path segments.
 	RepeatedPathParameterSeparator descriptor.PathParameterSeparator
 
@@ -74,6 +71,9 @@ type Options struct {
 	// ConfigSearchPath holds the search path to use for looking up OpenAPI configs.
 	ConfigSearchPath string
 
+	// LocalPackageMode limits the config files to only targetting objects from their own proto package.
+	LocalPackageMode bool
+
 	// OpenAPIConfigFilePattern holds the file pattern for loading OpenAPI config files.
 	//
 	// This pattern must not include the extension and the priority is yaml, yml and finally json.
@@ -87,20 +87,28 @@ type Options struct {
 	OmitEnumDefaultValue bool
 
 	// VisibilitySelectors are a list of visibility selectors.
-	VisibilitySelectors SelectorSlice
-
-	// PreserveProtoOrder adds the methods in the same order as they appear in the gRPC service instead of
-	// alphabetically.
-	PreserveProtoOrder bool
+	VisibilitySelectors SelectorMap
 
 	// MergeWithOverwrite will overwrite lists instead of appending.
 	MergeWithOverwrite bool
+
+	// OmitEmptyFiles avoids writing OpenAPI document files if the file does not contain at least one model or path.
+	OmitEmptyFiles bool
+
+	// FieldNullableMode configures the generation of nullable fields in the OpenAPI schemas.
+	FieldNullableMode FieldNullableMode
+
+	// FieldRequiredMode configures the generation of required field in the OpenAPI schemas.
+	FieldRequiredMode FieldRequiredMode
+
+	// WarnOnBrokenSelectors writes a warning instead of reporting errors when selectors to unmatching proto types is
+	// used in config files.
+	WarnOnBrokenSelectors bool
 }
 
 // DefaultOptions returns the default options.
 func DefaultOptions() Options {
 	return Options{
-		AllowDeleteBody:                false,
 		RepeatedPathParameterSeparator: descriptor.PathParameterSeparatorCSV,
 		AllowPatchFeature:              true,
 		IncludeServicesOnly:            false,
@@ -124,8 +132,11 @@ func DefaultOptions() Options {
 		OpenAPISeedFile:                "",
 		OmitEnumDefaultValue:           false,
 		VisibilitySelectors:            nil,
-		PreserveProtoOrder:             false,
 		MergeWithOverwrite:             true,
 		OperationIDMode:                OperationIDModeServiceAndMethod,
+		OmitEmptyFiles:                 false,
+		FieldNullableMode:              FieldNullableModeOptionalLabel,
+		FieldRequiredMode:              FieldRequiredModeDisabled,
+		LocalPackageMode:               false,
 	}
 }

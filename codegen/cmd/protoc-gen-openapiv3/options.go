@@ -10,10 +10,6 @@ import (
 func prepareOptions() *genopenapi.Options {
 	generatorOptions := genopenapi.DefaultOptions()
 
-	flag.BoolVar(
-		&generatorOptions.AllowDeleteBody, "allow_delete_body", generatorOptions.AllowDeleteBody,
-		"unless set, HTTP DELETE methods may not have a body.")
-
 	flag.Var(
 		&generatorOptions.RepeatedPathParameterSeparator, "repeated_path_param_separator",
 		"configures how repeated fields should be split. Allowed values are 'csv', 'pipes', 'ssv', and 'tsv'.")
@@ -84,6 +80,10 @@ func prepareOptions() *genopenapi.Options {
 		"if set, default error response does not get generated. Useful when custom error structure is used.")
 
 	flag.BoolVar(
+		&generatorOptions.DisableDefaultResponses, "disable_default_responses", generatorOptions.DisableDefaultResponses,
+		"if set, default success response does not get generated. Useful when non 200 status codes are needed.")
+
+	flag.BoolVar(
 		&generatorOptions.UseEnumNumbers, "use_enum_numbers", generatorOptions.UseEnumNumbers,
 		"if set, enums in the OpenAPI use the numerical values instead of string values.")
 
@@ -99,7 +99,7 @@ func prepareOptions() *genopenapi.Options {
 			" for each proto file containing service definitions. yaml, yml and finally json file extensions will be tried.")
 
 	flag.StringVar(
-		&generatorOptions.OpenAPISeedFile, "openapi_template", generatorOptions.OpenAPISeedFile,
+		&generatorOptions.OpenAPISeedFile, "openapi_seed_file", generatorOptions.OpenAPISeedFile,
 		"if set, this OpenAPI file (yaml or json) gets used as a template and will get merged with the generated files."+
 			" Useful to set values unavailable in the OpenAPI generation configs or to repeat document"+
 			" values in all generated files.")
@@ -113,12 +113,33 @@ func prepareOptions() *genopenapi.Options {
 		"comma-separated list of included visibility labels. Example: INTERNAL,PARTNERS")
 
 	flag.BoolVar(
-		&generatorOptions.PreserveProtoOrder, "preserve_proto_order", generatorOptions.PreserveProtoOrder,
-		"if set, adds paths in the same order as they appear in the proto files.")
-
-	flag.BoolVar(
 		&generatorOptions.MergeWithOverwrite, "merge_with_overwrite", generatorOptions.MergeWithOverwrite,
 		"when this option is enabled, arrays get overwritten instead of appended.")
+
+	flag.BoolVar(
+		&generatorOptions.OmitEmptyFiles, "omit_empty_files", generatorOptions.OmitEmptyFiles,
+		"when enabled, OpenAPI documents that do not contain at least one generated schema/path get skipped.")
+
+	flag.Var(
+		&generatorOptions.FieldRequiredMode, "field_required_mode",
+		"can be used to automatically mark fields as required. 'disabled' (default) does not automatically"+
+			"mark any field, 'not_optional' marks any field that is not labled as optional as required and"+
+			"'not_optional_scalar' is similar to the previous mode but only for scalar types (not message).")
+
+	flag.Var(
+		&generatorOptions.FieldNullableMode, "field_nullable_mode",
+		"can be used to generate nullable OpenAPI fields using 'anyOf' or type array for scalar types."+
+			" 'disabled' does not generate nullable fields at all,"+
+			" 'optional' adds generates nullable fields when proto3 optional label is used"+
+			" and 'not_required' adds nullable field when a field is not explicitly marked as required and can be null.")
+
+	flag.BoolVar(
+		&generatorOptions.LocalPackageMode, "local_package_mode", generatorOptions.LocalPackageMode,
+		"if enabled, limits each config file (save for the global config) to the local proto package.")
+
+	flag.BoolVar(
+		&generatorOptions.WarnOnBrokenSelectors, "warn_on_broken_selectors", generatorOptions.WarnOnBrokenSelectors,
+		"if enabled, lowers the severity of unrecognized selectors in config files to logging at warning level.")
 
 	return &generatorOptions
 }

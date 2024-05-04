@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-rest-gateway/api/Config.schema.json
 gateway:
   endpoints:
-    - selector: '.EchoService.Echo'
+    - selector: '~.EchoService.Echo'
       post: '/v1/example/echo/{id}'
       body: status
       query_params:

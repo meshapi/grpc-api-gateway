@@ -8,23 +8,56 @@ import (
 	"path/filepath"
 	"strings"
 
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/internal"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/openapimap"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 )
 
+func (g *Generator) readOpenAPISeedFile() (map[string]any, error) {
+	seedFile, err := os.Open(g.configFilePath(g.Options.OpenAPISeedFile))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open seed file: %w", err)
+	}
+	defer seedFile.Close()
+
+	var value map[string]any
+
+	extension := filepath.Ext(g.Options.OpenAPISeedFile)
+	switch strings.ToLower(extension) {
+	case ".json":
+		err = json.NewDecoder(seedFile).Decode(&value)
+	case ".yml", ".yaml":
+		err = yaml.NewDecoder(seedFile).Decode(&value)
+	default:
+		return nil, fmt.Errorf("could not recognize file type of the OpenAPI seed file %q", g.OpenAPISeedFile)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read OpenAPI seed file %q: %w", g.Options.OpenAPISeedFile, err)
+	}
+
+	return value, nil
+}
+
+// configFilePath uses the config search path to find the final path for a config file.
+func (g *Generator) configFilePath(fileName string) string {
+	if filepath.IsAbs(fileName) {
+		return fileName
+	}
+	return filepath.Join(g.ConfigSearchPath, fileName)
+}
+
 func (g *Generator) loadFromDescriptorRegistry() error {
 	if g.GlobalOpenAPIConfigFile != "" {
-		configPath := filepath.Join(g.ConfigSearchPath, g.GlobalOpenAPIConfigFile)
+		configPath := g.configFilePath(g.GlobalOpenAPIConfigFile)
 		doc, err := g.loadFile(configPath)
 		if err != nil {
 			return fmt.Errorf("failed to load global OpenAPI config file: %w", err)
@@ -57,7 +90,7 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		}
 	}
 
-	messages := []string{}
+	protoTypes := []internal.ProtoTypeName{}
 	err := g.registry.Iterate(func(filePath string, protoFile *descriptor.File) error {
 		// first try to load the configFromFile file here.
 		configFromFile, err := g.loadConfigForFile(filePath, protoFile)
@@ -89,7 +122,11 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 			}
 		}
 
-		configFromProto, ok := proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
+		var configFromProto *openapi.Document
+		var ok bool
+		if protoFile.Options != nil && proto.HasExtension(protoFile.Options, api.E_OpenapiDoc) {
+			configFromProto, ok = proto.GetExtension(protoFile.Options, api.E_OpenapiDoc).(*openapi.Document)
+		}
 		if ok && configFromProto != nil {
 			docFromProto, err := openapimap.Document(configFromProto)
 			if err != nil {
@@ -117,11 +154,11 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		}
 
 		for _, message := range protoFile.Messages {
-			messages = append(messages, message.FQMN())
+			protoTypes = append(protoTypes, internal.ProtoTypeName{FQN: message.FQMN(), OuterLength: uint8(len(message.Outers))})
 		}
 
 		for _, enum := range protoFile.Enums {
-			messages = append(messages, enum.FQEN())
+			protoTypes = append(protoTypes, internal.ProtoTypeName{FQN: enum.FQEN(), OuterLength: uint8(len(enum.Outers))})
 		}
 
 		return nil
@@ -131,7 +168,7 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 		return err
 	}
 
-	g.schemaNames = g.resolveMessageNames(messages)
+	g.schemaNames = g.resolveTypeNames(protoTypes)
 	return nil
 }
 
@@ -149,11 +186,27 @@ func (g *Generator) addMessageConfigs(configs []*api.OpenAPIMessageSpec, src int
 		// assert that selector resolves to a proto message.
 		msg, err := g.registry.LookupMessage(src.ProtoPackage, messageConfig.Selector)
 		if err != nil {
+			if g.WarnOnBrokenSelectors {
+				genlog.Log(
+					genlog.LevelWarning,
+					"could not find proto message %q referenced in file: %s",
+					messageConfig.Selector, src.Filename)
+				continue
+			}
+
 			return fmt.Errorf(
 				"could not find proto message %q referenced in file: %s", messageConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.messages[msg.FQMN()]; alreadyExists {
+		if g.LocalPackageMode && src.ProtoPackage != "" && msg.File.GetPackage() != src.ProtoPackage {
+			return fmt.Errorf(
+				"adding message %q from another proto package is not allowed,"+
+					" use local_package_mode=false, define this config in the global file"+
+					" or in the same proto package as the target message: %s", msg.File.GetPackage(), src.Filename)
+		}
+
+		// if the config already exists and its definition is not from the same file, return an error.
+		if existingConfig, exists := g.messages[msg.FQMN()]; exists && existingConfig.Filename != src.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for message %q: both %q and %q contain bindings for this selector",
 				messageConfig.Selector, existingConfig.Filename, src.Filename)
@@ -181,11 +234,27 @@ func (g *Generator) addEnumConfigs(configs []*api.OpenAPIEnumSpec, src internal.
 		// assert that selector resolves to a proto enum.
 		enum, err := g.registry.LookupEnum(src.ProtoPackage, enumConfig.Selector)
 		if err != nil {
+			if g.WarnOnBrokenSelectors {
+				genlog.Log(
+					genlog.LevelWarning,
+					"could not find proto message %q referenced in file: %s",
+					enumConfig.Selector, src.Filename)
+				continue
+			}
+
 			return fmt.Errorf(
 				"could not find proto enum %q referenced in file: %s", enumConfig.Selector, src.Filename)
 		}
 
-		if existingConfig, alreadyExists := g.enums[enum.FQEN()]; alreadyExists {
+		if g.LocalPackageMode && src.ProtoPackage != "" && enum.File.GetPackage() != src.ProtoPackage {
+			return fmt.Errorf(
+				"adding enum %q from another proto package is not allowed,"+
+					" use local_package_mode=false, define this config in the global file"+
+					" or in the same proto package as the target enum: %s", enum.File.GetPackage(), src.Filename)
+		}
+
+		// if the config already exists and its definition is not from the same file, return an error.
+		if existingConfig, exists := g.enums[enum.FQEN()]; exists && src.Filename != existingConfig.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for enum %q: both %q and %q contain bindings for this selector",
 				enumConfig.Selector, existingConfig.Filename, src.Filename)
@@ -214,7 +283,7 @@ func (g *Generator) addServiceConfigs(configs []*api.OpenAPIServiceSpec, src int
 			serviceConfig.Selector = "." + serviceConfig.Selector
 		}
 
-		if existingConfig, alreadyExists := g.services[serviceConfig.Selector]; alreadyExists {
+		if existingConfig, exists := g.services[serviceConfig.Selector]; exists && src.Filename != existingConfig.Filename {
 			return fmt.Errorf(
 				"multiple external OpenAPI configurations for service %q: both %q and %q contain bindings for this selector",
 				serviceConfig.Selector, existingConfig.Filename, src.Filename)
@@ -281,7 +350,10 @@ func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Ta
 		return tags, nil
 	}
 
-	protoOptions, ok := proto.GetExtension(service.GetOptions(), api.E_OpenapiServiceDoc).(*openapi.Document)
+	if service.Options == nil || !proto.HasExtension(service.Options, api.E_OpenapiServiceDoc) {
+		return nil, nil
+	}
+	protoOptions, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
 	if ok && protoOptions != nil {
 		tags, err := openapimap.Tags(protoOptions.Tags)
 		if err != nil {
@@ -294,23 +366,25 @@ func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Ta
 }
 
 func (g *Generator) loadConfigForFile(protoFilePath string, file *descriptor.File) (internal.OpenAPISpec, error) {
-	// TODO: allow the plugin to set the config path
 	result := internal.OpenAPISpec{}
 	if g.OpenAPIConfigFilePattern == "" {
 		return result, nil
 	}
 
-	configPath, err := configpath.Build(protoFilePath, g.OpenAPIConfigFilePattern)
+	configPath, err := g.configPathBuilder.Build(protoFilePath)
 	if err != nil {
 		return result, fmt.Errorf("failed to determine config file path: %w", err)
 	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
-		configFilePath := filepath.Join(g.ConfigSearchPath, configPath+"."+ext)
+		configFilePath := g.configFilePath(configPath + "." + ext)
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {
-				grpclog.Infof("looked for file %s, it was not found", configFilePath)
+				if genlog.HasLevel(genlog.LevelTrace) {
+					genlog.Log(genlog.LevelTrace, "looked for file %q, it was not found", configFilePath)
+				}
+
 				continue
 			}
 

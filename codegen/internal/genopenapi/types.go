@@ -181,14 +181,21 @@ func (t *TemplateArgs) Set(value string) error {
 	return nil
 }
 
-type SelectorSlice []string
+type SelectorMap map[string]bool
 
-func (s SelectorSlice) String() string {
-	return strings.Join(s, ",")
+func (s SelectorMap) String() string {
+	values := []string{}
+	for key := range s {
+		values = append(values, key)
+	}
+	return strings.Join(values, ",")
 }
 
-func (s *SelectorSlice) Set(value string) error {
-	*s = strings.Split(value, ",")
+func (s *SelectorMap) Set(value string) error {
+	*s = make(SelectorMap)
+	for _, part := range strings.Split(value, ",") {
+		(*s)[strings.TrimSpace(part)] = true
+	}
 	return nil
 }
 
@@ -223,6 +230,78 @@ func (o *OperationIDMode) Set(value string) error {
 		*o = OperationIDModeFQN
 	default:
 		return fmt.Errorf("unrecognized value for operation id mode, expected 'simple' or 'fqn', got: %s", value)
+	}
+
+	return nil
+}
+
+type FieldRequiredMode uint8
+
+const (
+	FieldRequiredModeDisabled FieldRequiredMode = iota
+	FieldRequiredModeRequireNonOptional
+	FieldRequiredModeRequireNonOptionalScalar
+)
+
+func (f FieldRequiredMode) String() string {
+	switch f {
+	case FieldRequiredModeDisabled:
+		return "disabled"
+	case FieldRequiredModeRequireNonOptional:
+		return "non_optional"
+	case FieldRequiredModeRequireNonOptionalScalar:
+		return "non_optional_scalar"
+	default:
+		return "n/a"
+	}
+}
+
+func (f *FieldRequiredMode) Set(value string) error {
+	switch strings.ToLower(value) {
+	case "disabled":
+		*f = FieldRequiredModeDisabled
+	case "non_optional":
+		*f = FieldRequiredModeRequireNonOptional
+	case "non_optional_scalar":
+		*f = FieldRequiredModeRequireNonOptionalScalar
+	default:
+		return fmt.Errorf("unrecognized value %q, expected 'disabled', 'non_optional' or 'non_optional_scalar'", value)
+	}
+
+	return nil
+}
+
+type FieldNullableMode uint8
+
+const (
+	FieldNullableModeDisabled FieldNullableMode = iota
+	FieldNullableModeOptionalLabel
+	FieldNullableModeNonRequired
+)
+
+func (f FieldNullableMode) String() string {
+	switch f {
+	case FieldNullableModeDisabled:
+		return "disabled"
+	case FieldNullableModeOptionalLabel:
+		return "optional"
+	case FieldNullableModeNonRequired:
+		return "non_required"
+	}
+
+	return "n/a"
+}
+
+func (f *FieldNullableMode) Set(value string) error {
+	switch strings.ToLower(value) {
+	case "disabled":
+		*f = FieldNullableModeDisabled
+	case "optional":
+		*f = FieldNullableModeOptionalLabel
+	case "non_required":
+		*f = FieldNullableModeNonRequired
+	default:
+		return fmt.Errorf("unrecognized value %q, expected 'disabled', 'optional' or 'non_required'", value)
 	}
 
 	return nil

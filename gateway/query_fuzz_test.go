@@ -26,7 +26,7 @@ func FuzzPopulateQueryParameters(f *testing.F) {
 		if err != nil {
 			return
 		}
-		err = defaultQueryParser.Parse(in, values, gateway.QueryParameterParseOptions{Filter: trie.New(nil)})
+		err = defaultQueryParser.Parse(in, values, gateway.QueryParameterParseOptions{Filter: trie.New()})
 		if err != nil {
 			return
 		}

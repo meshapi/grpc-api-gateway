@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"dario.cat/mergo"
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/api/openapi"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
@@ -23,6 +24,7 @@ type Session struct {
 
 	includedSchemas                      map[string]struct{}
 	includedDefaultErrorStatusDependency bool
+	hasAnyGeneratedObject                bool
 }
 
 func (g *Generator) newSession(doc *openapiv3.Document) *Session {
@@ -34,6 +36,7 @@ func (g *Generator) newSession(doc *openapiv3.Document) *Session {
 }
 
 func (s *Session) includeMessage(fqmn string) error {
+	s.hasAnyGeneratedObject = true
 	if _, ok := s.includedSchemas[fqmn]; ok {
 		return nil
 	}
@@ -65,6 +68,7 @@ func (s *Session) includeMessage(fqmn string) error {
 }
 
 func (s *Session) includeEnum(fqen string) error {
+	s.hasAnyGeneratedObject = true
 	if _, ok := s.includedSchemas[fqen]; ok {
 		return nil
 	}
@@ -123,7 +127,11 @@ func (s *Session) defaultResponsesForService(service *descriptor.Service) (inter
 	if doc := s.services[service.FQSN()]; doc != nil {
 		fromConfig = doc.GetDocument().GetConfig().GetDefaultResponses()
 	}
-	serviceSpec, ok := proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
+	var serviceSpec *openapi.Document
+	var ok bool
+	if service.Options != nil && proto.HasExtension(service.Options, api.E_OpenapiServiceDoc) {
+		serviceSpec, ok = proto.GetExtension(service.Options, api.E_OpenapiServiceDoc).(*openapi.Document)
+	}
 	if ok && serviceSpec != nil {
 		fromProto = serviceSpec.GetConfig().GetDefaultResponses()
 	}
@@ -222,6 +230,17 @@ func (g *Generator) addSchemaDependencyForFQN(
 	}
 }
 
+func (g *Generator) mergeDocumentWithSeedFile(doc *openapiv3.Document) (map[string]any, error) {
+	seedContent, err := g.readOpenAPISeedFile()
+	if err != nil {
+		return nil, err
+	}
+	if err := mergo.Map(&seedContent, doc); err != nil {
+		return nil, fmt.Errorf("failed to merge seed content with generated OpenAPI document: %w", err)
+	}
+	return seedContent, nil
+}
+
 func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*descriptor.ResponseFile, error) {
 	if doc == nil {
 		return nil, nil
@@ -238,10 +257,6 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 		doc.Object.Info.Object.Version = "version not set"
 	}
 
-	if err := doc.Object.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid OpenAPI file: %w", err)
-	}
-
 	content := &bytes.Buffer{}
 	var extension string
 
@@ -249,14 +264,30 @@ func (g *Generator) writeDocument(filePrefix string, doc *openapiv3.Document) (*
 	case OutputFormatYAML:
 		encoder := yaml.NewEncoder(content)
 		encoder.SetIndent(2)
-		if err := encoder.Encode(doc); err != nil {
+		var content any = doc
+		if g.OpenAPISeedFile != "" {
+			seedContent, err := g.mergeDocumentWithSeedFile(doc)
+			if err != nil {
+				return nil, err
+			}
+			content = seedContent
+		}
+		if err := encoder.Encode(content); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to yaml: %w", err)
 		}
 		extension = extYAML
 	case OutputFormatJSON:
 		encoder := json.NewEncoder(content)
 		encoder.SetIndent("", "  ")
-		if err := encoder.Encode(doc); err != nil {
+		var content any = doc
+		if g.OpenAPISeedFile != "" {
+			seedContent, err := g.mergeDocumentWithSeedFile(doc)
+			if err != nil {
+				return nil, err
+			}
+			content = seedContent
+		}
+		if err := encoder.Encode(content); err != nil {
 			return nil, fmt.Errorf("failed to marshal OpenAPI to json: %w", err)
 		}
 		extension = extJSON

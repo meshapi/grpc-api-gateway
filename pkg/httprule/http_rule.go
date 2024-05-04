@@ -18,7 +18,6 @@ type SegmentType uint8
 const (
 	SegmentTypeLiteral          SegmentType = iota // SegmentTypeLiteral is a literal string.
 	SegmentTypeSelector                            // SegmentTypeSelector is a variable.
-	SegmentTypeWildcard                            // SegmentTypeWildcard matches a single route segment.
 	SegmentTypeCatchAllSelector                    // SegmentTypeCatchAllSelector is similar to selector but reads everything.
 )
 
@@ -50,8 +49,6 @@ func (t Template) String() string {
 			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
 		case SegmentTypeSelector:
 			_, _ = fmt.Fprintf(writer, "/['%s']", segment.Value)
-		case SegmentTypeWildcard:
-			_, _ = fmt.Fprintf(writer, "/*")
 		case SegmentTypeCatchAllSelector:
 			_, _ = fmt.Fprintf(writer, "/[*'%s']", segment.Value)
 		default:
@@ -74,7 +71,7 @@ func (t Template) Pattern() string {
 		switch segment.Type {
 		case SegmentTypeLiteral:
 			_, _ = fmt.Fprintf(writer, "/%s", segment.Value)
-		case SegmentTypeSelector, SegmentTypeWildcard:
+		case SegmentTypeSelector:
 			_, _ = fmt.Fprint(writer, "/?")
 		case SegmentTypeCatchAllSelector:
 			_, _ = fmt.Fprint(writer, "/*")
@@ -131,10 +128,6 @@ func Parse(path string) (Template, error) {
 			result.Segments = append(result.Segments, Segment{
 				Value: matches[1],
 				Type:  SegmentTypeSelector,
-			})
-		case segment == "*":
-			result.Segments = append(result.Segments, Segment{
-				Type: SegmentTypeWildcard,
 			})
 		default: // literal case.
 			if !literalPattern.MatchString(segment) {

@@ -1,7 +1,6 @@
 package descriptor
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,12 +10,13 @@ import (
 
 	"github.com/meshapi/grpc-rest-gateway/api"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/configpath"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/httpspec"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 	"github.com/meshapi/grpc-rest-gateway/dotpath"
 	"github.com/meshapi/grpc-rest-gateway/pkg/httprule"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/types/descriptorpb"
@@ -43,6 +43,8 @@ type Registry struct {
 	RegistryOptions
 
 	filePaths []string
+
+	configPathBuilder configpath.Builder
 }
 
 // NewRegistry creates and initializes a new registry.
@@ -63,8 +65,18 @@ func (r *Registry) LoadFromPlugin(gen *protogen.Plugin) error {
 }
 
 func (r *Registry) loadProtoFilesFromPlugin(gen *protogen.Plugin) error {
+	configPathBuilder, err := configpath.NewBuilder(r.GatewayFileLoadOptions.FilePattern)
+	if err != nil {
+		return fmt.Errorf("failed to parse gateway config file pattern: %w", err)
+	}
+	r.configPathBuilder = configPathBuilder
+
 	if r.GatewayFileLoadOptions.GlobalGatewayConfigFile != "" {
-		filePath := filepath.Join(r.SearchPath, r.GatewayFileLoadOptions.GlobalGatewayConfigFile)
+
+		filePath := r.GatewayFileLoadOptions.GlobalGatewayConfigFile
+		if !filepath.IsAbs(filePath) {
+			filePath = filepath.Join(r.SearchPath, filePath)
+		}
 		if err := r.httpSpecRegistry.LoadFromFile(filePath, ""); err != nil {
 			return fmt.Errorf("failed to load global gateway config file: %w", err)
 		}
@@ -137,29 +149,13 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 		return nil
 	}
 
-	var configPath string
-
-	// if plugin callback is available, use the plugin first.
-	if r.PluginClient != nil && r.PluginClient.RegisteredCallbacks.Has(plugin.CallbackGatewayConfigFile) {
-		path, err := r.PluginClient.GetGatewayConfigFile(context.Background(), protoFile.Proto)
-		if err != nil {
-			return fmt.Errorf("failed to get gateway config file from plugin: %w", err)
-		}
-
-		configPath = path
+	if r.GatewayFileLoadOptions.FilePattern == "" {
+		return nil
 	}
 
-	if configPath == "" {
-		if r.GatewayFileLoadOptions.FilePattern == "" {
-			return nil
-		}
-
-		path, err := configpath.Build(filePath, r.GatewayFileLoadOptions.FilePattern)
-		if err != nil {
-			return fmt.Errorf("failed to determine config file path: %w", err)
-		}
-
-		configPath = path
+	configPath, err := r.configPathBuilder.Build(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to determine config file path: %w", err)
 	}
 
 	for _, ext := range [...]string{"yaml", "yml", "json"} {
@@ -167,7 +163,10 @@ func (r *Registry) loadEndpointsForFile(filePath string, protoFile *protogen.Fil
 
 		if _, err := os.Stat(configFilePath); err != nil {
 			if os.IsNotExist(err) {
-				grpclog.Infof("looked for file %s, it was not found", configFilePath)
+				if genlog.HasLevel(genlog.LevelTrace) {
+					genlog.Log(genlog.LevelTrace, "looked for file %q, it was not found", configFilePath)
+				}
+
 				continue
 			}
 
@@ -189,6 +188,9 @@ func (r *Registry) loadIncludedFile(filePath string, protoFile *protogen.File) {
 	pkg := GoPackage{
 		Path: string(protoFile.GoImportPath),
 		Name: string(protoFile.GoPackageName),
+	}
+	if r.Standalone {
+		pkg.Alias = "ext" + cases.Title(language.AmericanEnglish).String(pkg.Name)
 	}
 
 	// if package cannot be reserved, keep iterating until it can.
@@ -229,7 +231,7 @@ func (r *Registry) loadServices(file *File) error {
 					binding = httpspec.EndpointSpec{
 						Binding: &api.EndpointBinding{
 							Selector: "",
-							Pattern:  &api.EndpointBinding_Post{Post: fmt.Sprintf("/%s/%s", service.FQSN(), protoMethod.GetName())},
+							Pattern:  &api.EndpointBinding_Post{Post: fmt.Sprintf("/%s/%s", service.FQSN()[1:], protoMethod.GetName())},
 							Body:     "*",
 						},
 						SourceInfo: httpspec.SourceInfo{
@@ -238,7 +240,10 @@ func (r *Registry) loadServices(file *File) error {
 					}
 				} else {
 					if r.WarnOnUnboundMethods {
-						grpclog.Warningf("No HTTP binding specification found for method: %s.%s", service.GetName(), protoMethod.GetName())
+						genlog.Log(
+							genlog.LevelWarning,
+							"No HTTP binding specification found for method: %s.%s",
+							service.GetName(), protoMethod.GetName())
 					}
 					continue
 				}
@@ -331,6 +336,9 @@ func (r *Registry) mapBindings(md *Method, spec httpspec.EndpointSpec) ([]*Bindi
 			}
 		}
 
+		if !r.AllowDeleteBody && input.Method == http.MethodDelete && input.Body != "" {
+			return fmt.Errorf("must not set request body when http method is DELETE except allow_delete_body option is true: %q", input.Path)
+		}
 		binding.Body, err = r.mapBody(md, input.Body)
 		if err != nil {
 			return fmt.Errorf("failed to parse request body selector %q: %w", input.Body, err)
@@ -531,6 +539,14 @@ func buildQueryParameters(b *Binding, registry *Registry) ([]QueryParameter, err
 			repeated := field.HasRepeatedLabel()
 
 			if !field.IsScalarType() {
+				if field.GetTypeName() == ".google.protobuf.FieldMask" {
+					queryParams = append(queryParams, QueryParameter{
+						Name:      name,
+						FieldPath: append(item.FieldPath, FieldPathComponent{Name: field.GetName(), Target: field}),
+					})
+					continue
+				}
+
 				// go deep inside.
 				message, err := registry.LookupMessage(item.Message.FQMN(), field.GetTypeName())
 				if err != nil {
@@ -720,16 +736,18 @@ func parseAdditionalEndpointPattern(spec *api.AdditionalEndpointBinding) (string
 func (r *Registry) loadMessagesInFile(file *File, outerPath []string, messages []*descriptorpb.DescriptorProto) {
 	for index, protoMessage := range messages {
 		message := &Message{
-			DescriptorProto: protoMessage,
-			File:            file,
-			Outers:          outerPath,
-			Index:           index,
+			DescriptorProto:   protoMessage,
+			File:              file,
+			Outers:            outerPath,
+			Index:             index,
+			ForcePrefixedName: r.Standalone,
 		}
 		for index, protoField := range protoMessage.GetField() {
 			message.Fields = append(message.Fields, &Field{
 				FieldDescriptorProto: protoField,
 				Message:              message,
 				Index:                index,
+				ForcePrefixedName:    r.Standalone,
 			})
 		}
 
@@ -751,6 +769,7 @@ func (r *Registry) loadEnumsInFile(file *File, outerPath []string, enums []*desc
 			File:                file,
 			Outers:              outerPath,
 			Index:               index,
+			ForcePrefixedName:   r.Standalone,
 		}
 		file.Enums = append(file.Enums, enum)
 		r.enums[enum.FQEN()] = enum

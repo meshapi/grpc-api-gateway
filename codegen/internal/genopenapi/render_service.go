@@ -2,6 +2,7 @@ package genopenapi
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -53,6 +54,13 @@ func (s *Session) renderOperation(
 
 	// handle query parameters
 	for _, queryParam := range binding.QueryParameters {
+		if s.AllowPatchFeature && binding.HTTPMethod == http.MethodPatch {
+			target := queryParam.Target()
+			if target.GetTypeName() == fqmnFieldMask && target.GetName() == fieldNameUpdateMask {
+				continue
+			}
+		}
+
 		parameter, err := s.renderQueryParameter(&queryParam)
 		if err != nil {
 			return nil, fmt.Errorf("failed to render query parameter %q: %w", queryParam.Name, err)
@@ -90,7 +98,7 @@ func (s *Session) renderOperation(
 }
 
 func (s *Session) addDefaultErrorResponse(operation *openapiv3.OperationCore) error {
-	if s.DisableDefaultResponses || operation.Responses != nil && operation.Responses[httpStatusDefault] != nil {
+	if s.DisableDefaultErrors || operation.Responses != nil && operation.Responses[httpStatusDefault] != nil {
 		return nil
 	}
 
@@ -384,7 +392,7 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 
 	switch field.GetType() {
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
-		if descriptor.IsWellKnownType(field.GetTypeName()) {
+		if descriptor.IsWellKnownType(field.GetTypeName()) || field.GetTypeName() == fqmnFieldMask {
 			if repeated {
 				return nil, fmt.Errorf("only primitive and enum types can be used in repeated path parameters")
 			}
@@ -569,6 +577,9 @@ func (s *Session) updatePathParameterAliasesMap(table map[string]string, binding
 			}
 		}
 
+		if field.Options == nil || !proto.HasExtension(field.Options, api.E_OpenapiField) {
+			continue
+		}
 		fieldConfig, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
 		if !ok || fieldConfig == nil {
 			continue
@@ -611,8 +622,6 @@ func renderPath(binding *descriptor.Binding, aliasMap map[string]string) string 
 				}
 			}
 			writer.WriteString("/{" + segment.Value + "}")
-		case httprule.SegmentTypeWildcard:
-			_, _ = fmt.Fprintf(writer, "/?")
 		default:
 			_, _ = fmt.Fprintf(writer, "/<!?:%s>", segment.Value)
 		}
@@ -634,6 +643,10 @@ func (g *Generator) getCustomizedMethodOperation(method *descriptor.Method) (*op
 
 			operation = result
 		}
+	}
+
+	if method.Options == nil || !proto.HasExtension(method.Options, api.E_OpenapiOperation) {
+		return operation, nil
 	}
 
 	protoConfig, ok := proto.GetExtension(method.Options, api.E_OpenapiOperation).(*openapi.Operation)

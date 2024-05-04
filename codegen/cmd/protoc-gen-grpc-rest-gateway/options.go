@@ -18,10 +18,6 @@ func prepareOptions() *gengateway.Options {
 		&generatorOptions.UseHTTPRequestContext, "request_context", generatorOptions.UseHTTPRequestContext,
 		"determine whether to use http.Request's context or not.")
 
-	flag.BoolVar(
-		&generatorOptions.AllowDeleteBody, "allow_delete_body", generatorOptions.AllowDeleteBody,
-		"unless set, HTTP DELETE methods may not have a body")
-
 	flag.Var(
 		&generatorOptions.RepeatedPathParameterSeparator, "repeated_path_param_separator",
 		"configures how repeated fields should be split. Allowed values are `csv`, `pipes`, `ssv` and `tsv`.")
@@ -39,7 +35,7 @@ func prepareOptions() *gengateway.Options {
 		"generates a standalone gateway package, which imports the target service package")
 
 	flag.BoolVar(
-		&generatorOptions.GenerateLocal, "generate-local", generatorOptions.GenerateLocal,
+		&generatorOptions.GenerateLocal, "generate_local", generatorOptions.GenerateLocal,
 		"(experimental, limited) generates code to directly use the server implementation instead of gRPC clients")
 
 	return &generatorOptions

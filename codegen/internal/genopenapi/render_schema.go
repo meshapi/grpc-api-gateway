@@ -18,6 +18,7 @@ import (
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/protocomment"
 	"google.golang.org/genproto/googleapis/api/annotations"
+	"google.golang.org/genproto/googleapis/api/visibility"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -67,7 +68,12 @@ func (g *Generator) getCustomizedFieldSchema(
 		}
 	}
 
-	if protoSchema, ok := proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema); ok && protoSchema != nil {
+	var protoSchema *openapi.Schema
+	var ok bool
+	if field.Options != nil && proto.HasExtension(field.Options, api.E_OpenapiField) {
+		protoSchema, ok = proto.GetExtension(field.Options, api.E_OpenapiField).(*openapi.Schema)
+	}
+	if ok && protoSchema != nil {
 		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
 			return result, fmt.Errorf("failed to map field schema from %q: %w", field.Message.File.GetName(), err)
@@ -98,6 +104,10 @@ func (g *Generator) getCustomizedFieldSchema(
 
 // renderComment produces a single description string. This string will NOT be executed with the Go templates yet.
 func (g *Generator) renderComment(location *descriptorpb.SourceCodeInfo_Location) string {
+	if g.IgnoreComments {
+		return ""
+	}
+
 	// get leading comments.
 	leadingComments := strings.NewReader(location.GetLeadingComments())
 	trailingComments := strings.NewReader(location.GetTrailingComments())
@@ -178,6 +188,25 @@ func (g *Generator) evaluateCommentWithTemplate(body string, data any) string {
 	return tmp.String()
 }
 
+func (g *Generator) isVisible(v *visibility.VisibilityRule) bool {
+	if v == nil || v.Restriction == "" {
+		return true
+	}
+
+	startIndex := 0
+	for {
+		index := strings.IndexRune(v.Restriction[startIndex:], ',')
+		if index == -1 {
+			break
+		}
+		if g.VisibilitySelectors[strings.TrimSpace(v.Restriction[startIndex:startIndex+index])] {
+			return true
+		}
+		startIndex = startIndex + index + 1
+	}
+	return g.VisibilitySelectors[strings.TrimSpace(v.Restriction[startIndex:])]
+}
+
 func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, error) {
 	enumConfig := g.enums[enum.FQEN()]
 	schema, err := g.getCustomizedEnumSchema(enum, enumConfig)
@@ -186,10 +215,13 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 	}
 
 	if g.UseEnumNumbers {
-		values := make([]string, len(enum.Value))
+		values := make([]string, 0, len(enum.Value))
 		hasDefault := false
-		for index, evdp := range enum.Value {
-			values[index] = strconv.FormatInt(int64(evdp.GetNumber()), 10)
+		for _, evdp := range enum.Value {
+			if !g.isVisible(internal.GetEnumVisibilityRule(evdp)) {
+				continue
+			}
+			values = append(values, strconv.FormatInt(int64(evdp.GetNumber()), 10))
 			if evdp.GetNumber() == 0 {
 				hasDefault = true
 			}
@@ -224,10 +256,14 @@ func (g *Generator) renderEnumSchema(enum *descriptor.Enum) (*openapiv3.Schema, 
 		return generatedSchema, nil
 	}
 
-	values := make([]string, len(enum.Value))
+	values := make([]string, 0, len(enum.Value))
 	defaultIndex := -1
 	for index, evdp := range enum.Value {
-		values[index] = evdp.GetName()
+		if !g.isVisible(internal.GetEnumVisibilityRule(evdp)) {
+			continue
+		}
+
+		values = append(values, evdp.GetName())
 		if evdp.GetNumber() == 0 {
 			defaultIndex = index
 		}
@@ -295,7 +331,6 @@ func (g *Generator) renderFieldSchema(
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 
 	switch field.GetType() {
-	// TODO: handle the group wire format.
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if wellKnownSchema := wellKnownTypes(field.GetTypeName()); wellKnownSchema != nil {
 			fieldSchema = wellKnownSchema
@@ -392,6 +427,12 @@ func (g *Generator) renderFieldSchema(
 }
 
 func setFieldAnnotations(field *descriptor.Field, customizationObject *internal.FieldSchemaCustomization) {
+	if field.Options == nil {
+		return
+	}
+	if !proto.HasExtension(field.Options, annotations.E_FieldBehavior) {
+		return
+	}
 	items, ok := proto.GetExtension(field.Options, annotations.E_FieldBehavior).([]annotations.FieldBehavior)
 	if !ok || len(items) == 0 {
 		return
@@ -424,6 +465,10 @@ func (g *Generator) getCustomizedMessageSchema(
 		schema = schemaFromConfig
 	}
 
+	if message.Options == nil || !proto.HasExtension(message.Options, api.E_OpenapiSchema) {
+		return schema, nil
+	}
+
 	if protoSchema, ok := proto.GetExtension(message.Options, api.E_OpenapiSchema).(*openapi.Schema); ok && protoSchema != nil {
 		schemaFromProto, err := openapimap.Schema(protoSchema)
 		if err != nil {
@@ -454,6 +499,10 @@ func (g *Generator) getCustomizedEnumSchema(enum *descriptor.Enum, config *inter
 		}
 
 		schema = schemaFromConfig
+	}
+
+	if enum.Options == nil || !proto.HasExtension(enum.Options, api.E_OpenapiEnum) {
+		return schema, nil
 	}
 
 	if protoSchema, ok := proto.GetExtension(enum.Options, api.E_OpenapiEnum).(*openapi.Schema); ok && protoSchema != nil {
@@ -512,7 +561,13 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 		schema.Object.Description = g.evaluateCommentWithTemplate(schema.Object.Description, message)
 	}
 
+	requiredSet := internal.RequiredSetFromSlice(schema.Object.Required)
+
 	for index, field := range message.Fields {
+		if !g.isVisible(internal.GetFieldVisibilityRule(field)) {
+			continue
+		}
+
 		customFieldSchema, err := g.getCustomizedFieldSchema(field, messageConfig)
 		if err != nil {
 			return internal.OpenAPISchema{}, fmt.Errorf("failed to parse config for field %q: %w", field.FQFN(), err)
@@ -533,13 +588,63 @@ func (g *Generator) renderMessageSchema(message *descriptor.Message) (internal.O
 		}
 
 		fieldName := g.fieldName(field)
-		schema.Object.Properties[fieldName] = fieldSchema
-		if customFieldSchema.Required {
-			schema.Object.Required = append(schema.Object.Required, fieldName)
+		if customFieldSchema.Required || g.fieldIsDeemedRequired(field) {
+			requiredSet = internal.AppendToRequiredSet(requiredSet, fieldName)
 		}
+
+		if g.FieldNullableMode == FieldNullableModeOptionalLabel {
+			if field.GetProto3Optional() {
+				g.makeFieldSchemaNullable(fieldSchema)
+			}
+		} else if g.FieldNullableMode == FieldNullableModeNonRequired {
+			if field.GetProto3Optional() {
+				g.makeFieldSchemaNullable(fieldSchema)
+			} else if _, isRequired := requiredSet[fieldName]; !isRequired {
+				g.makeFieldSchemaNullable(fieldSchema)
+			}
+		}
+		schema.Object.Properties[fieldName] = fieldSchema
 	}
 
+	schema.Object.Required = internal.RequiredSliceFromRequiredSet(requiredSet)
+
 	return internal.OpenAPISchema{Schema: schema, Dependencies: dependencies}, nil
+}
+
+// makeFieldSchemaNullable updates the field schema so that it accepts null as a value.
+// if ref is available, oneOf will be used, otherwise, a null type will be appended to the type array unless the type
+// array already includes the null value.
+func (g *Generator) makeFieldSchemaNullable(schema *openapiv3.Schema) {
+	if schema.Object.Ref != "" {
+		schema.Object.OneOf = []*openapiv3.Schema{
+			{Object: openapiv3.SchemaCore{Ref: schema.Object.Ref}},
+			{Object: openapiv3.SchemaCore{Type: openapiv3.TypeSet{openapiv3.TypeNull}}},
+		}
+		schema.Object.Ref = ""
+		return
+
+	}
+
+	for index := range schema.Object.Type {
+		if schema.Object.Type[index] == openapiv3.TypeNull {
+			return
+		}
+	}
+	schema.Object.Type = append(schema.Object.Type, openapiv3.TypeNull)
+}
+
+// fieldIsDeemedRequired uses the field required mode option to determine if the current field should be deemed requried
+// or not.
+func (g *Generator) fieldIsDeemedRequired(field *descriptor.Field) bool {
+	if g.FieldRequiredMode == FieldRequiredModeDisabled {
+		return false
+	}
+
+	if g.FieldRequiredMode == FieldRequiredModeRequireNonOptionalScalar {
+		return !field.GetProto3Optional() && field.IsScalarType()
+	}
+
+	return !field.GetProto3Optional()
 }
 
 func openAPITypeAndFormatForScalarTypes(t descriptorpb.FieldDescriptorProto_Type) (string, string) {

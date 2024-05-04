@@ -6,8 +6,9 @@ const (
 )
 
 const (
-	fqmnAny      = ".google.protobuf.Any"
-	fqmnHTTPBody = ".google.api.HttpBody"
+	fqmnAny       = ".google.protobuf.Any"
+	fqmnHTTPBody  = ".google.api.HttpBody"
+	fqmnFieldMask = ".google.protobuf.FieldMask"
 )
 
 const openAPIOutputSuffix = ".openapi"
@@ -24,10 +25,15 @@ const (
 	mimeTypeJSON = "application/json"
 	mimeTypeSSE  = "text/event-stream"
 )
-const httpStatusOK = "200"
-const httpStatusDefault = "default"
-const rpcStatusProto = ".google.rpc.Status"
-const streamingInputDescription = " (streaming inputs)"
-const streamingResponsesDescription = " (streaming responses)"
-const headerTransferEncoding = "Transfer-Encoding"
-const encodingChunked = "chunked"
+const (
+	httpStatusOK      = "200"
+	httpStatusDefault = "default"
+
+	rpcStatusProto                = ".google.rpc.Status"
+	streamingInputDescription     = " (streaming inputs)"
+	streamingResponsesDescription = " (streaming responses)"
+	headerTransferEncoding        = "Transfer-Encoding"
+	encodingChunked               = "chunked"
+
+	fieldNameUpdateMask = "update_mask"
+)

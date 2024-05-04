@@ -2,17 +2,12 @@ package descriptor
 
 import (
 	"flag"
-
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/plugin"
 )
 
 // RegistryOptions holds all the options for the descriptor registry.
 type RegistryOptions struct {
 	// GatewayFileLoadOptions holds gateway config file loading options.
 	GatewayFileLoadOptions GatewayFileLoadOptions
-
-	// PluginClient will be used (if specified) to find gateway config files.
-	PluginClient *plugin.Client
 
 	// SearchPath is the directory that is used to look for gateway configuration files.
 	//
@@ -24,6 +19,12 @@ type RegistryOptions struct {
 
 	// GenerateUnboundMethods controls whether or not unannotated RPC methods should be created as part of the proxy.
 	GenerateUnboundMethods bool
+
+	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
+	AllowDeleteBody bool
+
+	// Standalone mode is to prepare for generation of Go files as a standalone package.
+	Standalone bool
 }
 
 // GatewayFileLoadOptions holds the gateway config file loading options.
@@ -65,12 +66,11 @@ func DefaultRegistryOptions() RegistryOptions {
 	return RegistryOptions{
 		GatewayFileLoadOptions: defaultGatewayLoadOptions(),
 		SearchPath:             ".",
+		AllowDeleteBody:        false,
 	}
 }
 
 // AddFlags adds command line flags to update this gateway loading options.
-//
-// NOTE: This function does not handle setting up the plugin client.
 func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
 	r.GatewayFileLoadOptions.addFlags(flags)
 
@@ -88,4 +88,8 @@ func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
 	flags.BoolVar(
 		&r.GenerateUnboundMethods, "generate_unbound_methods", r.GenerateUnboundMethods,
 		"controls whether or not unannotated RPC methods should be created as part of the proxy.")
+
+	flag.BoolVar(
+		&r.AllowDeleteBody, "allow_delete_body", r.AllowDeleteBody,
+		"unless set, HTTP DELETE methods may not have a body")
 }

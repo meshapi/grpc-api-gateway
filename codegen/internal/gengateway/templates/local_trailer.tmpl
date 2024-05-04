@@ -8,14 +8,14 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Server(ctx context.Context,
 	{{range $m := $svc.Methods}}
 	{{range $b := $m.Bindings}}
 	{{if or $m.GetClientStreaming $m.GetServerStreaming}}
-	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}", func(w http.ResponseWriter, req *http.Request, pathParams httprouter.Params) {
+	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}", func(w http.ResponseWriter, req *http.Request, pathParams gateway.Params) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := mux.MarshalerForRequest(req)
 		mux.HTTPError(ctx, outboundMarshaler, w, req, err)
 		return
 	})
 	{{else}}
-	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}",  func(w http.ResponseWriter, req *http.Request, pathParams httprouter.Params) {
+	mux.HandleWithParams({{$b.HTTPMethod | printf "%q"}}, "{{httpPath $b.PathTemplate}}",  func(w http.ResponseWriter, req *http.Request, pathParams gateway.Params) {
 	{{- if $UseRequestContext }}
 		ctx, cancel := context.WithCancel(req.Context())
 	{{- else -}}

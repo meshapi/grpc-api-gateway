@@ -23,6 +23,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type Params = httprouter.Params
+
 // HeaderMatcherFunc checks whether a header key should be forwarded to/from gRPC context.
 type HeaderMatcherFunc func(string) (string, bool)
 
@@ -564,9 +566,15 @@ func (s *ServeMux) ForwardWebsocketServerStreaming(
 			protoRes.Reset()
 			err := stream.RecvMsg(protoRes)
 			if err == io.EOF {
+				if err := ws.SendClose(); err != nil {
+					grpclog.Infof("Failed to send websocket close message: %v", err)
+				}
 				break
 			}
 			if err != nil {
+				if err := ws.SendClose(); err != nil {
+					grpclog.Infof("Failed to send websocket close message: %v", err)
+				}
 				grpclog.Infof("Failed to receive message from gRPC stream: %v", err)
 				break
 			}

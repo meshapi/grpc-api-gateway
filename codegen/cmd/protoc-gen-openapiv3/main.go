@@ -16,8 +16,8 @@ import (
 	"strings"
 
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
 	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/pluginpb"
 )
@@ -25,11 +25,15 @@ import (
 func main() {
 	showVersion := flag.Bool("version", false, "show version")
 	logFile := flag.String("log_file", "", "path to the output log file")
+	logLevel := genlog.LevelWarning
+	flag.Var(&logLevel,
+		"log_level", "sets the log level, levels: 'warning', 'info', 'trace' and 'silent' (default: warning).")
 
 	generatorOptions := prepareOptions()
 	registryOptions := descriptor.DefaultRegistryOptions()
 	registryOptions.AddFlags(flag.CommandLine)
 	flag.Parse()
+	genlog.SetLevel(logLevel)
 
 	if *showVersion {
 		fmt.Printf("Version v0.1.0\n")
@@ -44,12 +48,11 @@ func main() {
 		if *logFile != "" {
 			writer, err := os.Create(*logFile)
 			if err != nil {
-				grpclog.Errorf("failed to create log file: %s", err)
-				return err
+				return fmt.Errorf("failed to create log file: %w", err)
 			}
 			defer writer.Close()
 
-			grpclog.SetLoggerV2(grpclog.NewLoggerV2(writer, writer, writer))
+			genlog.Set(genlog.New(writer, logLevel))
 		}
 
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)

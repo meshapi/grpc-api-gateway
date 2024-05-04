@@ -10,9 +10,6 @@ type Options struct {
 	// UseHTTPRequestContext controls whether or not HTTP request's context gets used.
 	UseHTTPRequestContext bool
 
-	// AllowDeleteBody indicates whether or not DELETE methods can have bodies.
-	AllowDeleteBody bool
-
 	// RepeatedPathParameterSeparator determines how repeated fields should be split when used in path segments.
 	RepeatedPathParameterSeparator descriptor.PathParameterSeparator
 
@@ -35,7 +32,6 @@ func DefaultOptions() Options {
 	return Options{
 		RegisterFunctionSuffix:         "Handler",
 		UseHTTPRequestContext:          true,
-		AllowDeleteBody:                false,
 		RepeatedPathParameterSeparator: descriptor.PathParameterSeparatorCSV,
 		AllowPatchFeature:              true,
 		OmitPackageDoc:                 false,
