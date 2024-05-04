@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
-	"github.com/meshapi/grpc-rest-gateway/gateway"
+	"github.com/meshapi/grpc-api-gateway/examples/internal/gen/integration"
+	"github.com/meshapi/grpc-api-gateway/gateway"
 )
 
 func TestPatchRequest(t *testing.T) {

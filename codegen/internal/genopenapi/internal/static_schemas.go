@@ -1,6 +1,6 @@
 package internal
 
-import "github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+import "github.com/meshapi/grpc-api-gateway/codegen/internal/openapiv3"
 
 type ErrorResponse struct {
 	Response *openapiv3.Ref[openapiv3.Response]

@@ -12,8 +12,8 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/meshapi/grpc-rest-gateway/protomarshal"
-	"github.com/meshapi/grpc-rest-gateway/websocket"
+	"github.com/meshapi/grpc-api-gateway/protomarshal"
+	"github.com/meshapi/grpc-api-gateway/websocket"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

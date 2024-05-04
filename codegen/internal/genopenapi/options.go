@@ -1,7 +1,7 @@
 package genopenapi
 
 import (
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/descriptor"
 )
 
 // Options are the options for the code generator.

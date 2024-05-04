@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/api"
+	"github.com/meshapi/grpc-api-gateway/api"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"

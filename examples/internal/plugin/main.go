@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/meshapi/grpc-rest-gateway/api/codegen"
+	"github.com/meshapi/grpc-api-gateway/api/codegen"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )

@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/meshapi/grpc-rest-gateway/websocket"
+	"github.com/meshapi/grpc-api-gateway/websocket"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"

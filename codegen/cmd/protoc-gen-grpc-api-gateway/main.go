@@ -1,10 +1,10 @@
-// Command protoc-gen-grpc-rest-gateway is a plugin for Google protocol buffer
+// Command protoc-gen-grpc-api-gateway is a plugin for Google protocol buffer
 // compiler to generate a reverse-proxy, which converts incoming RESTful
 // HTTP/1 requests gRPC invocation.
 // You rarely need to run this program directly. Instead, put this program
 // into your $PATH with a name "protoc-gen-grpc-gateway" and run
 //
-//	protoc --grpc-rest-gateway_out=output_directory path/to/input.proto
+//	protoc --grpc-api-gateway_out=output_directory path/to/input.proto
 //
 // See README.md for more details.
 package main
@@ -15,9 +15,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/gengateway"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genlog"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/gengateway"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/genlog"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/types/pluginpb"
 )

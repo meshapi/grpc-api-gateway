@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
+	"github.com/meshapi/grpc-api-gateway/examples/internal/gen/integration"
 )
 
 type StreamingTestServer struct {

@@ -4,9 +4,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/gateway"
-	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
-	"github.com/meshapi/grpc-rest-gateway/trie"
+	"github.com/meshapi/grpc-api-gateway/gateway"
+	"github.com/meshapi/grpc-api-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-api-gateway/trie"
 )
 
 func FuzzPopulateQueryParameters(f *testing.F) {

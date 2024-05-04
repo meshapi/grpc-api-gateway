@@ -3,7 +3,7 @@ package casing_test
 import (
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/casing"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/casing"
 )
 
 func TestCamelIdentifier(t *testing.T) {

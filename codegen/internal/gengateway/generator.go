@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/descriptor"
 	"golang.org/x/tools/imports"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/proto"
@@ -33,12 +33,12 @@ func New(descriptorRegistry *descriptor.Registry, options Options) *Generator {
 		"context",
 		"io",
 		"net/http",
-		"github.com/meshapi/grpc-rest-gateway/gateway",
-		"github.com/meshapi/grpc-rest-gateway/iofactory",
-		"github.com/meshapi/grpc-rest-gateway/partialfieldmask",
-		"github.com/meshapi/grpc-rest-gateway/protoconvert",
-		"github.com/meshapi/grpc-rest-gateway/protopath",
-		"github.com/meshapi/grpc-rest-gateway/trie",
+		"github.com/meshapi/grpc-api-gateway/gateway",
+		"github.com/meshapi/grpc-api-gateway/iofactory",
+		"github.com/meshapi/grpc-api-gateway/partialfieldmask",
+		"github.com/meshapi/grpc-api-gateway/protoconvert",
+		"github.com/meshapi/grpc-api-gateway/protopath",
+		"github.com/meshapi/grpc-api-gateway/trie",
 		"google.golang.org/protobuf/proto",
 		"google.golang.org/grpc",
 		"google.golang.org/grpc/codes",

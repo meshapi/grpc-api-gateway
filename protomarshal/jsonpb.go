@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/meshapi/grpc-rest-gateway/protoconvert"
+	"github.com/meshapi/grpc-api-gateway/protoconvert"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )

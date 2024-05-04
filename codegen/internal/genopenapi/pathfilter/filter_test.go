@@ -3,7 +3,7 @@ package pathfilter_test
 import (
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/genopenapi/pathfilter"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/genopenapi/pathfilter"
 )
 
 func TestFilter(t *testing.T) {

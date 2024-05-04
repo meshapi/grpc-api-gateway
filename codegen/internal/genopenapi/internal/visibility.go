@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/descriptor"
 	"google.golang.org/genproto/googleapis/api/visibility"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"

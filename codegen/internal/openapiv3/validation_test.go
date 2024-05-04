@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/openapiv3"
 )
 
 type Root struct {

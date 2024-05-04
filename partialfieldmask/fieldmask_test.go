@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
-	"github.com/meshapi/grpc-rest-gateway/partialfieldmask"
+	"github.com/meshapi/grpc-api-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-api-gateway/partialfieldmask"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	field_mask "google.golang.org/protobuf/types/known/fieldmaskpb"

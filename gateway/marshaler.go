@@ -1,6 +1,6 @@
 package gateway
 
-import "github.com/meshapi/grpc-rest-gateway/protomarshal"
+import "github.com/meshapi/grpc-api-gateway/protomarshal"
 
 // Marshaler defines a conversion between byte sequence and gRPC payloads / fields.
 type Marshaler = protomarshal.Marshaler

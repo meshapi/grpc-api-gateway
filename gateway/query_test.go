@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/meshapi/grpc-rest-gateway/gateway"
-	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
-	"github.com/meshapi/grpc-rest-gateway/trie"
+	"github.com/meshapi/grpc-api-gateway/gateway"
+	"github.com/meshapi/grpc-api-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-api-gateway/trie"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/durationpb"

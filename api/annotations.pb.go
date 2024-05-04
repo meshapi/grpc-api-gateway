@@ -7,7 +7,7 @@
 package api
 
 import (
-	openapi "github.com/meshapi/grpc-rest-gateway/api/openapi"
+	openapi "github.com/meshapi/grpc-api-gateway/api/openapi"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	descriptorpb "google.golang.org/protobuf/types/descriptorpb"

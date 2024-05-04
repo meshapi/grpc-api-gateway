@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/meshapi/grpc-rest-gateway/internal/examplepb"
-	"github.com/meshapi/grpc-rest-gateway/protomarshal"
+	"github.com/meshapi/grpc-api-gateway/internal/examplepb"
+	"github.com/meshapi/grpc-api-gateway/protomarshal"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"

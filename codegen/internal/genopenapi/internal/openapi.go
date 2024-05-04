@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"github.com/meshapi/grpc-rest-gateway/api"
-	"github.com/meshapi/grpc-rest-gateway/codegen/internal/openapiv3"
+	"github.com/meshapi/grpc-api-gateway/api"
+	"github.com/meshapi/grpc-api-gateway/codegen/internal/openapiv3"
 )
 
 // OpenAPISpec is a wrapper around *api.OpenAPISpec with additional context of filename.

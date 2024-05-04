@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/meshapi/grpc-rest-gateway/dotpath"
-	"github.com/meshapi/grpc-rest-gateway/protoconvert"
+	"github.com/meshapi/grpc-api-gateway/dotpath"
+	"github.com/meshapi/grpc-api-gateway/protoconvert"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/protobuf/encoding/protojson"

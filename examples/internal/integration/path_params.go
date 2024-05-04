@@ -3,7 +3,7 @@ package integration
 import (
 	"context"
 
-	"github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration"
+	"github.com/meshapi/grpc-api-gateway/examples/internal/gen/integration"
 )
 
 type PathParamsTestServer struct {

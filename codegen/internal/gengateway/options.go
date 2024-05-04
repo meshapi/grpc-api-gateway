@@ -1,6 +1,6 @@
 package gengateway
 
-import "github.com/meshapi/grpc-rest-gateway/codegen/internal/descriptor"
+import "github.com/meshapi/grpc-api-gateway/codegen/internal/descriptor"
 
 // Options are the options for the code generator.
 type Options struct {
