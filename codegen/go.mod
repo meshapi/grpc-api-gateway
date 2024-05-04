@@ -1,8 +1,8 @@
-module github.com/meshapi/grpc-rest-gateway/codegen
+module github.com/meshapi/grpc-api-gateway/codegen
 
 go 1.19.0
 
-replace github.com/meshapi/grpc-rest-gateway => ..
+replace github.com/meshapi/grpc-api-gateway => ..
 
 require (
 	dario.cat/mergo v1.0.0

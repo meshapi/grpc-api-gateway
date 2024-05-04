@@ -11,7 +11,7 @@ import "google/protobuf/struct.proto";
 
 import "meshapi/gateway/annotations.proto";
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/echo";
+option go_package = "github.com/meshapi/grpc-api-gateway/examples/internal/gen/echo";
 
 // Embedded represents a message embedded in SimpleMessage.
 message Embedded {

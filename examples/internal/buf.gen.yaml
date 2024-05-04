@@ -7,7 +7,7 @@ plugins:
     name: go-grpc
     opt: 'paths=source_relative'
   - out: gen
-    name: grpc-rest-gateway
+    name: grpc-api-gateway
     opt:
       - 'paths=source_relative'
       - 'config_search_path=proto'

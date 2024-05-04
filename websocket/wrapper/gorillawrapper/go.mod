@@ -1,4 +1,4 @@
-module github.com/meshapi/grpc-rest-gateway/websocket/wrapper/gorillawrapper
+module github.com/meshapi/grpc-api-gateway/websocket/wrapper/gorillawrapper
 
 go 1.22.0
 

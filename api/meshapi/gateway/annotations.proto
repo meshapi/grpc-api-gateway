@@ -6,7 +6,7 @@ import "google/protobuf/descriptor.proto";
 import "meshapi/gateway/gateway.proto";
 import "meshapi/gateway/openapi/openapi.proto";
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/api";
+option go_package = "github.com/meshapi/grpc-api-gateway/api";
 
 extend google.protobuf.FileOptions {
 	// openapi holds OpenAPI file options.

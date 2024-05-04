@@ -5,7 +5,7 @@ package meshapi.gateway.examples.integration;
 import "meshapi/gateway/annotations.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+option go_package = "github.com/meshapi/grpc-api-gateway/examples/internal/gen/integration";
 
 message Proto2SimpleMessage {
 	

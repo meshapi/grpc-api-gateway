@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-rest-gateway/api/Config.schema.json
+# yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-api-gateway/api/Config.schema.json
 gateway:
   endpoints:
     - selector: '~.EchoService.Echo'

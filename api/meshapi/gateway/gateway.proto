@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package meshapi.gateway;
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/api";
+option go_package = "github.com/meshapi/grpc-api-gateway/api";
 
 // GatewaySpec holds gRPC gateway configurations.
 message GatewaySpec {

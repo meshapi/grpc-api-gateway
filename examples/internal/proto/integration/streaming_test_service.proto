@@ -5,7 +5,7 @@ package meshapi.gateway.examples.integration;
 import "integration/messages.proto";
 import "meshapi/gateway/annotations.proto";
 
-option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+option go_package = "github.com/meshapi/grpc-api-gateway/examples/internal/gen/integration";
 
 service StreamingTest {
 	rpc Add(stream AddRequest) returns (AddResponse) {

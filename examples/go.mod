@@ -1,12 +1,12 @@
-module github.com/meshapi/grpc-rest-gateway/examples
+module github.com/meshapi/grpc-api-gateway/examples
 
 go 1.22.0
 
 toolchain go1.22.2
 
 replace (
-	github.com/meshapi/grpc-rest-gateway => ..
-	github.com/meshapi/grpc-rest-gateway/websocket/wrapper/gorillawrapper => ../websocket/wrapper/gorillawrapper
+	github.com/meshapi/grpc-api-gateway => ..
+	github.com/meshapi/grpc-api-gateway/websocket/wrapper/gorillawrapper => ../websocket/wrapper/gorillawrapper
 )
 
 require (
