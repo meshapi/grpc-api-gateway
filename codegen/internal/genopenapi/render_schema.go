@@ -331,7 +331,6 @@ func (g *Generator) renderFieldSchema(
 	repeated := field.GetLabel() == descriptorpb.FieldDescriptorProto_LABEL_REPEATED
 
 	switch field.GetType() {
-	// TODO: handle the group wire format.
 	case descriptorpb.FieldDescriptorProto_TYPE_GROUP, descriptorpb.FieldDescriptorProto_TYPE_MESSAGE:
 		if wellKnownSchema := wellKnownTypes(field.GetTypeName()); wellKnownSchema != nil {
 			fieldSchema = wellKnownSchema
