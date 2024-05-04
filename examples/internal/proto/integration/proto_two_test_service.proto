@@ -1,0 +1,37 @@
+syntax = "proto2";
+
+package meshapi.gateway.examples.integration;
+
+import "meshapi/gateway/annotations.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/meshapi/grpc-rest-gateway/examples/internal/gen/integration";
+
+message Proto2SimpleMessage {
+	
+}
+
+message Proto2Request {
+	repeated group Result = 1 {
+		required string id = 1;
+		optional string optional_field = 2;
+		required Proto2SimpleMessage message = 3;
+	};
+	required string ref = 2;
+}
+
+message Proto2Response {
+	required Proto2Request request = 1;
+}
+
+service Proto2Service {
+	rpc Echo(Proto2Request) returns (Proto2Response) {
+		option (meshapi.gateway.http) = {
+			post: '/proto2/echo',
+			body: '*',
+			additional_bindings: [
+				{get: '/proto2/echo/{ref}'}
+			]
+		};
+	};
+}
