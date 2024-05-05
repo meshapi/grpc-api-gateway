@@ -11,12 +11,11 @@ option go_package = "github.com/meshapi/grpc-api-gateway/api";
 message OpenAPIServiceSpec {
 	// selector is dot separated gRPC service method selector.
 	//
-	// selector string can be configured to be relative if it begins with a '.' character
-	// but this is only supported when using the proto generators and only if a package
-	// can be deduced.
+	// if the selector begins with '~.', the current proto package will be added to the beginning
+	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
+	// config file, this alias cannot be used in the global config file.
 	//
-	// if the selector does not begin with a '.' character, it will be treated as a
-	// fully qualified method name (FQMN).
+	// if the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
 	string selector = 1;
 	// document can be used to override default values for OpenAPI document files when using the option to generate
 	// OpenAPI files per service.
@@ -24,7 +23,7 @@ message OpenAPIServiceSpec {
 	// Additionally, this can be used to change documentation generation behavior such as default responses regardless
 	// of the output generation mode.
 	//
-	// NOTE: This document will only be used when using output mode of "per service" and in all other
+	// NOTE: This document will only be used when using output mode of "service" and in all other
 	// modes, this object simply gets ignored save for the config field. Since the config field instructs
 	// the generation of responses and the document objects for that service only, regardless of the output mode
 	// the settings will be honored.
@@ -36,12 +35,12 @@ message OpenAPIServiceSpec {
 message OpenAPIMessageSpec {
 	// selector is dot separated protobuf message selector.
 	//
-	// selector string can be configured to be relative if it begins with a '.' character
-	// but this is only supported when using the proto generators and only if a package
-	// can be deduced.
-	//
-	// if the selector does not begin with a '.' character, it will be treated as a
-	// fully qualified message name (FQMN).
+	// if the selector begins with a '.' character, it will be treated as an absolute path.
+	// if it begins with '~.', the current proto package will be added to the beginning
+	// of the path. For instance: `~.MyMessage`. Since no proto package can be deduced in the global
+	// config file, this alias cannot be used in the global config file.
+	// if the path does not beging with a '.' or '~.', it will be treated as a relative path and a search
+	// from the current proto package will be performed in order to find the message.
 	string selector = 1;
 	// schema controls the OpenAPI v3.1 schema generation for this proto message.
 	gateway.openapi.Schema schema = 2;
@@ -52,31 +51,37 @@ message OpenAPIMessageSpec {
 message OpenAPIEnumSpec {
 	// selector is dot separated protobuf enum selector.
 	//
-	// selector string can be configured to be relative if it begins with a '.' character
-	// but this is only supported when using the proto generators and only if a package
-	// can be deduced.
-	//
-	// if the selector does not begin with a '.' character, it will be treated as a
-	// fully qualified message name (FQEN).
+	// if the selector begins with a '.' character, it will be treated as an absolute path.
+	// if it begins with '~.', the current proto package will be added to the beginning
+	// of the path. For instance: `~.MyEnum`. Since no proto package can be deduced in the global
+	// config file, this alias cannot be used in the global config file.
+	// if the path does not beging with a '.' or '~.', it will be treated as a relative path and a search
+	// from the current proto package will be performed in order to find the enum.
 	string selector = 1;
-	// schema controls the OpenAPI v3.1 schema generation for this proto message.
+	// schema controls the OpenAPI v3.1 schema generation for this proto enum.
 	gateway.openapi.Schema schema = 2;
 }
 
 message OpenAPISpec {
 	// Document is the OpenAPI v3.1 document configuration which controls how the OpenAPI documentation is generated.
+	//
+	// this document can be defined to define a base config for all documents (if in the global config) or the document
+	// for the current output target. For instance, when using output mode of "service", each service defined in the
+	// associated proto file inherits this base document and can additionally specify more defaults for its own OpenAPI
+	// document. When defining this in the global config and for specific proto files, the configs get merged together
+	// but the priority is given to the proto document.
 	gateway.openapi.Document document = 1;
 	// Used to configure OpenAPI v3.1 output for gRPC services.
 	repeated OpenAPIServiceSpec services = 2;
 	// Used to configure OpenAPI v3.1 output for proto messages.
 	repeated OpenAPIMessageSpec messages = 3;
-	// Used to configure OpenAPI v3.1 output for proto messages.
+	// Used to configure OpenAPI v3.1 output for proto enums.
 	repeated OpenAPIEnumSpec enums = 4;
 }
 
 // Config is the content of a configuration file.
 message Config {
-	// gateway holds gateway configs.
+	// gateway holds gateway configs which.
 	GatewaySpec gateway = 1;
 
 	// openapi holds OpenAPI v3.1 configs.

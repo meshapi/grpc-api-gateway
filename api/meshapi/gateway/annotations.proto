@@ -9,12 +9,12 @@ import "meshapi/gateway/openapi/openapi.proto";
 option go_package = "github.com/meshapi/grpc-api-gateway/api";
 
 extend google.protobuf.FileOptions {
-	// openapi holds OpenAPI file options.
+	// openapi_doc holds OpenAPI file options.
 	gateway.openapi.Document openapi_doc = 1147;
 }
 
 extend google.protobuf.ServiceOptions {
-	// openapi holds OpenAPI file options.
+	// openapi_service_doc holds OpenAPI file options.
 	gateway.openapi.Document openapi_service_doc = 1147;
 }
 
@@ -24,7 +24,7 @@ extend google.protobuf.MethodOptions {
   // ID assigned by protobuf-global-extension-registry@google.com for gRPC-Gateway project.
   ProtoEndpointBinding http = 1146;
 
-	// openapi holds OpenAPI method/operation options.
+	// openapi_operation holds OpenAPI method/operation options.
 	gateway.openapi.Operation openapi_operation = 1147;
 }
 

@@ -263,8 +263,10 @@ type Info struct {
 	// A URL to the Terms of Service for the API. This MUST be in the form of a URL.
 	TermsOfService string `protobuf:"bytes,4,opt,name=terms_of_service,json=termsOfService,proto3" json:"terms_of_service,omitempty"`
 	// The contact information for the exposed API.
+	// See: https://spec.openapis.org/oas/v3.1.0#contact-object
 	Contact *Contact `protobuf:"bytes,5,opt,name=contact,proto3" json:"contact,omitempty"`
 	// The license information for the exposed API.
+	// See: https://spec.openapis.org/oas/v3.1.0#license-object
 	License *License `protobuf:"bytes,6,opt,name=license,proto3" json:"license,omitempty"`
 	// REQUIRED. The version of the OpenAPI document.
 	Version string `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
@@ -2953,8 +2955,15 @@ type Document struct {
 	unknownFields protoimpl.UnknownFields
 
 	// REQUIRED. Provides metadata about the API. The metadata MAY be used by tooling as required.
-	Info       *Info       `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	Servers    []*Server   `protobuf:"bytes,2,rep,name=servers,proto3" json:"servers,omitempty"`
+	// NOTE: A generated value will be used for the required fields if they are left empty.
+	// See: https://spec.openapis.org/oas/v3.1.0#info-object
+	Info    *Info     `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Servers []*Server `protobuf:"bytes,2,rep,name=servers,proto3" json:"servers,omitempty"`
+	// Holds a set of reusable objects for different aspects of the OAS. All objects defined within the
+	// components object will have no effect on the API unless they are explicitly referenced from properties
+	// outside the components object.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#components-object
 	Components *Components `protobuf:"bytes,5,opt,name=components,proto3" json:"components,omitempty"`
 	// A declaration of which security mechanisms can be used across the API. The list of values includes
 	// alternative security requirement objects that can be used. Only one of the security requirement objects
@@ -2967,8 +2976,11 @@ type Document struct {
 	// reflect on their order by the parsing tools. Not all tags that are used by the Operation Object must
 	// be declared. The tags that are not declared MAY be organized randomly or based on the tools’ logic.
 	// Each tag name in the list MUST be unique.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#tag-object
 	Tags []*Tag `protobuf:"bytes,7,rep,name=tags,proto3" json:"tags,omitempty"`
 	// Additional external documentation.
+	// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
 	ExternalDocs *ExternalDocumentation `protobuf:"bytes,8,opt,name=external_docs,json=externalDocs,proto3" json:"external_docs,omitempty"`
 	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.

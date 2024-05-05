@@ -261,7 +261,7 @@ var file_meshapi_gateway_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 
 // Extension fields to descriptorpb.FileOptions.
 var (
-	// openapi holds OpenAPI file options.
+	// openapi_doc holds OpenAPI file options.
 	//
 	// optional meshapi.gateway.openapi.Document openapi_doc = 1147;
 	E_OpenapiDoc = &file_meshapi_gateway_annotations_proto_extTypes[0]
@@ -269,7 +269,7 @@ var (
 
 // Extension fields to descriptorpb.ServiceOptions.
 var (
-	// openapi holds OpenAPI file options.
+	// openapi_service_doc holds OpenAPI file options.
 	//
 	// optional meshapi.gateway.openapi.Document openapi_service_doc = 1147;
 	E_OpenapiServiceDoc = &file_meshapi_gateway_annotations_proto_extTypes[1]
@@ -283,7 +283,7 @@ var (
 	//
 	// optional meshapi.gateway.ProtoEndpointBinding http = 1146;
 	E_Http = &file_meshapi_gateway_annotations_proto_extTypes[2]
-	// openapi holds OpenAPI method/operation options.
+	// openapi_operation holds OpenAPI method/operation options.
 	//
 	// optional meshapi.gateway.openapi.Operation openapi_operation = 1147;
 	E_OpenapiOperation = &file_meshapi_gateway_annotations_proto_extTypes[3]

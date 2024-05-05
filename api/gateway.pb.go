@@ -77,12 +77,11 @@ type EndpointBinding struct {
 
 	// selector is dot separated gRPC service method selector.
 	//
-	// selector string can be configured to be relative if it begins with a '.' character
-	// but this is only supported when using the proto generators and only if a package
-	// can be deduced.
+	// if the selector begins with '~.', the current proto package will be added to the beginning
+	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
+	// config file, this alias cannot be used in the global config file.
 	//
-	// if the selector does not begin with a '.' character, it will be treated as a
-	// fully qualified method name (FQMN).
+	// if the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// Types that are assignable to Pattern:
 	//
@@ -271,6 +270,9 @@ type EndpointBinding_Patch struct {
 
 type EndpointBinding_Custom struct {
 	// custom can be used for custom HTTP methods.
+	//
+	// Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the
+	// generated OpenAPI document.
 	Custom *CustomPattern `protobuf:"bytes,7,opt,name=custom,proto3,oneof"`
 }
 
@@ -462,6 +464,9 @@ type AdditionalEndpointBinding_Patch struct {
 
 type AdditionalEndpointBinding_Custom struct {
 	// custom can be used for custom HTTP methods.
+	//
+	// Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the
+	// generated OpenAPI document.
 	Custom *CustomPattern `protobuf:"bytes,7,opt,name=custom,proto3,oneof"`
 }
 
