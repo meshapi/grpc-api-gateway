@@ -21,18 +21,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// OpenAPIServiceSpec defines configuration for generating OpenAPI documentation for gRPC services.
 type OpenAPIServiceSpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// selector is dot separated gRPC service method selector.
+	// selector is a dot-separated gRPC service method selector.
 	//
-	// if the selector begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with '~.', the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
 	//
-	// if the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
+	// If the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// document can be used to override default values for OpenAPI document files when using the option to generate
 	// OpenAPI files per service.
@@ -102,18 +103,19 @@ func (x *OpenAPIServiceSpec) GetMethods() map[string]*openapi.Operation {
 	return nil
 }
 
+// OpenAPIMessageSpec defines configuration for generating OpenAPI documentation for protobuf messages.
 type OpenAPIMessageSpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// selector is dot separated protobuf message selector.
+	// selector is a dot-separated protobuf message selector.
 	//
-	// if the selector begins with a '.' character, it will be treated as an absolute path.
-	// if it begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with a '.', it will be treated as an absolute path.
+	// If it begins with '~.', the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyMessage`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
-	// if the path does not beging with a '.' or '~.', it will be treated as a relative path and a search
+	// If the path does not begin with a '.' or '~.', it will be treated as a relative path and a search
 	// from the current proto package will be performed in order to find the message.
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// schema controls the OpenAPI v3.1 schema generation for this proto message.
@@ -175,18 +177,19 @@ func (x *OpenAPIMessageSpec) GetFields() map[string]*openapi.Schema {
 	return nil
 }
 
+// OpenAPIEnumSpec defines configuration for generating OpenAPI documentation for protobuf enums.
 type OpenAPIEnumSpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// selector is dot separated protobuf enum selector.
+	// selector is a dot-separated protobuf enum selector.
 	//
-	// if the selector begins with a '.' character, it will be treated as an absolute path.
-	// if it begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with a '.', it will be treated as an absolute path.
+	// If it begins with '~.', the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyEnum`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
-	// if the path does not beging with a '.' or '~.', it will be treated as a relative path and a search
+	// If the path does not begin with a '.' or '~.', it will be treated as a relative path and a search
 	// from the current proto package will be performed in order to find the enum.
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// schema controls the OpenAPI v3.1 schema generation for this proto enum.
@@ -239,6 +242,7 @@ func (x *OpenAPIEnumSpec) GetSchema() *openapi.Schema {
 	return nil
 }
 
+// OpenAPISpec defines the overall OpenAPI documentation configuration.
 type OpenAPISpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -246,17 +250,17 @@ type OpenAPISpec struct {
 
 	// Document is the OpenAPI v3.1 document configuration which controls how the OpenAPI documentation is generated.
 	//
-	// this document can be defined to define a base config for all documents (if in the global config) or the document
+	// This document can be defined to define a base config for all documents (if in the global config) or the document
 	// for the current output target. For instance, when using output mode of "service", each service defined in the
 	// associated proto file inherits this base document and can additionally specify more defaults for its own OpenAPI
 	// document. When defining this in the global config and for specific proto files, the configs get merged together
 	// but the priority is given to the proto document.
 	Document *openapi.Document `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-	// Used to configure OpenAPI v3.1 output for gRPC services.
+	// services is used to configure OpenAPI v3.1 output for gRPC services.
 	Services []*OpenAPIServiceSpec `protobuf:"bytes,2,rep,name=services,proto3" json:"services,omitempty"`
-	// Used to configure OpenAPI v3.1 output for proto messages.
+	// messages is used to configure OpenAPI v3.1 output for protobuf messages.
 	Messages []*OpenAPIMessageSpec `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
-	// Used to configure OpenAPI v3.1 output for proto enums.
+	// enums is used to configure OpenAPI v3.1 output for protobuf enums.
 	Enums []*OpenAPIEnumSpec `protobuf:"bytes,4,rep,name=enums,proto3" json:"enums,omitempty"`
 }
 
@@ -326,7 +330,7 @@ type Config struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// gateway holds gateway configs which.
+	// gateway holds gateway configs.
 	Gateway *GatewaySpec `protobuf:"bytes,1,opt,name=gateway,proto3" json:"gateway,omitempty"`
 	// openapi holds OpenAPI v3.1 configs.
 	Openapi *OpenAPISpec `protobuf:"bytes,2,opt,name=openapi,proto3" json:"openapi,omitempty"`

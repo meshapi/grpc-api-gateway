@@ -75,14 +75,16 @@ type EndpointBinding struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// selector is dot separated gRPC service method selector.
+	// selector is a dot-separated gRPC service method selector.
 	//
-	// if the selector begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with '~.', the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
 	//
-	// if the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
+	// If the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
+	// pattern specifies the HTTP method for this endpoint binding.
+	//
 	// Types that are assignable to Pattern:
 	//
 	//	*EndpointBinding_Get
@@ -94,14 +96,14 @@ type EndpointBinding struct {
 	Pattern isEndpointBinding_Pattern `protobuf_oneof:"pattern"`
 	// body is a request message field selector that will be read via HTTP body.
 	//
-	// value of '*' indicates that the entire request message gets decoded from the body.
-	// default value of ” indicates that no part of the request gets decoded from the body.
+	// '*' indicates that the entire request message gets decoded from the body.
+	// An empty string indicates that no part of the request gets decoded from the body.
 	//
 	// NOTE: Not all methods support HTTP body.
 	Body string `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
 	// response_body is a response message field selector that will be written to HTTP response.
 	//
-	// default value of '*' or ” indicates that the entire response message gets encoded.
+	// '*' or an empty string indicates that the entire response message gets encoded.
 	ResponseBody string `protobuf:"bytes,9,opt,name=response_body,json=responseBody,proto3" json:"response_body,omitempty"`
 	// query_params are explicit query parameter bindings that can be used to rename
 	// or ignore query parameters.
@@ -288,11 +290,14 @@ func (*EndpointBinding_Patch) isEndpointBinding_Pattern() {}
 
 func (*EndpointBinding_Custom) isEndpointBinding_Pattern() {}
 
+// AdditionalEndpointBinding is an additional gRPC method - HTTP endpoint binding specification.
 type AdditionalEndpointBinding struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// pattern specifies the HTTP method for this additional endpoint binding.
+	//
 	// Types that are assignable to Pattern:
 	//
 	//	*AdditionalEndpointBinding_Get
@@ -304,14 +309,14 @@ type AdditionalEndpointBinding struct {
 	Pattern isAdditionalEndpointBinding_Pattern `protobuf_oneof:"pattern"`
 	// body is a request message field selector that will be read via HTTP body.
 	//
-	// value of '*' indicates that the entire request message gets decoded from the body.
-	// default value of ” indicates that no part of the request gets decoded from the body.
+	// '*' indicates that the entire request message gets decoded from the body.
+	// An empty string indicates that no part of the request gets decoded from the body.
 	//
 	// NOTE: Not all methods support HTTP body.
 	Body string `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
 	// response_body is a response message field selector that will be written to HTTP response.
 	//
-	// default value of '*' or ” indicates that the entire response message gets encoded.
+	// '*' or an empty string indicates that the entire response message gets encoded.
 	ResponseBody string `protobuf:"bytes,9,opt,name=response_body,json=responseBody,proto3" json:"response_body,omitempty"`
 	// query_params are explicit query parameter bindings that can be used to rename
 	// or ignore query parameters.
@@ -546,7 +551,7 @@ type QueryParameterBinding struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// selector is a dot separated path to the request message's field.
+	// selector is a dot-separated path to the request message's field.
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// name is the name of the HTTP query parameter that will be used.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -614,7 +619,7 @@ type StreamConfig struct {
 	unknownFields protoimpl.UnknownFields
 
 	// disable_websockets indicates whether or not websockets are allowed for this method.
-	// client must still ask for a connection upgrade.
+	// The client must still ask for a connection upgrade.
 	DisableWebsockets bool `protobuf:"varint,1,opt,name=disable_websockets,json=disableWebsockets,proto3" json:"disable_websockets,omitempty"`
 	// disable_sse indicates whether or not server-sent events are allowed.
 	//
@@ -624,7 +629,7 @@ type StreamConfig struct {
 	DisableSse bool `protobuf:"varint,2,opt,name=disable_sse,json=disableSse,proto3" json:"disable_sse,omitempty"`
 	// disable_chunked indicates whether or not chunked transfer encoding is allowed.
 	//
-	// NOTE: chunked transfer encoding is disabled in HTTP/2 so this option will only be available if request
+	// NOTE: Chunked transfer encoding is disabled in HTTP/2 so this option will only be available if the request
 	// is HTTP/1.
 	DisableChunkedTransfer bool `protobuf:"varint,3,opt,name=disable_chunked_transfer,json=disableChunkedTransfer,proto3" json:"disable_chunked_transfer,omitempty"`
 }

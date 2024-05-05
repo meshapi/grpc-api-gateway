@@ -268,7 +268,7 @@ func Schema(schema *openapi.Schema) (*openapiv3.Schema, error) {
 			Type:             Type(schema.Types),
 			Description:      schema.Description,
 			Default:          schema.Default.AsInterface(),
-			ReadOnly:         schema.ReadyOnly,
+			ReadOnly:         schema.ReadOnly,
 			WriteOnly:        schema.WriteOnly,
 			Format:           schema.Format,
 			Deprecated:       schema.Deprecated,

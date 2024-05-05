@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 option go_package = "github.com/meshapi/grpc-api-gateway/api/openapi";
 
 // Contact information for the exposed API.
+//
 // See: https://spec.openapis.org/oas/v3.1.0#contact-object
 message Contact {
 	// The identifying name of the contact person/organization.
@@ -15,14 +16,15 @@ message Contact {
 	string url = 2;
 	// The email address of the contact person/organization. This MUST be in the form of an email address.
 	string email = 3;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 4;
+	map<string, google.protobuf.Value> extensions = 4;
 }
 
 // License information for the exposed API.
+//
 // See: https://spec.openapis.org/oas/v3.1.0#license-object
 message License {
 	// REQUIRED. The license name used for the API.
@@ -32,15 +34,16 @@ message License {
 	// A URL to the license used for the API. This MUST be in the form of a URL.
 	// The url field is mutually exclusive of the identifier field.
 	string url = 3;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 4;
+	map<string, google.protobuf.Value> extensions = 4;
 }
 
 // Info captures OpenAPI Info object.
 // NOTE: A generated value will be used for the required fields if they are left empty.
+//
 // See: https://spec.openapis.org/oas/v3.1.0#info-object
 message Info {
 	// REQUIRED. The title of the API.
@@ -52,21 +55,25 @@ message Info {
 	// A URL to the Terms of Service for the API. This MUST be in the form of a URL.
 	string terms_of_service = 4;
 	// The contact information for the exposed API.
+	//
 	// See: https://spec.openapis.org/oas/v3.1.0#contact-object
 	Contact contact = 5;
 	// The license information for the exposed API.
+	//
 	// See: https://spec.openapis.org/oas/v3.1.0#license-object
 	License license = 6;
 	// REQUIRED. The version of the OpenAPI document.
 	string version = 7;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 8;
+	map<string, google.protobuf.Value> extensions = 8;
 }
 
 // An object representing a Server Variable for server URL template substitution.
+//
 // See: https://spec.openapis.org/oas/v3.1.0#server-variable-object
 message ServerVariable {
 	// An enumeration of string values to be used if the substitution options are from a limited set.
@@ -80,14 +87,15 @@ message ServerVariable {
 	// An optional description for the server variable.
 	// CommonMark syntax MAY be used for rich text representation.
 	string description = 3;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 4;
+	map<string, google.protobuf.Value> extensions = 4;
 }
 
 // An object representing a Server.
+//
 // See: https://spec.openapis.org/oas/v3.1.0#server-object
 message Server {
 	// REQUIRED. A URL to the target host. This URL supports Server Variables and MAY be relative,
@@ -99,23 +107,15 @@ message Server {
 	string description = 2;
 	// A map between a variable name and its value. The value is used for substitution in the
 	// server’s URL template.
-	map<string,ServerVariable> variables = 3;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	map<string, ServerVariable> variables = 3;
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 4;
+	map<string, google.protobuf.Value> extensions = 4;
 }
 
-// Lists the required security schemes to execute this operation. The name used for each property MUST
-// correspond to a security scheme declared in the Security Schemes under the Components Object.
-//
-// Security Requirement Objects that contain multiple schemes require that all schemes MUST be satisfied
-// for a request to be authorized. This enables support for scenarios where multiple query parameters or
-// HTTP headers are required to convey security information.
-//
-// When a list of Security Requirement Objects is defined on the OpenAPI Object or Operation Object, only
-// one of the Security Requirement Objects in the list needs to be satisfied to authorize the request.
+// Lists the required security schemes to execute this operation.
 //
 // See: https://spec.openapis.org/oas/v3.1.0#security-requirement-object
 message SecurityRequirement {
@@ -136,15 +136,14 @@ message ExternalDocumentation {
 	string description = 1;
 	// REQUIRED. The URL for the target documentation. This MUST be in the form of a URL.
 	string url = 2;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 3;
+	map<string, google.protobuf.Value> extensions = 3;
 }
 
-// Adds metadata to a single tag that is used by the Operation Object. It is not mandatory to have a Tag Object
-// per tag defined in the Operation Object instances.
+// Adds metadata to a single tag that is used by the Operation Object.
 //
 // See: https://spec.openapis.org/oas/v3.1.0#tag-object
 message Tag {
@@ -153,12 +152,14 @@ message Tag {
 	// A description for the tag. CommonMark syntax MAY be used for rich text representation.
 	string description = 2;
 	// Additional external documentation for this tag.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
 	ExternalDocumentation external_docs = 3;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 4;
+	map<string, google.protobuf.Value> extensions = 4;
 }
 
 // See: https://spec.openapis.org/oas/latest.html#discriminator-object
@@ -166,14 +167,15 @@ message Discriminator {
 	// REQUIRED. The name of the property in the payload that will hold the discriminator value.
 	string property_name = 1;
 	// An object to hold mappings between payload values and schema names or references.
-	map<string,string> mapping = 2;
-	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
+	map<string, string> mapping = 2;
+	// Extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
 	// standard OpenAPI specification.
 	//
 	// See: https://spec.openapis.org/oas/latest.html#specification-extensions
-  map<string, google.protobuf.Value> extensions = 3;
+	map<string, google.protobuf.Value> extensions = 3;
 }
 
+// Enum for the data type of a schema.
 enum SchemaDataType {
 	UNKNOWN = 0;
 	ARRAY = 1;
@@ -190,27 +192,30 @@ enum SchemaDataType {
 message FieldConfiguration {
 	// Alternative parameter name when used as path parameter. If set, this will
 	// be used as the complete parameter name when this field is used as a path
-	// parameter. Use this to avoid having auto generated path parameter names
+	// parameter. Use this to avoid having auto-generated path parameter names
 	// for overlapping paths.
 	string path_param_name = 1;
 
-	// requried marks this field as required.
+	// Marks this field as required.
 	bool required = 2;
 }
 
-// Schema is a representation of OpenAPI v3.1 specification's Schema object.
+// Schema represents an OpenAPI v3.1 Schema object, providing a structured definition for data types used in the API.
 //
-// See: https://spec.openapis.org/oas/v3.1.0#schema-object
+// For detailed information on the Schema object, refer to the OpenAPI Specification:
+// https://spec.openapis.org/oas/v3.1.0#schema-object
 message Schema {
-	// Adds support for polymorphism. The discriminator is an object name that is used to
-	// differentiate between other schemas which may satisfy the payload description.
+	// Adds support for polymorphism by specifying a discriminator object name that differentiates between schemas.
 	//
 	// See: https://spec.openapis.org/oas/v3.1.0#discriminator-object
 	Discriminator discriminator = 1;
-	reserved 2; // XML
-	// Additional external documentation.
+	// Reserved field for XML representation (not used in gRPC API Gateway OpenAPI objects).
+	reserved 2;
+	// Additional external documentation related to this schema.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
 	ExternalDocumentation external_docs = 3;
-	// extra can be used to add any other field in the schema. Since OpenAPI v3.1 arbitrary fields can be
+	// Extra can be used to add any other field in the schema. Since OpenAPI v3.1 arbitrary fields can be
 	// used in the schema objects. This field can be utilized to add those extra fields. Some of the JSON schema
 	// validation properties or core properties that are not captured as part of the gRPC REST Gateway OpenAPI
 	// objects.
@@ -225,35 +230,24 @@ message Schema {
 	//
 	// NOTE: This reference will only be honored when used in top-level schemas in responses only.
 	string ref = 5;
-	// config is additional schema config related to OpenAPI doc generation.
+	// Configuration related to schema generation for OpenAPI documentation.
 	FieldConfiguration config = 6;
 
-	// The "$schema" keyword is both used as a JSON Schema dialect
-	// identifier and as the identifier of a resource which is itself a JSON
-  // Schema, which describes the set of valid schemas written for this
-  // particular dialect.
-	//
-  // The value of this keyword MUST be a URI [RFC3986] (containing a scheme) and this URI MUST be normalized.
-	// The current schema MUST be valid against the meta-schema identified by this URI. 
-	//
+	// The "$schema" keyword is used to identify the schema dialect and its associated URI for validation.
+	// 
 	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-the-schema-keyword
 	string schema = 10;
-  // The title of the schema.
+	// The title of the schema.
 	string title = 11;
-	// The value of this keyword MUST be a string. This string SHOULD be a valid regular expression,
-	// according to the ECMA 262 regular expression dialect.
-	//
-	// A string instance is considered valid if the regular expression matches the instance successfully.
-	// Recall: regular expressions are not implicitly anchored.
-	//
+	// A regular expression pattern that the schema value should match.
 	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.3.3
-  string pattern = 12;
-	// required is a list of property names that are required in this schema.
-  repeated string required = 13;
-  // Items in enum must be unique
+	string pattern = 12;
+	// A list of property names that are required in this schema.
+	repeated string required = 13;
+	// An array of unique values for enum validation.
 	//
 	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-6.1.2
-  repeated string enum = 14;
+	repeated string enum = 14;
 	// The value of "multipleOf" MUST be a number, strictly greater than 0.
 	// A numeric instance is valid only if division by this keyword's value results in an integer.
 	// 
@@ -301,13 +295,15 @@ message Schema {
 	// a list of values. For simplicity of structure, types is always a list but if it contains only one
 	// item, in the generated file, it will be a single string and not a list.
 	repeated SchemaDataType types = 27;
-  // Supports CommonMark syntax for rich text representation.
+	// A description of the schema using CommonMark syntax.
 	string description = 28;
 
+	// Represents a list of schemas for array validation or for object properties.
 	message SchemaList {
 		repeated Schema items = 1;
 	}
 
+	// Represents an item in a SchemaList, which can be a schema or another SchemaList.
 	message Item {
 		oneof value {
 			Schema schema = 1;
@@ -315,75 +311,67 @@ message Schema {
 		}
 	}
 
-	// The value of "items" MUST be either a valid JSON Schema or an array of valid JSON Schemas.
-	// This keyword determines how child instances validate for arrays, and does not directly validate
-	// the immediate instance itself.
-	// If "items" is a schema, validation succeeds if all elements in the array successfully
-	// validate against that schema.
-	// If "items" is an array of schemas, validation succeeds if each element of the instance
-	// validates against the schema at the same position, if any.
-	// Omitting this keyword has the same behavior as an empty schema.
+	// The items keyword specifies the schema for items in an array.
 	Item items = 29;
-	// This keyword determines how child instances validate for objects,
-	// and does not directly validate the immediate instance itself.
-	//
-	// Validation succeeds if, for each name that appears in both the instance and as a name
-	// within this keyword's value, the child instance for that name successfully validates
-	// against the corresponding schema.
+	// The properties keyword specifies the schema for properties in an object.
 	//
 	// Defining any property here for proto messages merges them with the automatically generated ones.
-  map<string, Schema> properties = 30;
-  // This keyword determines how child instances validate for objects, and does not directly validate
-	// the immediate instance itself.
-	//
-	// Validation with "additionalProperties" applies only to the child values of instance names that do
-	// not match any names in "properties", and do not match any regular expression in "patternProperties".
-	//
-	// For all such properties, validation succeeds if the child instance validates against
-	// the "additionalProperties" schema.
-  Schema additional_properties = 31;
-	// There is no restriction placed on the value of this keyword.
-	// This keyword can be used to supply a default JSON value associated with a particular schema.
+	map<string, Schema> properties = 30;
+	// The additionalProperties keyword specifies the schema for additional properties in an object.
+	Schema additional_properties = 31;
+	// The default keyword provides a default JSON value associated with the schema.
 	google.protobuf.Value default = 32;
+	// The allOf keyword specifies that an instance must validate against all the schemas defined in the array.
+	//
 	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-allof
 	repeated Schema all_of = 33;
+	// The anyOf keyword specifies that an instance must validate against at least one of the schemas defined in the array.
+	//
 	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-anyof
 	repeated Schema any_of = 34;
+	// The oneOf keyword specifies that an instance must validate against exactly one of the schemas defined in the array.
+	//
 	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-oneof
 	repeated Schema one_of = 35;
+	// The not keyword specifies that an instance must not validate against the schema defined.
+	//
 	// See: https://json-schema.org/draft/2020-12/json-schema-core#name-not
 	Schema not = 36;
+	// The readOnly keyword specifies that a property is read-only.
+	//
 	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.4
-	bool ready_only = 37;
+	bool read_only = 37;
+	// The writeOnly keyword specifies that a property is write-only.
+	//
 	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.4
 	bool write_only = 38;
+	// Examples of valid instances for the schema.
+	//
 	// See: https://json-schema.org/draft/2020-12/json-schema-validation#section-9.5
-  repeated google.protobuf.Value examples = 39;
-  // Structural validation alone may be insufficient to validate that an instance meets all
-	// the requirements of an application. The "format" keyword is defined to allow interoperable
-	// semantic validation for a fixed subset of values which are accurately described by authoritative
-	// resources, be they RFCs or other external specifications.
+	repeated google.protobuf.Value examples = 39;
+	// The format keyword specifies a predefined format for the schema value.
 	//
 	// See: https://json-schema.org/draft-06/json-schema-validation#rfc.section.8
-  string format = 40;
+	string format = 40;
+	// The deprecated keyword specifies that the schema is deprecated.
+	//
 	// See: https://datatracker.ietf.org/doc/html/draft-bhutton-json-schema-validation-00#section-9.3
 	bool deprecated = 41;
 }
 
-// A simple object to allow referencing other components in the OpenAPI document, internally and externally.
-//
-// See: https://spec.openapis.org/oas/latest.html#reference-object
+// Reference allows referencing other components in the OpenAPI document, both internally and externally.
+// For detailed information on the Reference object, refer to the OpenAPI Specification:
+// https://spec.openapis.org/oas/latest.html#reference-object
 message Reference {
 	// REQUIRED. The reference identifier. This MUST be in the form of a URI.
-	// For proto messages, a fully qualified message name can be used
-	// (relative links are allowed where proto file is deduced).
+	// For proto messages, a fully qualified message name can be used (relative links are allowed where proto file is deduced).
 	//
 	// Example: ".google.protobuf.Timestamp"
 	string uri = 1;
-	// A short summary which by default SHOULD override that of the referenced component.
+	// A short summary that, by default, SHOULD override that of the referenced component.
 	// If the referenced object-type does not allow a summary field, then this field has no effect.
 	string summary = 2;
-	// A description which by default SHOULD override that of the referenced component.
+	// A description that, by default, SHOULD override that of the referenced component.
 	// CommonMark syntax MAY be used for rich text representation.
 	// If the referenced object-type does not allow a description field, then this field has no effect.
 	string description = 3;
@@ -776,6 +764,8 @@ message Operation {
 	// A verbose explanation of the operation behavior. CommonMark syntax MAY be used for rich text representation.
 	string description = 3;
 	// Additional external documentation for this operation.
+	//
+	// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
 	ExternalDocumentation external_docs = 4;
 	// Override the operation ID, if left unset, a default value will be provided.
 	string operation_id = 5;
@@ -848,8 +838,14 @@ message DocumentConfiguration {
 message Document {
 	// REQUIRED. Provides metadata about the API. The metadata MAY be used by tooling as required.
 	// NOTE: A generated value will be used for the required fields if they are left empty.
+	//
 	// See: https://spec.openapis.org/oas/v3.1.0#info-object
 	Info info = 1;
+	// An array of Server Objects, which provide connectivity information to a target server.
+	// If the servers property is not provided, or is an empty array,
+	// the default value would be a Server Object with a url value of /.
+	//
+	// See: https://spec.openapis.org/oas/latest.html#server-object
 	repeated Server servers = 2;
 	reserved 3; // reserved for webhooks which are currently not supported.
 	reserved 4; // reserved for paths. At the moment, custom paths are not allowed.
@@ -874,6 +870,7 @@ message Document {
 	// See: https://spec.openapis.org/oas/v3.1.0#tag-object
 	repeated Tag tags = 7;
 	// Additional external documentation.
+	//
 	// See: https://spec.openapis.org/oas/v3.1.0#external-documentation-object
 	ExternalDocumentation external_docs = 8;
 	// extensions that start with "x-" such as "x-foo" used to describe extra functionality that is not covered by
