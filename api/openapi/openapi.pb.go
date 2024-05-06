@@ -1551,7 +1551,7 @@ type Link_OperationId struct {
 	// The name of an existing, resolvable OAS operation, as defined with a unique operationId.
 	// This field is mutually exclusive of the operationRef field.
 	//
-	// NOTE: If a path (relative or absolute) to another service method is used, that operation ID will be substituded.
+	// NOTE: If a path (relative or absolute) to another service method is used, that operation ID will be substituted.
 	//
 	//	Example: ".google.protobuf.Timestamp"
 	OperationId string `protobuf:"bytes,3,opt,name=operation_id,json=operationId,proto3,oneof"`

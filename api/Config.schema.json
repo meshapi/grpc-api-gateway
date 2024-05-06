@@ -70,35 +70,75 @@
             },
             "additionalProperties": false,
             "type": "object",
-            "oneOf": [
+            "allOf": [
                 {
-                    "required": [
-                        "get"
-                    ]
-                },
-                {
-                    "required": [
-                        "put"
-                    ]
-                },
-                {
-                    "required": [
-                        "post"
-                    ]
-                },
-                {
-                    "required": [
-                        "delete"
-                    ]
-                },
-                {
-                    "required": [
-                        "patch"
-                    ]
-                },
-                {
-                    "required": [
-                        "custom"
+                    "oneOf": [
+                        {
+                            "not": {
+                                "anyOf": [
+                                    {
+                                        "required": [
+                                            "get"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "put"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "post"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "delete"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "patch"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "custom"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "required": [
+                                "get"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "put"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "post"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "delete"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "patch"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "custom"
+                            ]
+                        }
                     ]
                 }
             ],
@@ -183,35 +223,75 @@
             },
             "additionalProperties": false,
             "type": "object",
-            "oneOf": [
+            "allOf": [
                 {
-                    "required": [
-                        "get"
-                    ]
-                },
-                {
-                    "required": [
-                        "put"
-                    ]
-                },
-                {
-                    "required": [
-                        "post"
-                    ]
-                },
-                {
-                    "required": [
-                        "delete"
-                    ]
-                },
-                {
-                    "required": [
-                        "patch"
-                    ]
-                },
-                {
-                    "required": [
-                        "custom"
+                    "oneOf": [
+                        {
+                            "not": {
+                                "anyOf": [
+                                    {
+                                        "required": [
+                                            "get"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "put"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "post"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "delete"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "patch"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "custom"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "required": [
+                                "get"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "put"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "post"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "delete"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "patch"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "custom"
+                            ]
+                        }
                     ]
                 }
             ],
@@ -1059,7 +1139,7 @@
                 },
                 "operation_id": {
                     "type": "string",
-                    "description": "The name of an existing, resolvable OAS operation, as defined with a unique operationId. This field is mutually exclusive of the operationRef field. NOTE: If a path (relative or absolute) to another service method is used, that operation ID will be substituded. \tExample: \".google.protobuf.Timestamp\""
+                    "description": "The name of an existing, resolvable OAS operation, as defined with a unique operationId. This field is mutually exclusive of the operationRef field. NOTE: If a path (relative or absolute) to another service method is used, that operation ID will be substituted. \tExample: \".google.protobuf.Timestamp\""
                 },
                 "parameters": {
                     "additionalProperties": {
@@ -1144,15 +1224,35 @@
             },
             "additionalProperties": false,
             "type": "object",
-            "oneOf": [
+            "allOf": [
                 {
-                    "required": [
-                        "operation_ref"
-                    ]
-                },
-                {
-                    "required": [
-                        "operation_id"
+                    "oneOf": [
+                        {
+                            "not": {
+                                "anyOf": [
+                                    {
+                                        "required": [
+                                            "operation_ref"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "operation_id"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "required": [
+                                "operation_ref"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "operation_id"
+                            ]
+                        }
                     ]
                 }
             ],
@@ -1858,15 +1958,35 @@
             },
             "additionalProperties": false,
             "type": "object",
-            "oneOf": [
+            "allOf": [
                 {
-                    "required": [
-                        "schema"
-                    ]
-                },
-                {
-                    "required": [
-                        "list"
+                    "oneOf": [
+                        {
+                            "not": {
+                                "anyOf": [
+                                    {
+                                        "required": [
+                                            "schema"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "list"
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "required": [
+                                "schema"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "list"
+                            ]
+                        }
                     ]
                 }
             ],
