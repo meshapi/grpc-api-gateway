@@ -35,8 +35,6 @@ func (s *ServeMux) PopulateQueryParameters(msg proto.Message, values url.Values,
 
 // DefaultQueryParser is a QueryParameterParser which implements the default
 // query parameters parsing behavior.
-//
-// See https://github.com/grpc-ecosystem/grpc-gateway/issues/2632 for more context.
 type DefaultQueryParser struct{}
 
 // Parse populates "values" into "msg".
