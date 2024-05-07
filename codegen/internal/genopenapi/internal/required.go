@@ -1,5 +1,7 @@
 package internal
 
+import "sort"
+
 type RequiredSet map[string]struct{}
 
 func RequiredSetFromSlice(values []string) RequiredSet {
@@ -34,5 +36,6 @@ func RequiredSliceFromRequiredSet(requiredSet RequiredSet) []string {
 		result = append(result, key)
 	}
 
+	sort.Strings(result)
 	return result
 }

@@ -479,7 +479,8 @@ func (s *Session) renderQueryParameter(param *descriptor.QueryParameter) (*opena
 		parameter.Object.Schema = fieldCustomization.Schema
 	}
 
-	if fieldCustomization.Required {
+	// field necessity settings.
+	if fieldCustomization.Required || s.fieldIsDeemedRequired(field) {
 		parameter.Object.Required = true
 	}
 
