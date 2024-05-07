@@ -636,7 +636,7 @@ func (g *Generator) makeFieldSchemaNullable(schema *openapiv3.Schema) {
 // fieldIsDeemedRequired uses the field required mode option to determine if the current field should be deemed requried
 // or not.
 func (g *Generator) fieldIsDeemedRequired(field *descriptor.Field) bool {
-	if g.FieldRequiredMode == FieldRequiredModeDisabled {
+	if g.FieldRequiredMode == FieldRequiredModeDisabled || field.OneofIndex != nil {
 		return false
 	}
 

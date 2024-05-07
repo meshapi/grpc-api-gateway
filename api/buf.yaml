@@ -1,0 +1,8 @@
+version: v1
+name: buf.build/meshapi/grpc-api-gateway
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - BASIC

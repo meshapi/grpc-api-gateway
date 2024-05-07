@@ -1,8 +1,8 @@
 syntax = "proto2";
 
-package grpc.gateway.runtime.internal.examplepb;
+package grpc.gateway.internal.examplepb;
 
-option go_package = "github.com/grpc-ecosystem/grpc-gateway/v2/runtime/internal/examplepb";
+option go_package = "github.com/meshapi/grpc-api-gateway/internal/examplepb";
 
 message Proto2Message {
   optional float float_value = 42;
