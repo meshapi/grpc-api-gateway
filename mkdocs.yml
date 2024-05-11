@@ -1,0 +1,36 @@
+site_name: gRPC API Gateway
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+theme:
+  name: material
+  logo: assets/squid.png
+  favicon: assets/squid.png
+  features:
+    - navigation.instant
+    - navigation.tracking
+
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: teal
+      accent: deep purple
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
