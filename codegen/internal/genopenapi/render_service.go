@@ -201,7 +201,9 @@ func (s *Session) renderRequestBody(binding *descriptor.Binding) (*openapiv3.Ref
 			}
 			schema = fieldSchema
 		} else {
-			_, bodyFilter = bodyFilter.HasString(binding.Body.FieldPath.String())
+			if bodyFilter != nil {
+				_, bodyFilter = bodyFilter.HasString(binding.Body.FieldPath.String())
+			}
 			nestedBody, err := s.registry.LookupMessage(requestBody.FQMN(), field.GetTypeName())
 			if err != nil {
 				return nil, fmt.Errorf("failed to look up %q: %w", field.GetTypeName(), err)
