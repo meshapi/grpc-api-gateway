@@ -1,14 +1,34 @@
 site_name: gRPC API Gateway
+site_url: https://meshapi.github.com/grpc-api-gateway
+site_author: Peyman Mortazavi
+site_description: Documentation for the gRPC API Gateway (https://github.com/meshapi/grpc-api-gateway).
+repo_name: meshapi/grpc-api-gateway
+repo_url: https://github.com/meshapi/grpc-api-gateway
 
 markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
-  - pymdownx.tabbed
+  - pymdownx.tabbed:
+      alternate_style: true
   - attr_list
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - tables
+  - pymdownx.emoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
+nav:
+  - Introduction:
+    - index.md
+  - installation.md
+  - Quickstart Demo:
+    - quickstart/intro.md
+    - quickstart/generation.md
+  - reference.md
 
 theme:
   name: material
@@ -17,6 +37,12 @@ theme:
   features:
     - navigation.instant
     - navigation.tracking
+    - navigation.path
+    - navigation.indexes 
+    - navigation.tabs
+    - navigation.expand
+    - content.tabs.link
+    - content.code.copy
 
   palette:
     # Palette toggle for light mode
