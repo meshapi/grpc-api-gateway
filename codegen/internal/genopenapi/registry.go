@@ -341,7 +341,7 @@ func (g *Generator) getSchemaForMessage(protoPackage, fqmn string) (internal.Ope
 
 func (g *Generator) tagsForService(service *descriptor.Service) ([]*openapiv3.Tag, error) {
 	opts, ok := g.services[service.FQSN()]
-	if ok {
+	if ok && opts.Document != nil {
 		tags, err := openapimap.Tags(opts.Document.Tags)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map tags: %w", err)
