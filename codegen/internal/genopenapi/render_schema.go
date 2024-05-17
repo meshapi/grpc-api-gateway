@@ -135,7 +135,7 @@ func (g *Generator) renderComment(location *descriptorpb.SourceCodeInfo_Location
 		}
 	}
 
-	return builder.String()
+	return strings.TrimSpace(builder.String())
 }
 
 func (g *Generator) renderEnumComment(enum *descriptor.Enum, values []string) (string, error) {

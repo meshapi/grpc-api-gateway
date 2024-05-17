@@ -28,6 +28,8 @@ nav:
   - Quickstart Demo:
     - quickstart/intro.md
     - quickstart/generation.md
+    - quickstart/http_binding.md
+    - quickstart/openapi.md
   - reference.md
 
 theme:
@@ -43,6 +45,7 @@ theme:
     - navigation.expand
     - content.tabs.link
     - content.code.copy
+    - content.code.annotate 
 
   palette:
     # Palette toggle for light mode

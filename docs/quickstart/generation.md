@@ -6,7 +6,7 @@ In this page, we will generate and implement a simple gRPC service. In the follo
 
 For the sake of this quick tour, let's create the following proto file.
 
-```proto title="echo_service.proto"
+```proto title="echo_service.proto" linenums="1"
 syntax = "proto3";
 
 package echo;
@@ -23,6 +23,7 @@ message EchoResponse {
 }
 
 service EchoService {
+    // Echo returns the received text and make it louder too!
     rpc Echo(EchoRequest) returns (EchoResponse);
 }
 ```
@@ -38,7 +39,7 @@ If you decide to use Buf, follow the instructions below or go to the `protoc` ta
 
     Let's create a buf.gen.yaml with the following content:
 
-    ```yaml title="buf.gen.yaml"
+    ```yaml title="buf.gen.yaml" linenums="1"
     version: v1
     plugins:
       - out: gen
@@ -88,7 +89,7 @@ $ go mod init demo
 
 The following `main.go` implements the Echo service and starts a gRPC server on port `40000`:
 
-```go title="main.go"
+```go title="main.go" linenums="1"
 package main
 
 import (
