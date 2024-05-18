@@ -104,3 +104,21 @@ release:
     - "proto"
   extra_files:
     - glob: 'grpc_api_gateway_proto.tar.gz'
+
+aurs:
+  - name: protoc-gen-grpc-api-gateway-bin
+    homepage: https://meshapi.github.com/grpc-api-gateway
+    description: Protoc plug-ings for generating reverse proxy code translating HTTP to gRPC.
+    maintainers:
+      - "Peyman Mortazavi <pey.mortazavi@gmail.com>"
+    contributors:
+      - "Peyman Mortazavi <pey.mortazavi@gmail.com>"
+    license: "GPL-3.0"
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: ""
+    provides:
+      - "protoc-gen-openapiv3"
+      - "protoc-gen-grpc-api-gateway"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com

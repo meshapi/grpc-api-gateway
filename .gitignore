@@ -33,6 +33,7 @@ examples/internal/gen/*
 
 # Logs
 log.txt
+tasks.txt
 
 dist/
 grpc_api_gateway_proto.tar.gz
