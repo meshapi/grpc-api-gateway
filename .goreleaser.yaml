@@ -1,0 +1,106 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 1
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+builds:
+  - id: 'protoc-gen-grpc-api-gateway'
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    main: './cmd/protoc-gen-grpc-api-gateway'
+    binary: 'protoc-gen-grpc-api-gateway'
+    dir: codegen
+
+  - id: 'protoc-gen-openapiv3'
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    main: './cmd/protoc-gen-openapiv3'
+    binary: 'protoc-gen-openapiv3'
+    dir: codegen
+
+upx:
+  - compress: best
+    lzma: true
+    enabled: true
+    ids:
+      - "protoc-gen-grpc-api-gateway"
+      - "protoc-gen-openapiv3"
+    goos:
+      - "linux"
+    goarch:
+      - "arm"
+      - "amd64"
+    goamd64:
+      - "v1"
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+nfpms:
+  - id: protoc-gen-grpc-api-gateway
+    package_name: protoc-gen-grpc-api-gateway
+    vendor: Mesh API
+    maintainer: Peyman Mortazavi <pey.mortazavi@gmail.com>
+    description: Protoc plug-ings for generating reverse proxy code translating HTTP to gRPC.
+    license: GPL-3.0
+    formats:
+      - apk
+      - deb
+      - rpm
+      - archlinux
+    builds:
+      - "protoc-gen-grpc-api-gateway"
+      - "protoc-gen-openapiv3"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: meshapi
+    name: grpc-api-gateway
+  mode: keep-existing
+  draft: true
+  replace_existing_draft: true
+  replace_existing_artifacts: true
+  ids:
+    - "default"
+    - "proto"
+  extra_files:
+    - glob: 'grpc_api_gateway_proto.tar.gz'

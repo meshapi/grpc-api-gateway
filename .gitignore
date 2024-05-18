@@ -33,3 +33,5 @@ examples/internal/gen/*
 
 # Logs
 log.txt
+
+dist/
