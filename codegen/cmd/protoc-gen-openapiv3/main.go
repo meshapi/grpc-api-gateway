@@ -36,7 +36,7 @@ func main() {
 	genlog.SetLevel(logLevel)
 
 	if *showVersion {
-		fmt.Printf("Version v0.1.0\n")
+		fmt.Printf("Version v0.0.1\n")
 		os.Exit(0)
 	}
 
