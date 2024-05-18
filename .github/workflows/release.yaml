@@ -37,4 +37,4 @@ jobs:
           name: grpc-api-gateway
           path: dist/*
         env:
-          AUR_KEY: ${{ secrets. AUR_KEY }}
+          AUR_KEY: ${{ secrets.AUR_KEY }}
