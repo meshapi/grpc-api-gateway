@@ -115,7 +115,7 @@ aurs:
       - "Peyman Mortazavi <pey.mortazavi@gmail.com>"
     license: "GPL-3.0"
     private_key: "{{ .Env.AUR_KEY }}"
-    git_url: ""
+    git_url: "ssh://aur@aur.archlinux.org/protoc-gen-grpc-api-gateway-bin.git"
     provides:
       - "protoc-gen-openapiv3"
       - "protoc-gen-grpc-api-gateway"
