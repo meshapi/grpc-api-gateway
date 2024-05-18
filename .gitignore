@@ -35,3 +35,4 @@ examples/internal/gen/*
 log.txt
 
 dist/
+grpc_api_gateway_proto.tar.gz
