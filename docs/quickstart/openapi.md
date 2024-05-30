@@ -5,7 +5,7 @@ However, we might like to change a few things in this document.
 
 In this page we will customize our OpenAPI document for this `Echo` service.
 
-Refer to [Reference](/reference) to learn more about all of the customizations.
+Refer to [Reference](/grpc-api-gateway/reference/intro) to learn more about all of the customizations.
 
 Similar to defining HTTP bindings, you can opt to use the annotations and directly define options in the proto
 files or use configuration files.

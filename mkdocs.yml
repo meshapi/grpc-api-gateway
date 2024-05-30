@@ -30,7 +30,11 @@ nav:
     - quickstart/generation.md
     - quickstart/http_binding.md
     - quickstart/openapi.md
-  - reference.md
+  - Reference:
+    - reference/intro.md
+    - reference/configuration.md
+    - Gateway:
+      - reference/grpc/cli.md
 
 theme:
   name: material

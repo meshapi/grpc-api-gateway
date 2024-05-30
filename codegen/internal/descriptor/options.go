@@ -44,7 +44,7 @@ func (g *GatewayFileLoadOptions) addFlags(flags *flag.FlagSet) {
 		&g.GlobalGatewayConfigFile,
 		"gateway_config",
 		g.GlobalGatewayConfigFile,
-		"(optional) path to the gateway config file that gets loaded first.")
+		"specifies the path to the global gateway config file that is loaded first. This file can contain bindings for any service.")
 
 	flags.StringVar(
 		&g.FilePattern,
@@ -91,5 +91,5 @@ func (r *RegistryOptions) AddFlags(flags *flag.FlagSet) {
 
 	flag.BoolVar(
 		&r.AllowDeleteBody, "allow_delete_body", r.AllowDeleteBody,
-		"unless set, HTTP DELETE methods may not have a body")
+		"by default, HTTP DELETE methods may not include a body unless explicitly specified.")
 }

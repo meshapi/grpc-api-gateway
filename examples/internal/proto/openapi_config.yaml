@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=/home/peyman/projects/meshapi/grpc-api-gateway/api/Config.schema.json
 openapi:
   document:
     info:

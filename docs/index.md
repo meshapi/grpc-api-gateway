@@ -18,13 +18,13 @@ In essence, gRPC Gateway streamlines the exposure of gRPC services to clients th
 
 ## Rationale
 
+This project aims to implement features that the [gRPC Gateway](https://grpc-ecosystem.github.io/grpc-gateway) project does not plan to cover. These include bidirectional streaming APIs, dynamic reverse proxy capabilities, and full support for OpenAPI v3.1 specification. These additions enhance the versatility and power of the gRPC API Gateway, providing users with a comprehensive solution for their API gateway needs.
+
 :heart: Inspiration and Gratitude:
 This project is deeply inspired by the widely recognized [gRPC Gateway](https://grpc-ecosystem.github.io/grpc-gateway).
 Building upon its established and stable implementation has enabled rapid development of similar features,
 allowing us to focus on introducing new functionality.
 We extend our sincere thanks to the creators of the gRPC Gateway for laying the foundation.
-
-This project aims to implement features that the gRPC Gateway project does not plan to cover. These include bidirectional streaming APIs, dynamic reverse proxy capabilities, and full support for OpenAPI v3.1 specification. These additions enhance the versatility and power of the gRPC API Gateway, providing users with a comprehensive solution for their API gateway needs.
 
 ## Key Differences
 

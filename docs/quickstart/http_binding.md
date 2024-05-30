@@ -7,7 +7,7 @@ To do this, we need to define gRPC method to HTTP endpoint bindings.
 
 Generally this can be either via gRPC API Gateway proto extensions or via a configuration file.
 
-The way configurations get loaded can be heavily customized. Refer to [Reference](/reference) to learn more.
+The way configurations get loaded can be heavily customized. Refer to [Configuration](/grpc-api-gateway/reference/configuration) to learn more.
 The default behavior is that for any proto file `file.proto`, files `file_gateway.yaml`, `file_gateway.yml` and `file_gateway.json` will be tried in order. If any file is available, it will be consumed.
 
 It is a matter of personal preference to choose the method that works best for you and your project.
