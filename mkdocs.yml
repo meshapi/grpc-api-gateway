@@ -35,6 +35,8 @@ nav:
     - reference/configuration.md
     - Gateway:
       - reference/grpc/cli.md
+    - OpenAPI:
+      - reference/openapi/cli.md
 
 theme:
   name: material

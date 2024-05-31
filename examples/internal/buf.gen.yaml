@@ -11,6 +11,7 @@ plugins:
     opt:
       - 'paths=source_relative'
       - 'config_search_path=proto'
+      - 'generate_local=true'
   - out: gen
     name: openapiv3
     opt:

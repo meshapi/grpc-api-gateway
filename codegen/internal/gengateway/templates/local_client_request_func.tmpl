@@ -41,32 +41,31 @@
 {{- if .HasRepeatedEnumPathParam}}
 		es []int32
 {{- end}}
-		ok bool
 		err error
 		_ = err
 	)
 	{{$binding := .}}
 	{{range $param := .PathParameters}}
 	{{$enum := $binding.LookupEnum $param}}
-	val, ok = pathParams[{{$param | printf "%q"}}]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", {{$param | printf "%q"}})
+	val = pathParams.ByName({{$param | printf "%q"}})
+	if val == "" {
+		return nil, metadata, gateway.ErrPathParameterMissing{Name: {{$param | printf "%q"}}}
 	}
 {{if $param.IsNestedProto3}}
 	err = protopath.PopulateFieldFromPath(&protoReq, {{$param | printf "%q"}}, val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		return nil, metadata, gateway.ErrPathParameterTypeMismatch{Err: err, Name: {{$param | printf "%q"}}}
 	}
 	{{if $enum}}
 		e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 		if err != nil {
-			return nil, metadata, status.Errorf(codes.InvalidArgument, "could not parse path as enum value, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+			return nil, metadata, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}}
 		}
 	{{end}}
 {{else if $enum}}
 	e{{if $param.IsRepeated}}s{{end}}, err = {{$param.ConvertFuncExpr}}(val{{if $param.IsRepeated}}, {{$binding.RepeatedPathParamSeparator.Separator | printf "%c" | printf "%q"}}{{end}}, {{$enum.GoType  $param.Method.Service.File.GoPkg.Path | camelIdentifier}}_value)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", {{$param | printf "%q"}}, err)
+		return nil, metadata, gateway.ErrPathParameterInvalidEnum{Err: err, Name: {{$param | printf "%q"}}}
 	}
 {{else}}
 	{{- $protoReq := $param.AssignableExprPrep "protoReq" $binding.Method.Service.File.GoPkg.Path -}}
