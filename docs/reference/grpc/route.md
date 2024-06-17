@@ -10,14 +10,14 @@ Represents an HTTP endpoint(s) to gRPC method binding.
 
 | <div style="width:110px">Field Name</div> | Type | Description |
 | --- | --- | --- |
-| [`<http-method>*`](#http-method-route) | [RoutePattern](#routepattern) | defines route for an HTTP method, method name can be `get`, `post`, `put`, `delete` or `patch`. |
-| custom | [CustomPattern](#routepattern) | custom can be used for custom HTTP methods.<br>Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the generated OpenAPI document.</br> |
+| [`<http-method>*`](#http-method-route) | [RoutePattern](#routepattern) | Defines route for an HTTP method, method name can be `get`, `post`, `put`, `delete` or `patch`. |
+| custom | [CustomPattern](#routepattern) | Can be used for custom HTTP methods.<br>Not all HTTP methods are supported in OpenAPI specification and will not be included in the generated OpenAPI document.</br> |
 | body | string | (Default: `''`)<br>request message field selector that will be read via HTTP body.</br>- `'*'` indicates that the entire request message gets decoded from the body.<br>- An empty string indicates that no part of the request gets decoded from the body.</br> |
-| response_body | string | response message field selector that will be written to HTTP response.<br>`'*'` or an empty string indicates that the entire response message gets encoded.</br> |
-| query_params | [QueryParameterBinding](#routepattern) | explicit query parameter bindings that can be used to rename or ignore query parameters. |
-| additional_bindings | \[[AdditionalEndpointBinding](#routepattern)\] | additional HTTP bindings for the same gRPC method. |
-| disable_query_param_discovery | boolean | disable_query_param_discovery can be used to avoid auto binding query parameters. |
-| stream | [StreamConfig](#routepattern) | stream holds configurations for streaming methods. |
+| response_body | string | Response message field selector that will be written to HTTP response.<br>`'*'` or an empty string indicates that the entire response message gets encoded.</br> |
+| query_params | [QueryParameterBinding](#routepattern) | Explicit query parameter bindings that can be used to rename or ignore query parameters. |
+| additional_bindings | \[[AdditionalEndpointBinding](#routepattern)\] | Additional HTTP bindings for the same gRPC method. |
+| disable_query_param_discovery | boolean | Can be used to avoid auto binding query parameters. |
+| stream | [StreamConfig](#routepattern) | Holds configurations for streaming methods. |
 
 #### HTTP Method & Route
 
@@ -26,8 +26,7 @@ one gRPC method via `additional_bindings` property.
 HTTP method needs to be defined by specifying precisely one and only one of the
 `get`, `post`, `put`, `patch`, `delete` or `custom` fields.
 
-If `custom` field is used, the value must be a [CustomPattern](#custompattern).
-
+If the `custom` field is used, the value must be a [CustomPattern](#custompattern).
 For other fields, the value is a [RoutePattern](#routepattern).
 
 !!! example
@@ -52,7 +51,7 @@ For other fields, the value is a [RoutePattern](#routepattern).
 
 ### AdditionalEndpointBinding
 
-This object is nearly the same object as [EndpointBinding](#endpointspec_1) excluding the `additional_binding` key.
+This object is similar to [EndpointBinding](#endpointspec_1) excluding the `additional_binding` key.
 
 ### RoutePattern
 
@@ -76,10 +75,10 @@ For instance:
 
     `/path/{name}` would bind to field `name` of the `Request` message.
 
-    Nested fields are supported so `/path/{name}/{nested.field}` is perfectly valid.
+    Nested fields are supported so `/path/{name}/{nested.field}` is valid.
 
 
-Additionally, if you wanted a field to contain all segments including the slashes, you can use `{<selector>=*}` pattern.
+Additionally, if you want a field to contain all segments including slashes, you can use the `{<selector>=*}` pattern.
 
 !!! example
 
