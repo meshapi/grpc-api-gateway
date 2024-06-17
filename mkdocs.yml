@@ -20,6 +20,8 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
+  - toc:
+      permalink: ¶
 
 nav:
   - Introduction:
@@ -35,6 +37,7 @@ nav:
     - reference/configuration.md
     - Gateway:
       - reference/grpc/cli.md
+      - reference/grpc/route.md
     - OpenAPI:
       - reference/openapi/cli.md
 
@@ -49,6 +52,7 @@ theme:
     - navigation.indexes 
     - navigation.tabs
     - navigation.expand
+    - navigation.tracking
     - content.tabs.link
     - content.code.copy
     - content.code.annotate 
