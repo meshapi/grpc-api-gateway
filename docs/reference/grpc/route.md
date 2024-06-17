@@ -11,7 +11,7 @@ Represents an HTTP endpoint(s) to gRPC method binding.
 | <div style="width:110px">Field Name</div> | Type | Description |
 | --- | --- | --- |
 | [`<http-method>*`](#http-method-route) | [RoutePattern](#routepattern) | Defines route for an HTTP method, method name can be `get`, `post`, `put`, `delete` or `patch`. |
-| custom | [CustomPattern](#routepattern) | Can be used for custom HTTP methods.<br>Not all HTTP methods are supported in OpenAPI specification and will not be included in the generated OpenAPI document.</br> |
+| [custom](#http-method-route) | [CustomPattern](#routepattern) | Can be used for custom HTTP methods.<br>Not all HTTP methods are supported in OpenAPI specification and will not be included in the generated OpenAPI document.</br> |
 | body | string | (Default: `''`)<br>request message field selector that will be read via HTTP body.</br>- `'*'` indicates that the entire request message gets decoded from the body.<br>- An empty string indicates that no part of the request gets decoded from the body.</br> |
 | response_body | string | Response message field selector that will be written to HTTP response.<br>`'*'` or an empty string indicates that the entire response message gets encoded.</br> |
 | query_params | [QueryParameterBinding](#routepattern) | Explicit query parameter bindings that can be used to rename or ignore query parameters. |
@@ -25,6 +25,11 @@ Each [EndpointSpec](#endpointspec) object can define multiple HTTP bindings to
 one gRPC method via `additional_bindings` property.
 HTTP method needs to be defined by specifying precisely one and only one of the
 `get`, `post`, `put`, `patch`, `delete` or `custom` fields.
+
+If you would like to use an HTTP method that is not listed, you can use the `custom` property to use any HTTP method.
+
+!!! warning
+    You can use any HTTP method for the gRPC gateway. However, since OpenAPI specification only supports a limited set of HTTP methods, the unsupported methods do NOT get listed in the generated OpenAPI documents.
 
 If the `custom` field is used, the value must be a [CustomPattern](#custompattern).
 For other fields, the value is a [RoutePattern](#routepattern).
@@ -51,7 +56,7 @@ For other fields, the value is a [RoutePattern](#routepattern).
 
 ### AdditionalEndpointBinding
 
-This object is similar to [EndpointBinding](#endpointspec_1) excluding the `additional_binding` key.
+This object is similar to [EndpointBinding](#endpointspec_1) excluding the `additional_bindings` key.
 
 ### RoutePattern
 
