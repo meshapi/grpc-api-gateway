@@ -143,6 +143,104 @@ This object is similar to [EndpointBinding](#endpointbinding) excluding the `add
         }
         ```
 
+!!! warning
+    Any method can be used and will work in the gateway.
+    However, methods not recognized by OpenAPI will be skipped when generating the documentation.
+
 --8<-- "templates/gateway.md:QueryParameterBinding"
 
+By default, any fields in the request proto message not bound to the HTTP body
+or path parameters are bound to query parameters.
+
+You can bind one or more fields to query parameters by specifying
+the proto message selector and the query parameter name or use `ignore` to avoid binding them at all.
+
+!!! example
+    Consider the following request message:
+    ```proto linenums="1"
+    message EchoOptions {
+        int32 delay = 1;
+        bool lower_case = 2;
+    }
+
+    message EchoRequest {
+        EchoOptions options = 1;
+        string message = 2;
+    }
+    ```
+
+    === "Configuration"
+        ```yaml title="sound_gateway.yaml" linenums="1" hl_lines="5-11"
+        gateway:
+          endpoints:
+            - post: "/echo"
+              selector: "~.SoundService.Echo"
+              query_parameters:
+                - selector: "message"
+                  name: "msg"
+                - selector: "options.lower_case" # (1)!
+                  name: "lower"
+                - selector: "options.delay"
+                  ignore: true # (2)!
+        ```
+
+        1. It can be helpful to define aliases for long or nested fields, in this case `lower` instead of `options.lower_case`.
+        2. Setting `ignore` to true ignores binding `options.delay` proto field to **any** query parameter.
+
+    === "Proto Annotations"
+        ```proto title="sound.proto" linenums="1" hl_lines="5-9"
+        service SoundService {
+            rpc Echo(EchoRequest) returns (EchoResponse) {
+                option (meshapi.gateway.http) = {
+                    post: "/echo",
+                    query_parameters: [
+                        {selector: "message", name: "msg"},
+                        {selector: "options.lower_case", name: "lower"}, // (1)!
+                        {selector: "options.delay", ignore: true} // (2)!
+                    ]
+                };
+            }
+        }
+        ```
+
+        1. It can be helpful to define aliases for long or nested fields, in this case `lower` instead of `options.lower_case`.
+        2. Setting `ignore` to true ignores binding `options.delay` proto field to **any** query parameter.
+
+    In this example, in the HTTP request, you can use `msg` and `lower` query parameters directly:
+
+    `/echo?msg=something&lower=true`
+
+!!! info
+    Defining aliases overrides the default auto-binding names. In the example above, when using `msg` as an alias for
+    the proto field `message`, only the query parameter `msg` will be bound to the proto field `message`. To retain the
+    original name, you can define additional aliases for the same selector.
+
 --8<-- "templates/gateway.md:StreamConfig"
+
+!!! example
+    Imagine there is an events streaming endpoint that keeps
+    sending events to the client. For this, using chunked transfer is not ideal
+    because of the time out constraints. Using *SSE* or *WebSockets* however is perfectly valid.
+    === "Configuration"
+        ```yaml title="notification_gateway.yaml" linenums="1" hl_lines="5-6"
+        gateway:
+          endpoints:
+            - post: "/notify"
+              selector: "~.NotificationService.Notify"
+              stream:
+                disable_chunked_transfer: true
+        ```
+
+    === "Proto Annotations"
+        ```proto title="notification.proto" linenums="1" hl_lines="5-7"
+        service NotificationService {
+            rpc Notify(NotifyRequest) returns (stream NotifyResponse) {
+                option (meshapi.gateway.http) = {
+                    get: "/events",
+                    stream: {
+                        disable_chunked_transfer: true
+                    }
+                };
+            }
+        }
+        ```
