@@ -10,43 +10,50 @@ message GatewaySpec {
 	repeated EndpointBinding endpoints = 1;
 }
 
-// EndpointBinding is a gRPC method - HTTP endpoint binding specification.
+// EndpointBinding represents an HTTP endpoint(s) to gRPC method binding.
 message EndpointBinding {
 	// selector is a dot-separated gRPC service method selector.
 	//
-	// If the selector begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with `~.`, the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
 	//
-	// If the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
+	// If the selector does not begin with `~.`, it will be treated as a fully qualified method name (FQMN).
+	//
+	// NOTE: In proto annotations, this field gets automatically assigned, thus it is only applicable in configuration files.
 	string selector = 1;
 
 	// pattern specifies the HTTP method for this endpoint binding.
 	oneof pattern {
+		// get defines route for a GET HTTP endpoint.
 		string get = 2;
+		// put defines route for a PUT HTTP endpoint.
 		string put = 3;
+		// post defines route for a POST HTTP endpoint.
 		string post = 4;
+		// delete defines route for a DELETE HTTP endpoint.
 		string delete = 5;
+		// patch defines route for a PATCH HTTP endpoint.
 		string patch = 6;
 
 		// custom can be used for custom HTTP methods.
 		//
-		// Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the
+		// Not all HTTP methods are supported in OpenAPI specification and will not be included in the
 		// generated OpenAPI document.
 		CustomPattern custom = 7; 
 	}
 
 	// body is a request message field selector that will be read via HTTP body.
 	//
-	// '*' indicates that the entire request message gets decoded from the body.
-	// An empty string indicates that no part of the request gets decoded from the body.
+	// `*` indicates that the entire request message gets decoded from the body.
+	// An empty string (default value) indicates that no part of the request gets decoded from the body.
 	//
 	// NOTE: Not all methods support HTTP body.
 	string body = 8;
 
 	// response_body is a response message field selector that will be written to HTTP response.
 	//
-	// '*' or an empty string indicates that the entire response message gets encoded.
+	// `*` or an empty string indicates that the entire response message gets encoded.
 	string response_body = 9;
 
 	// query_params are explicit query parameter bindings that can be used to rename
@@ -57,6 +64,8 @@ message EndpointBinding {
 	repeated AdditionalEndpointBinding additional_bindings = 11;
 
 	// disable_query_param_discovery can be used to avoid auto binding query parameters.
+	//
+	// Default: `false`
 	bool disable_query_param_discovery = 12;
 
 	// stream holds configurations for streaming methods.

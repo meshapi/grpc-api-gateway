@@ -22,6 +22,8 @@ markdown_extensions:
   - pymdownx.snippets
   - toc:
       permalink: ¶
+  - pymdownx.snippets:
+      base_path: 'docs'
 
 nav:
   - Introduction:
