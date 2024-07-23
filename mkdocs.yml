@@ -39,7 +39,7 @@ nav:
     - reference/configuration.md
     - Gateway:
       - reference/grpc/cli.md
-      - reference/grpc/route.md
+      - reference/grpc/config.md
     - OpenAPI:
       - reference/openapi/cli.md
 

@@ -1,8 +1,24 @@
-# Endpoint Spec
+# Configuration Reference
 
 To define and bind HTTP endpoints to gRPC methods, you can use
 either configuration files or proto annotations directly in the proto files.
 See [Configuration](/grpc-api-gateway/reference/configuration) to learn more.
+
+Gateway configuration files accept the following object (`GatewayConfig`) under `gateway` key:
+
+| <div style="width:120px">Field Name</div> | Type | Description |
+| --- | --- | --- |
+| `endpoints` | [[EndpointBinding](#endpointbinding)] | List of all gRPC-HTTP bindings. |
+
+
+!!! example
+
+    ```yaml
+    gateway:
+        endpoints:
+            - selector: "~.MyService.MyMethod"
+              get: "/route"
+    ```
 
 --8<-- "templates/gateway.md:EndpointBinding"
 
@@ -66,7 +82,8 @@ For instance:
     Nested fields are supported so `/path/{name}/{nested.field}` is valid.
 
 
-Additionally, if you want a field to contain all segments including slashes, you can use the `{<selector>=*}` pattern.
+#### Wildcard
+If you want a field to contain all segments, including slashes, you can use the `{<selector>=*}` pattern.
 
 !!! example
 
