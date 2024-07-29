@@ -40,6 +40,7 @@ nav:
     - Gateway:
       - reference/grpc/cli.md
       - reference/grpc/config.md
+      - reference/grpc/query.md
     - OpenAPI:
       - reference/openapi/cli.md
 
