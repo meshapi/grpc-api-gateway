@@ -41,6 +41,7 @@ nav:
       - reference/grpc/cli.md
       - reference/grpc/config.md
       - reference/grpc/query.md
+      - reference/grpc/streaming.md
     - OpenAPI:
       - reference/openapi/cli.md
 
