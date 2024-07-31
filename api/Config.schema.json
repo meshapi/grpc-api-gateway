@@ -165,31 +165,36 @@
             "properties": {
                 "selector": {
                     "type": "string",
-                    "description": "selector is a dot-separated gRPC service method selector. If the selector begins with '~.', the current proto package will be added to the beginning of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global config file, this alias cannot be used in the global config file. If the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN)."
+                    "description": "selector is a dot-separated gRPC service method selector. If the selector begins with `~.`, the current proto package will be added to the beginning of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global config file, this alias cannot be used in the global config file. If the selector does not begin with `~.`, it will be treated as a fully qualified method name (FQMN). NOTE: In proto annotations, this field gets automatically assigned, thus it is only applicable in configuration files."
                 },
                 "get": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Defines route for a GET HTTP endpoint."
                 },
                 "put": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Defines route for a PUT HTTP endpoint."
                 },
                 "post": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Defines route for a POST HTTP endpoint."
                 },
                 "delete": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Defines route for a DELETE HTTP endpoint."
                 },
                 "patch": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Defines route for a PATCH HTTP endpoint."
                 },
                 "custom": {
                     "$ref": "#/definitions/meshapi.gateway.CustomPattern",
                     "additionalProperties": false,
-                    "description": "custom can be used for custom HTTP methods. Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the generated OpenAPI document."
+                    "description": "custom can be used for custom HTTP methods. Not all HTTP methods are supported in OpenAPI specification and will not be included in the generated OpenAPI document."
                 },
                 "body": {
                     "type": "string",
-                    "description": "body is a request message field selector that will be read via HTTP body. '*' indicates that the entire request message gets decoded from the body. An empty string indicates that no part of the request gets decoded from the body. NOTE: Not all methods support HTTP body."
+                    "description": "body is a request message field selector that will be read via HTTP body. `*` indicates that the entire request message gets decoded from the body. An empty string indicates that no part of the request gets decoded from the body. Default: ` ` (meaning no value will be read from the HTTP body). NOTE: Not all methods support HTTP body."
                 },
                 "response_body": {
                     "type": "string",
@@ -296,7 +301,7 @@
                 }
             ],
             "title": "Endpoint Binding",
-            "description": "EndpointBinding is a gRPC method - HTTP endpoint binding specification."
+            "description": "EndpointBinding represents an HTTP endpoint(s) to gRPC method binding."
         },
         "meshapi.gateway.GatewaySpec": {
             "properties": {

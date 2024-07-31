@@ -69,7 +69,7 @@ func (x *GatewaySpec) GetEndpoints() []*EndpointBinding {
 	return nil
 }
 
-// EndpointBinding is a gRPC method - HTTP endpoint binding specification.
+// EndpointBinding represents an HTTP endpoint(s) to gRPC method binding.
 type EndpointBinding struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -77,11 +77,13 @@ type EndpointBinding struct {
 
 	// selector is a dot-separated gRPC service method selector.
 	//
-	// If the selector begins with '~.', the current proto package will be added to the beginning
+	// If the selector begins with `~.`, the current proto package will be added to the beginning
 	// of the path. For instance: `~.MyService`. Since no proto package can be deduced in the global
 	// config file, this alias cannot be used in the global config file.
 	//
-	// If the selector does not begin with '~.', it will be treated as a fully qualified method name (FQMN).
+	// If the selector does not begin with `~.`, it will be treated as a fully qualified method name (FQMN).
+	//
+	// NOTE: In proto annotations, this field gets automatically assigned, thus it is only applicable in configuration files.
 	Selector string `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
 	// pattern specifies the HTTP method for this endpoint binding.
 	//
@@ -96,9 +98,10 @@ type EndpointBinding struct {
 	Pattern isEndpointBinding_Pattern `protobuf_oneof:"pattern"`
 	// body is a request message field selector that will be read via HTTP body.
 	//
-	// '*' indicates that the entire request message gets decoded from the body.
+	// `*` indicates that the entire request message gets decoded from the body.
 	// An empty string indicates that no part of the request gets decoded from the body.
 	//
+	// Default: ` ` (meaning no value will be read from the HTTP body).
 	// NOTE: Not all methods support HTTP body.
 	Body string `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
 	// response_body is a response message field selector that will be written to HTTP response.
@@ -251,29 +254,34 @@ type isEndpointBinding_Pattern interface {
 }
 
 type EndpointBinding_Get struct {
+	// Defines route for a GET HTTP endpoint.
 	Get string `protobuf:"bytes,2,opt,name=get,proto3,oneof"`
 }
 
 type EndpointBinding_Put struct {
+	// Defines route for a PUT HTTP endpoint.
 	Put string `protobuf:"bytes,3,opt,name=put,proto3,oneof"`
 }
 
 type EndpointBinding_Post struct {
+	// Defines route for a POST HTTP endpoint.
 	Post string `protobuf:"bytes,4,opt,name=post,proto3,oneof"`
 }
 
 type EndpointBinding_Delete struct {
+	// Defines route for a DELETE HTTP endpoint.
 	Delete string `protobuf:"bytes,5,opt,name=delete,proto3,oneof"`
 }
 
 type EndpointBinding_Patch struct {
+	// Defines route for a PATCH HTTP endpoint.
 	Patch string `protobuf:"bytes,6,opt,name=patch,proto3,oneof"`
 }
 
 type EndpointBinding_Custom struct {
 	// custom can be used for custom HTTP methods.
 	//
-	// Not all HTTP methods are supported in OpenAPI specification, however and will not be included in the
+	// Not all HTTP methods are supported in OpenAPI specification and will not be included in the
 	// generated OpenAPI document.
 	Custom *CustomPattern `protobuf:"bytes,7,opt,name=custom,proto3,oneof"`
 }
