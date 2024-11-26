@@ -25,11 +25,14 @@ This is an on-going effort and should be available soon, at the moment, you can 
 #### Install from source
 
 If the binaries are not available for your operating system or architecture,
-you can install from the source using Go
+you can install from the source using Go:
 
 ```sh
-$ go install github.com/meshapi/grpc-api-gateway@<version>
+$ go install github.com/meshapi/grpc-api-gateway/codegen/cmd/protoc-gen-openapiv3@<version>
+$ go install github.com/meshapi/grpc-api-gateway/codegen/cmd/protoc-gen-grpc-api-gateway@<version>
 ```
+
+To retrieve the latest version, use `latest`.
 
 ### Docker
 
