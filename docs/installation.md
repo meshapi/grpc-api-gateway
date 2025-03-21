@@ -1,39 +1,35 @@
-You can directly download the binaries from the [Releases](https://github.com/meshapi/grpc-api-gateway/releases) page.
+You can directly download the binaries from the [Releases](https://github.com/meshapi/grpc-api-gateway/releases) page, which also includes the proto files containing the annotations.
 
-The link above includes the proto files containing the annotations as well.
+Additionally, you can find the binaries in the package repositories listed below:
 
-Package repositories below also contain the binaries:
+#### Arch Linux
 
-#### Arch
-
-This plug-in is not part of the official repository but there is a package in the user repository that can be used:
+This plug-in is not part of the official repository, but you can use a package from the user repository (AUR):
 
 [protoc-gen-grpc-api-gateway-bin](https://aur.archlinux.org/packages/protoc-gen-grpc-api-gateway-bin)
 
-This can be installed using `makepkg`:
+To install it using `makepkg`, follow these steps:
 
 ```sh
 $ git clone https://aur.archlinux.org/protoc-gen-grpc-api-gateway-bin.git
 $ cd protoc-gen-grpc-api-gateway-bin && makepkg -si
 ```
 
-#### Alpine
+#### Alpine Linux
 
-This is an on-going effort and should be available soon, at the moment, you can download the binaries from
-[Releases](https://github.com/meshapi/grpc-api-gateway/releases) page or install from source:
+This is an ongoing effort and should be available soon. In the meantime, you can download the binaries from the [Releases](https://github.com/meshapi/grpc-api-gateway/releases) page or install from source.
 
-#### Install from source
+#### Install from Source
 
-If the binaries are not available for your operating system or architecture,
-you can install from the source using Go:
+If binaries are not available for your operating system or architecture, you can install from the source using Go:
 
 ```sh
 $ go install github.com/meshapi/grpc-api-gateway/codegen/cmd/protoc-gen-openapiv3@<version>
 $ go install github.com/meshapi/grpc-api-gateway/codegen/cmd/protoc-gen-grpc-api-gateway@<version>
 ```
 
-To retrieve the latest version, use `latest`.
+To retrieve the latest version, replace `<version>` with `latest`.
 
 ### Docker
 
-If you wish to install this tool inside docker, you can use `wget` or `curl` to download the binaries for the intended architecture. Take a look at the [Releases](https://github.com/meshapi/grpc-api-gateway/releases).
+To install this tool inside a Docker container, you can use `wget` or `curl` to download the binaries for your intended architecture. Refer to the [Releases](https://github.com/meshapi/grpc-api-gateway/releases) page for more details.

@@ -1,15 +1,14 @@
 # OpenAPI Documentation
 
-OpenAPI documentation is already generated for our service.
-However, we might like to change a few things in this document.
+OpenAPI documentation has already been generated for our service.
+However, we may want to make some modifications to this document.
 
-In this page we will customize our OpenAPI document for this `Echo` service.
+In this section, we will customize our OpenAPI document for the `Echo` service.
 
-Refer to [Reference](/grpc-api-gateway/reference/intro) to learn more about all of the customizations.
+Refer to [Reference](/grpc-api-gateway/reference/intro) to learn more about all available customizations.
 
-Similar to defining HTTP bindings, you can opt to use the annotations and directly define options in the proto
+Similar to defining HTTP bindings, you can use annotations to directly define options in the proto
 files or use configuration files.
-
 
 === "Using configurations"
 
@@ -109,7 +108,6 @@ files or use configuration files.
     3. This option can be used to customize _operation_ for HTTP endpoints bound to this gRPC method.
         Here, defining `external_docs` in the OpenAPI document only for the HTTP endpoints that are
         bound to the `Echo` gRPC method.
-
 
 Now you can re-generate using either `Buf` or `protoc` directly and notice the changes in the generated OpenAPI file.
 
