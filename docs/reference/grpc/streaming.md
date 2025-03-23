@@ -3,57 +3,47 @@
 One of the main motivations for this project was to support streaming aspects of gRPC in the HTTP Gateway as well.
 
 !!! warning
-    This feature and API is fairly new and while it functions, it has not been put in a high latency production
-    environment and is not battle-tested. Conduct your own tests and experiments to ensure it is a good fit for your
-    project and needs.
+    This feature and API are relatively new. While it is functional, it has not been extensively tested in high-latency production environments. Please conduct thorough testing and experimentation to ensure it meets the requirements of your project.
 
 ## Streaming Modes
 
-There are three different supported modes of streaming. It is recommended to read the documentation for the streaming
-modes that you plan on using to ensure you are aware of all features and behaviors.
+This project supports three distinct streaming modes. It is highly recommended to review the documentation for each streaming mode you intend to use to fully understand their features and behaviors.
 
 | Streaming Mode      | Description                               | HTTP Method |
 | --- | --- | --- |
-| [Server-Sent Events (SSE)](#1-server-sent-events-sse) | Using SSE, client subscribes to an event stream and server sends events (messages) to the client. | GET |
-| [WebSocket](#2-websockets) | Using WebSocket both client and server can send messages. | GET |
-| [Chunked-Transfer](#3-chunked-transfer) | It is a way to stream a message in multiple chunks but is subject to short time out. | * |
+| [Server-Sent Events (SSE)](#1-server-sent-events-sse) | SSE allows the client to subscribe to a stream of events sent by the server over a single HTTP connection. | GET |
+| [WebSocket](#2-websockets) | WebSocket enables bidirectional communication between the client and server over a single connection. | GET |
+| [Chunked-Transfer](#3-chunked-transfer) | This method streams a message in multiple chunks, making it suitable for transferring large payloads efficiently. However, it is subject to short timeouts. | * |
 
 ### 1. Server-sent events (SSE)
 
-[Server-sent events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) is a standard for enabling servers to push real-time updates to clients over a single, long-lived HTTP connection. Unlike WebSockets, which allow for bidirectional communication, SSE provides a simpler, one-way communication channel from the server to the client.
+[Server-sent events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) is a technology that allows servers to push real-time updates to clients over a single, long-lived HTTP connection. Unlike WebSockets, which support bidirectional communication, SSE offers a simpler, one-way communication channel from the server to the client.
 
-With SSE, the server can continuously send updates to the client as new data becomes available, making it ideal for applications that require real-time notifications, such as live feeds, news updates, or stock price tickers. Clients subscribe to the stream by opening a persistent HTTP connection and can receive automatic updates without the need for repeated polling.
+SSE enables the server to continuously send updates to the client as new data becomes available. This makes it ideal for applications that require real-time notifications, such as live feeds, news updates, or stock price tickers. Clients subscribe to the stream by opening a persistent HTTP connection, allowing them to receive automatic updates without the need for repeated polling.
 
 Key features of SSE include:
 
-* Simple Implementation: SSE uses standard HTTP protocols, making it easy to implement and compatible with existing web infrastructure.
-* Automatic Reconnection: Built-in support for automatic reconnection in case the connection drops.
-* Event Identification: Supports event IDs, allowing clients to track the last received event and resume from where they left off.
+* **Ease of Implementation**: SSE leverages standard HTTP protocols, ensuring straightforward integration and compatibility with existing web infrastructure.
+* **Automatic Reconnection**: Provides built-in support for automatic reconnection if the connection is lost, enhancing reliability.
+* **Event Identification**: Supports event IDs, enabling clients to track the last received event and resume from where they left off seamlessly.
 
-To use SSE, the client simply opens a connection to an endpoint that delivers events, and the server streams text-based event data, typically in the form of plain text or JSON.
+To utilize SSE, the client opens a connection to an endpoint that delivers events, and the server streams text-based event data, typically in the form of plain text or JSON.
 
 You can use SSE for any gRPC method as long as:
 
-1. Server returns a stream which includes server-streaming and bidirectional modes.
-2. HTTP method is _GET_
+1. The server returns a stream, which includes both server-streaming and bidirectional modes.
+2. The HTTP method is _GET_.
 
 !!! note
-    Even though bidirectional gRPC methods are accepted and can be used, it's important to note that while requests _can_
-    be streamed to the server using Chunked-Transfer, SSE is server-streaming only.
-    As a result, the client cannot arbitrarily send messages. It can stream its request and then wait for server to
-    push messages.
+    While bidirectional gRPC methods are supported, it's crucial to understand that SSE is strictly server-streaming. Although requests can be streamed to the server using Chunked-Transfer, the client cannot send messages arbitrarily with SSE. Instead, the client streams its request and then waits for the server to push messages.
 
 #### Note on closing the stream
 
-When using SSEs in the browser, if the connection gets closed for virtually any reason other than the client closing
-the stream, browser tries to establish the connection again.
+When using SSEs in the browser, if the connection is closed for any reason other than the client closing the stream, the browser will attempt to re-establish the connection.
 
-For this reason, __IF__ the gRPC server implementation closes the stream, an _End-of-stream (EOS)_ message gets pushed
-by the server to indicate that the server has reached the end of the stream and that there are no more events. To
-handle this correctly, you will need to close the stream upon receiving this message. This message can be customized if
-you prefer to send a different content instead.
+To handle this, if the gRPC server implementation closes the stream, it sends an _End-of-stream (EOS)_ message to indicate that the stream has ended and no more events will be sent. Upon receiving this message, you should close the stream. This message can be customized if you prefer to send different content.
 
-The default EOS has _ID_ `EOS` with _Event_ `EOS` and no data.
+The default EOS message has an _ID_ of `EOS`, an _Event_ of `EOS`, and no data.
 
 ```text
 id: EOS
@@ -80,18 +70,15 @@ gateway.NewServeMux(gateway.WithSSEConfig(gateway.SSEConfig{EndOfStreamMessage: 
       notificationsSource.close();
     });
     ```
-    
+
 !!! info
-    If your gRPC method implementation is designed to end the stream, you might benefit from re-evaluating whether or
-    not SSE is the right choice for your specific need.
+    If your gRPC method implementation is designed to end the stream, it may be worth reconsidering whether SSE is the most suitable choice for your needs.
 
 #### Custom Events
 
-One of the features of the SSE is the ability to push messages with specific _event_ names.
-At the present moment, all SSE messages (save for the EOS message) get no `event` or `id` value.
-In future, you will be able to use gRPC metadata to specify these properties but this is not possible presently.
+One of the key features of SSE is the ability to push messages with specific _event_ names. Currently, all SSE messages (except for the EOS message) do not include `event` or `id` values. In the future, it will be possible to use gRPC metadata to specify these properties, but this functionality is not available at present.
 
-Because of this all messages will be received using the `onmessage` handler if you are using JavaScript in the browser:
+As a result, all messages will be received using the `onmessage` handler when using JavaScript in the browser:
 
 ```javascript
 const eventSource = new EventSource("/path/to/endpoint");
@@ -104,21 +91,19 @@ eventSource.onmessage = (event) => {
 #### Important Note for HTTP 1.1
 
 !!! warning
-    When not used over HTTP/2, SSE suffers from a limitation to the maximum number of open connections, which can be especially painful when opening multiple tabs, as the limit is per browser and is set to a very low number (6).
+!!! warning
+    When not used over HTTP/2, SSE is limited by the maximum number of open connections, which can be particularly problematic when opening multiple tabs. This limit is set to a very low number (6) per browser.
 
-    The issue has been marked as "Won't fix" in Chrome and Firefox. This limit is per browser + domain, which means that you can open 6 SSE connections across all of the tabs to www.example1.com and another 6 SSE connections to www.example2.com (per Stackoverflow).
+    This issue has been marked as "Won't fix" in both Chrome and Firefox. The limit is per browser and domain, meaning you can open 6 SSE connections across all tabs to www.example1.com and another 6 SSE connections to www.example2.com.
 
-    When using HTTP/2, the maximum number of simultaneous HTTP streams is negotiated between the server and the client (defaults to 100).
+    When using HTTP/2, the maximum number of simultaneous HTTP streams is negotiated between the server and the client, with a default of 100.
 
 
 #### Error Handling
 
-If an error is returned by the server, that error gets handled using the `SSEErrorHandlerFunc` and
-the connection will be closed. If you would like to communicate errors without closing the connection,
-include that error structure into your proto response messages.
+If an error is returned by the server, it is handled using the `SSEErrorHandlerFunc`, and the connection will be closed. To communicate errors without closing the connection, include the error structure in your proto response messages.
 
-By default, the error received from the server gets marshaled and sent to the client.
-To customize this behavior and use your own error handler for SSE connections, use `WithSSEErrorHandler` option:
+By default, the error received from the server is marshaled and sent to the client. To customize this behavior and use your own error handler for SSE connections, use the `WithSSEErrorHandler` option:
 
 ```go
 gateway.NewServeMux(gateway.WithSSEErrorHandler(myCustomErrorHandler))
@@ -132,37 +117,29 @@ HTTP request.
 
 ### 2. WebSockets
 
-WebSockets is a communication protocol providing full-duplex communication channels over a single TCP connection.
-It allows real-time data transfer between clients and servers with low latency, enabling interactive web applications
-such as live chat, streaming, and multiplayer games.
-WebSockets are initiated through an HTTP handshake and then upgraded to a persistent connection, facilitating efficient data exchange.
+WebSockets is a communication protocol that provides full-duplex communication channels over a single TCP connection. It enables real-time data transfer between clients and servers with low latency, making it ideal for interactive web applications such as live chat, streaming, and multiplayer games. WebSockets are initiated through an HTTP handshake and then upgraded to a persistent connection, facilitating efficient data exchange.
 
-While WebSocket sounds like an ideal choice for streaming, there are some common limitations and challenges of using WebSockets:
+While WebSockets offer significant advantages for streaming, there are several limitations and challenges to consider:
 
-* __Scalability__: Managing a large number of concurrent WebSocket connections can be resource-intensive and complex, requiring robust server infrastructure and load balancing strategies.
+* __Scalability__: Managing a large number of concurrent WebSocket connections can be resource-intensive and complex, requiring robust server infrastructure and effective load balancing strategies.
 
-* __Network Issues__: WebSocket connections can be susceptible to interruptions due to network instability, requiring efficient reconnection strategies to maintain a seamless user experience.
+* __Network Issues__: WebSocket connections can be prone to interruptions due to network instability, necessitating efficient reconnection strategies to maintain a seamless user experience.
 
-* __Security__: Ensuring secure WebSocket communication involves implementing measures such as encryption (TLS/SSL), authentication, and protection against common attacks like cross-site WebSocket hijacking.
+* __Security__: Secure WebSocket communication requires implementing encryption (TLS/SSL), authentication, and protection against common attacks such as cross-site WebSocket hijacking.
 
-* __Browser Compatibility__: While most modern browsers support WebSockets, some older versions may not, necessitating fallback mechanisms like long polling or Server-Sent Events (SSE).
+* __Browser Compatibility__: Although most modern browsers support WebSockets, some older versions do not. This necessitates fallback mechanisms like long polling or Server-Sent Events (SSE).
 
-* __Firewall and Proxy Restrictions__: Some firewalls and proxies may block or interfere with WebSocket traffic, requiring additional configurations to allow WebSocket connections.
+* __Firewall and Proxy Restrictions__: WebSocket traffic can be blocked or interfered with by some firewalls and proxies, requiring additional configurations to ensure proper connections.
 
-* __Error Handling__: Properly managing and handling errors and edge cases in WebSocket communication is crucial for maintaining application stability and providing a good user experience.
+* __Error Handling__: Effective error management and handling of edge cases in WebSocket communication are essential for maintaining application stability and ensuring a good user experience.
 
-* __State Management__: Keeping track of client state across WebSocket connections can be challenging, especially in distributed systems or applications requiring high availability and fault tolerance.
+* __State Management__: Tracking client state across WebSocket connections can be complex, especially in distributed systems or applications that require high availability and fault tolerance.
 
 #### Enabling WebSockets
 
-To enable the gRPC API Gateway to support a WebSocket interface for your gRPC streaming API while
-allowing you to choose and manage the technology used for connections, an indirection is employed.
+To enable the gRPC API Gateway to support a WebSocket interface for your gRPC streaming API, you need to provide a custom connection upgrader. This allows you to manage the specifics of WebSocket connections, such as authorization, compression, and other concerns.
 
-By default, the gateway does not include a WebSocket handler. You will need to provide a custom
-connection upgrader that handles message sending and receiving. This approach allows you to manage
-aspects such as authorization, compression, and other WebSocket-specific concerns. The gRPC API Gateway
-functions as a mapping library, not a WebSocket library. It is designed to integrate seamlessly with
-various WebSocket libraries, giving you the flexibility to choose the one that best fits your needs.
+By default, the gateway does not include a WebSocket handler. You must supply a custom connection upgrader to handle message sending and receiving. This approach gives you control over WebSocket-specific details and ensures the gRPC API Gateway can integrate seamlessly with various WebSocket libraries, allowing you to choose the one that best fits your needs.
 
 !!! info
     [gorilla/websocket](https://github.com/gorilla/websocket) is a popular Go implementation of
@@ -198,7 +175,7 @@ The upgrader function has the following signature:
     )
 
     // ...
-    
+
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true // NB: not ideal for production code.
@@ -228,21 +205,13 @@ The upgrader function has the following signature:
 
 #### Error Handling
 
-If an error occurs while receiving or sending messages, a WebSocket-specific error handler will
-be invoked with the encountered error.
-After handling the error, both the WebSocket connection and the gRPC streams will be closed.
-Consequently, a reconnection will be required to resume sending or receiving messages.
+If an error occurs while receiving or sending messages, a WebSocket-specific error handler will be triggered to manage the encountered error. After the error is handled, both the WebSocket connection and the gRPC streams will be terminated. As a result, a reconnection will be necessary to continue sending or receiving messages.
 
-To communicate an error without closing or interrupting the connection,
-you should include an error structure in your proto response messages.
+To report an error without closing or interrupting the connection, include an error structure in your proto response messages.
 
 ### 3. Chunked Transfer
 
-Chunked Transfer is a streaming method but unlike the other streaming modes, it is not long-lived.
-This mode can be used to stream a large message in chunks. For instance, say a user wants to load
-a large number of items. Fetching these items does not take long but sending them over the wire does.
-You can benefit from Chunked-Transfer to process items as they are received by using Chunked-Transfer
-encoding.
+Chunked Transfer is a streaming method that, unlike other streaming modes, is not long-lived. This mode is ideal for streaming large messages in chunks. For example, if a user needs to load a large number of items, fetching these items might be quick, but transmitting them over the network can be time-consuming. Chunked-Transfer encoding allows you to process items as they are received, making the transfer more efficient.
 
 #### Error Handling
 
@@ -255,21 +224,14 @@ gateway.NewServeMux(gateway.WithStramErrorHandler(myCustomHandler))
 
 ## Toggles / Disable streaming
 
-All streaming modes are _enabled_ by default. Note that _enabled_ here does not mean they are available, just that they
-are allowed so that when the conditions are met, they are _allowed_ to be used.
+All streaming modes are _enabled_ by default. However, _enabled_ does not imply they are immediately available; it means they are permitted to be used when the appropriate conditions are met.
 
-WebSockets can only be requested on endpoints with `GET` method and you need to have added
-an _Upgrader_ to use the WebSockets streaming mode.
-Server-sent events (SSE) need to be `GET` endpoints and require `Accept` header with `text/event-streaming` in the
-request.
+WebSockets can only be utilized on endpoints with the `GET` method, and you must have added an _Upgrader_ to enable the WebSockets streaming mode. Server-sent events (SSE) also require `GET` endpoints and the `Accept` header with `text/event-stream` in the request.
 
-To disable a specific streaming mode for an endpoint binding, use the [Stream](/grpc-api-gateway/reference/grpc/config#stream) config.
+To disable a specific streaming mode for an endpoint binding, use the [Stream](/grpc-api-gateway/reference/grpc/config#stream) configuration.
 
 !!! example
-    Imagine an endpoint for chatting. This method is bidirectional streaming and _can_
-    accept _Chunked-Transfer_ encoding or _Server-sent events_ but it does not make sense for
-    it to do so because with Chunked-Transfer, we cannot have a long-lived connection and with
-    SSE, client cannot send messages to the server.
+    Imagine an endpoint for a chat application. This method supports bidirectional streaming and _can_ technically accept _Chunked-Transfer_ encoding or _Server-sent events_. However, using these modes is impractical because Chunked-Transfer does not support long-lived connections, and SSE does not allow the client to send messages to the server.
 
     === "Configuration"
         ```yaml title="chat_gateway.yaml"
@@ -297,5 +259,5 @@ To disable a specific streaming mode for an endpoint binding, use the [Stream](/
         }
         ```
 
-    Now, these endpoint bindings do NOT accept SSE or Chunked-Transfer and 
+    Now, these endpoint bindings do NOT accept SSE or Chunked-Transfer and
     return streaming not supported error.

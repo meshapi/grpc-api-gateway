@@ -1,41 +1,41 @@
 # Configuration Reference
 
-To define and bind HTTP endpoints to gRPC methods, you can use
-either configuration files or proto annotations directly in the proto files.
-See [Configuration](/grpc-api-gateway/reference/configuration) to learn more.
+To define and bind HTTP endpoints to gRPC methods, you can use either
+configuration files or proto annotations directly within the proto files.
+For more details, refer to the [Configuration](/grpc-api-gateway/reference/configuration) documentation.
 
-Gateway configuration files accept the following object (`GatewayConfig`) under `gateway` key:
+Gateway configuration files should include the following object
+(`GatewayConfig`) under the `gateway` key:
 
-| <div style="width:120px">Field Name</div> | Type | Description |
-| --- | --- | --- |
-| `endpoints` | [[EndpointBinding](#endpointbinding)] | List of all gRPC-HTTP bindings. |
-
+| <div style="width:120px">Field Name</div> | Type                                  | Description                     |
+| ----------------------------------------- | ------------------------------------- | ------------------------------- |
+| `endpoints`                               | [[EndpointBinding](#endpointbinding)] | List of all gRPC-HTTP bindings. |
 
 !!! example
 
     ```yaml
     gateway:
-        endpoints:
-            - selector: "~.MyService.MyMethod"
-              get: "/route"
+      endpoints:
+        - selector: "~.MyService.MyMethod"
+          get: "/route"
     ```
 
 --8<-- "templates/gateway.md:EndpointBinding"
 
 #### HTTP Method & Route
 
-Each [EndpointBinding](#endpointbinding) object can define multiple HTTP bindings to
-one gRPC method via `additional_bindings` property.
-HTTP method needs to be defined by specifying precisely one and only one of the
-`get`, `post`, `put`, `patch`, `delete` or `custom` fields.
+Each [EndpointBinding](#endpointbinding) object can define multiple HTTP bindings to a single gRPC method using
+the `additional_bindings` property. You must specify exactly one of the following fields to define the HTTP method:
+`get`, `post`, `put`, `patch`, `delete`, or `custom`.
 
-If you would like to use an HTTP method that is not listed, you can use the `custom` property to use any HTTP method.
+To use an HTTP method not listed, utilize the `custom` property.
 
 !!! warning
-    You can use any HTTP method for the gRPC gateway. However, since OpenAPI specification only supports a limited set of HTTP methods, the unsupported methods do NOT get listed in the generated OpenAPI documents.
+    Any HTTP method can be used for the gRPC gateway. However, OpenAPI specification supports only
+    a limited set of HTTP methods. Unsupported methods will not appear in the generated OpenAPI documents.
 
-If the `custom` field is used, the value must be a [CustomPattern](#custompattern).
-For other fields, the value is a [RoutePattern](#routepattern).
+When using the `custom` field, the value must be a [CustomPattern](#custompattern).
+For other fields, the value should be a [RoutePattern](#routepattern).
 
 !!! example
     === "Configuration"
@@ -81,8 +81,8 @@ For instance:
 
     Nested fields are supported so `/path/{name}/{nested.field}` is valid.
 
-
 #### Wildcard
+
 If you want a field to contain all segments, including slashes, you can use the `{<selector>=*}` pattern.
 
 !!! example
@@ -161,16 +161,14 @@ This object is similar to [EndpointBinding](#endpointbinding) excluding the `add
         ```
 
 !!! warning
-    Any method can be used and will work in the gateway.
-    However, methods not recognized by OpenAPI will be skipped when generating the documentation.
+    Any HTTP method can be used and will function correctly in the gateway.
+    However, methods not supported by OpenAPI will be excluded from the generated documentation.
 
 --8<-- "templates/gateway.md:QueryParameterBinding"
 
-By default, any fields in the request proto message not bound to the HTTP body
-or path parameters are bound to query parameters.
+By default, any field in the request proto message that is not bound to the HTTP body or path parameters will be automatically bound to query parameters.
 
-You can bind one or more fields to query parameters by specifying
-the proto message selector and the query parameter name or use `ignore` to avoid binding them at all.
+You can explicitly bind one or more fields to query parameters by specifying the proto message selector and the desired query parameter name. Alternatively, you can use `ignore` to exclude specific fields from being bound to query parameters.
 
 !!! example
     Consider the following request message:
@@ -201,8 +199,8 @@ the proto message selector and the query parameter name or use `ignore` to avoid
                   ignore: true # (2)!
         ```
 
-        1. It can be helpful to define aliases for long or nested fields, in this case `lower` instead of `options.lower_case`.
-        2. Setting `ignore` to true ignores binding `options.delay` proto field to **any** query parameter.
+        1. Defining aliases for long or nested fields can simplify query parameters. For example, using `lower` instead of `options.lower_case`.
+        2. Setting `ignore` to true prevents the `options.delay` proto field from being bound to any query parameter.
 
     === "Proto Annotations"
         ```proto title="sound.proto" linenums="1" hl_lines="5-9"
@@ -220,24 +218,20 @@ the proto message selector and the query parameter name or use `ignore` to avoid
         }
         ```
 
-        1. It can be helpful to define aliases for long or nested fields, in this case `lower` instead of `options.lower_case`.
-        2. Setting `ignore` to true ignores binding `options.delay` proto field to **any** query parameter.
+        1. Defining aliases for long or nested fields can simplify query parameters. For example, using `lower` instead of `options.lower_case`.
+        2. Setting `ignore` to true prevents the `options.delay` proto field from being bound to any query parameter.
 
     In this example, in the HTTP request, you can use `msg` and `lower` query parameters directly:
 
     `/echo?msg=something&lower=true`
 
 !!! info
-    Defining aliases overrides the default auto-binding names. In the example above, when using `msg` as an alias for
-    the proto field `message`, only the query parameter `msg` will be bound to the proto field `message`. To retain the
-    original name, you can define additional aliases for the same selector.
+    Defining aliases replaces the default auto-binding names. In the example above, using `msg` as an alias for the proto field `message` means only the query parameter `msg` will be bound to the proto field `message`. If you want to keep the original name as well, you can define multiple aliases for the same selector.
 
 --8<-- "templates/gateway.md:StreamConfig"
 
 !!! example
-    Imagine there is an events streaming endpoint that keeps
-    sending events to the client. For this, using chunked transfer is not ideal
-    because of the time out constraints. Using *SSE* or *WebSockets* however is perfectly valid.
+    Imagine an event streaming endpoint that continuously sends events to the client. Using chunked transfer for this is not ideal due to timeout constraints. However, using *SSE* (Server-Sent Events) or *WebSockets* is perfectly valid and recommended.
     === "Configuration"
         ```yaml title="notification_gateway.yaml" linenums="1" hl_lines="5-6"
         gateway:
