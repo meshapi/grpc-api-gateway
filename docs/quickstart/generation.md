@@ -1,10 +1,10 @@
 # Create a Simple Service
 
-In this page, we will generate and implement a simple gRPC service. In the following section, we will add the reverse proxy and the HTTP bindings.
+In this guide, we will generate and implement a simple gRPC service. In the following section, we will add the reverse proxy and the HTTP bindings.
 
-## Echo service
+## Echo Service
 
-For the sake of this quick tour, let's create the following proto file.
+To get started, let's create the following proto file.
 
 ```proto title="echo_service.proto" linenums="1"
 syntax = "proto3";
@@ -28,12 +28,12 @@ service EchoService {
 }
 ```
 
-## Generation
+## Code Generation
 
 [Buf](https://buf.build/) is a tool that simplifies the development and consumption of Protobuf APIs.
-One of the features of Buf is managing dependencies and building proto files.
+One of Buf's features is managing dependencies and building proto files.
 
-If you decide to use Buf, follow the instructions below or go to the `protoc` tab to see instructions using protoc.
+If you decide to use Buf, follow the instructions below or switch to the `protoc` tab for instructions using protoc.
 
 === "Using Buf"
 
@@ -53,7 +53,7 @@ If you decide to use Buf, follow the instructions below or go to the `protoc` ta
 
       - out: gen
         name: openapiv3
-    ``` 
+    ```
 
     Now generate the artifacts using:
 
@@ -61,7 +61,7 @@ If you decide to use Buf, follow the instructions below or go to the `protoc` ta
     $ buf generate
     ```
 
-    You should see generated files inside `gen` directory.
+    You should see the generated files inside the `gen` directory.
 
 === "Using protoc"
 
@@ -71,23 +71,23 @@ If you decide to use Buf, follow the instructions below or go to the `protoc` ta
         --go-grpc_out=gen \
         --grpc-api-gateway_out=gen \
         --openapiv3_out=gen \
-        echo_service.proto 
+        echo_service.proto
     ```
 
-    You should see generated files inside `gen` directory.
+        You should see the generated files inside the `gen` directory.
 
     !!! tip
-        It might be a good idea to utilize `Makefile`s to avoid having to type a long command over and over.
+        It might be a good idea to use `Makefile`s to avoid typing a long command repeatedly.
 
-## Implementing the service
+## Implementing the Service
 
-How about we set up our go module first:
+First, let's set up our Go module:
 
 ```sh
 $ go mod init demo
 ```
 
-The following `main.go` implements the Echo service and starts a gRPC server on port `40000`:
+The following `main.go` file implements the Echo service and starts a gRPC server on port `40000`:
 
 ```go title="main.go" linenums="1"
 package main
@@ -136,14 +136,13 @@ func main() {
 }
 ```
 
+## Running the Service
 
-## Running the service
-
-Let us run it and check that it works okay:
+Let's run it and ensure everything works correctly:
 
 ```sh
 $ go mod tidy
 $ go run .
 ```
 
-If everything looks good, let's go to the next part and add the HTTP bindings!
+If everything looks good, let's proceed to the next part and add the HTTP bindings!

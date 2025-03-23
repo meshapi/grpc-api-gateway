@@ -1,19 +1,14 @@
 # Query Parameter Binding
 
-It is important to understand how query parameters get processed by the gRPC Gateway
-so you are aware of the logic and can customize your API based on your needs.
+Understanding how query parameters are processed by the gRPC Gateway is crucial for customizing your API to meet specific needs.
 
 ### Default Behavior
 
-In each [EndpointConfig](/grpc-api-gateway/reference/grpc/config),
-any proto field from the request message that is not already bound to path parameters or HTTP body
-automatically gets bound to query parameters.
-
+In each [EndpointConfig](/grpc-api-gateway/reference/grpc/config), any proto field from the request message that is not already bound to path parameters or the HTTP body is automatically bound to query parameters.
 
 #### Naming
 
-By default, the name of these query parameters are the proto names
-and the nested fields contain the parent fields name followed by a dot.
+By default, the names of these query parameters are derived from the proto field names. For nested fields, the name is constructed by concatenating the parent field name with the nested field name, separated by a dot.
 
 !!! example
     Consider the following proto messages where `Request` is the request message:
@@ -30,7 +25,8 @@ and the nested fields contain the parent fields name followed by a dot.
     ```
 
     Assuming neither are captured by path parameters or the HTTP body,
-    query parameters `some_input` and `options.case_sensitive` get bound to the proto message.
+    query parameters `some_input` and `options.case_sensitive` will be
+    bound to the corresponding fields in the proto message.
 
 
 ### Customization
@@ -39,9 +35,7 @@ There are a number of customizations available.
 
 #### Disable Automatic Discovery
 
-In [EndpointConfig](/grpc-api-gateway/reference/grpc/config),
-you can disable the automatic discovery and binding of query parameters.
-Doing so means for that specific endpoint binding, only explicitly defined query parameter bindings are considered.
+In [EndpointConfig](/grpc-api-gateway/reference/grpc/config), you have the option to disable the automatic discovery and binding of query parameters. When this feature is disabled for a specific endpoint, only the query parameter bindings that are explicitly defined will be considered.
 
 
 === "Configuration"
@@ -65,17 +59,17 @@ Doing so means for that specific endpoint binding, only explicitly defined query
     }
     ```
 
-Some applications of using this setting:
+Some practical uses of this setting include:
 
-* Use custom name for all query parameters.
-* Only expose parts of the proto message to the HTTP request.
+* Assigning custom names to all query parameters.
+* Restricting the exposure of certain parts of the proto message to the HTTP request.
 
 
 #### Additional Query Parameter Binding and Aliases
 
-If you would like to use a custom name for a query parameter or allow multiple names (aliases) for the same message field, you can explicitly define query parameter to request proto message field binding.
+To use custom names for query parameters or to allow multiple names (aliases) for the same message field, you can explicitly define the query parameter to request proto message field binding.
 
-Using `query_params` in [EndpointConfig](/grpc-api-gateway/reference/grpc/config), you can add multiple [QueryParameterBinding](/grpc-api-gateway/reference/grpc/config/#queryparameterbinding) objects.
+By utilizing `query_params` in [EndpointConfig](/grpc-api-gateway/reference/grpc/config), you can add multiple [QueryParameterBinding](/grpc-api-gateway/reference/grpc/config/#queryparameterbinding) objects.
 
 !!! example
     Consider request proto message below:
@@ -90,10 +84,10 @@ Using `query_params` in [EndpointConfig](/grpc-api-gateway/reference/grpc/config
         PageOptions pagination = 3;
     }
     ```
-    Assume we would like to:
+    Assume we want to achieve the following:
 
-    1. Accept either `language` or `lang` (in order of priority)
-    2. Use `per_page` instead of `pagination.per_page` which is the default name.
+    1. Allow both `language` and `lang` as query parameters, with `language` taking precedence.
+    2. Use `per_page` as the query parameter name instead of the default `pagination.per_page`.
 
     === "Configuration"
         ```yaml title="query_gateway.yaml" linenums="1" hl_lines="5-11"
@@ -128,26 +122,24 @@ Using `query_params` in [EndpointConfig](/grpc-api-gateway/reference/grpc/config
 
     With the configuration above:
 
-    * `language` and `lang` both are accepted and bound to `language` in the proto request.
-    * `per_page` is accepted and is bound to `pagination.per_page`.
-    * `term` does not have an explicit binding but gets automatically discovered and added.
+    * Both `language` and `lang` are accepted and bound to the `language` field in the proto request, with `language` taking precedence.
+    * The `per_page` query parameter is accepted and bound to `pagination.per_page`.
+    * The `term` field does not have an explicit binding but is automatically discovered and added.
 
 !!! warning
-    Once you add an explicit binding for a proto field, that specific field no longer receives automatic bindings.
-    Only the explicitly added bindings will be applied.
-    For instance, in the example above, `pagination.per_page` is not longer accepted because an
+    Once you add an explicit binding for a proto field, that specific field will no longer receive automatic bindings.
+    Only the explicitly defined bindings will be applied.
+    For instance, in the example above, `pagination.per_page` is no longer automatically bound because an
     explicit binding for `pagination.per_page` is defined.
 
 ##### Prioritization
 
-If multiple names are defined for the same proto field, the later bindings take priority over previously defined ones.
-In the example above, `language` takes priority over `lang`.
+If multiple names are defined for the same proto field, the most recently defined binding takes precedence over earlier ones.
+In the example above, `language` takes precedence over `lang`.
 
 #### Ignoring Parameters
 
-You may want to avoid binding any query parameter to some proto fields.
-You can use `ignore` in [QueryParameterBinding](/grpc-api-gateway/reference/grpc/config/#queryparameterbinding) to remove
-some proto fields from query parameters.
+You may want to exclude certain proto fields from being bound to any query parameters. To achieve this, you can use the `ignore` attribute in [QueryParameterBinding](/grpc-api-gateway/reference/grpc/config/#queryparameterbinding). This will prevent the specified proto fields from being included in the query parameters.
 
 !!! example
 
@@ -176,21 +168,17 @@ some proto fields from query parameters.
         }
         ```
 
-    Proto field `language` gets ignored during automatic discovery phase and
-    thus does not get bound to any query parameter.
+    Proto field `language` is excluded during the automatic discovery phase and, as a result, is not bound to any query parameter.
 
 ### Data Types
 
-This section addresses the mapping of query parameter data to proto types.
-While mapping scalar types is straightforward, handling more complex data types
-like repeated values and maps can be less intuitive.
-Here, we explain how various types are parsed from query parameters.
+This section explains how query parameter data is mapped to proto types. While mapping scalar types is straightforward, handling more complex data types like repeated values and maps can be less intuitive. Here, we clarify how various types are parsed from query parameters.
 
-Throughout this section, references to _scalar types_ include all numerical types, boolean, strings and enums.
+Throughout this section, references to _scalar types_ include all numerical types, booleans, strings, and enums.
 
 #### Repeated Fields
 
-Repeated fields can hold multiple values. Query parameters _do_ support repeated fields __only__ for the _scalar types_.
+Repeated fields can hold multiple values. Query parameters support repeated fields only for scalar types.
 
 !!! example
     ```proto
@@ -202,19 +190,18 @@ Repeated fields can hold multiple values. Query parameters _do_ support repeated
     `?names=value1&names=value2&names=value3` gets mapped to `["value1", "value2", "value3"]`.
 
 !!! info
-    Commas in the value do not act as a separator and is instead read as part of the value.
+    Commas in the value do not act as a separator and are instead read as part of the value.
 
     In the example above, `?names=value1,value2` gets mapped to `["value1,value2"]`.
 
 #### Maps
 
-Map types are also supported if both the key and the value are _scalar types_.
-HTTP query parameter is `field_name[key]=value`.
+Map types are also supported if both the key and the value are scalar types. The HTTP query parameter format is `field_name[key]=value`.
 
 !!! example
     ```proto
     message Request {
-        map<string,string> metadata = 1;
+        map<string, string> metadata = 1;
     }
     ```
 
@@ -222,4 +209,4 @@ HTTP query parameter is `field_name[key]=value`.
 
 #### Unbound Query Parameters
 
-All unbound query parameters get ignored without generating any error.
+All unbound query parameters are ignored without generating any errors.
