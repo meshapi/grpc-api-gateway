@@ -45,6 +45,7 @@ nav:
       - OpenAPI:
           - reference/openapi/cli.md
           - reference/openapi/patch.md
+          - reference/openapi/field_optionality.md
 
 theme:
   name: material
