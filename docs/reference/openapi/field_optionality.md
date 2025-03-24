@@ -102,6 +102,41 @@ Value of `non_required` for `field_nullable_mode` would enable this mode.
 
 This mode treats all fields as nullable _unless_ they are explicitly marked as required.
 
+Follow the guidelines in [Explicitly Define Required Fields](#explicitly-define-required-fields) to specify which fields should be marked as required.
+
+## Field Requiredness
+
+In JSON Schema and OpenAPI, requiredness and nullability are distinct concepts:
+
+- **Requiredness**: Determines whether a field must be present in the JSON object. If a field is required, it must be included in the object, but it can still have a null value unless specified otherwise.
+- **Nullability**: Specifies whether a field can have a null value. A nullable field can explicitly be set to null, indicating the absence of a value.
+
+In OpenAPI v3.1, nullability is indicated using type arrays (e.g., `["string", "null"]`), while requiredness is specified using the `required` keyword at the object level.
+
+We discussed field nullability in the previous section. Now, let's use the same object to explore the concept of requiredness.
+
+Consider the proto message below:
+
+```proto
+message User {
+  string id = 1;
+  string name = 2;
+  optional string email_address = 3;
+  optional Address address = 4;
+  PhoneNumber phone_number = 5;
+}
+```
+
+You can configure the OpenAPI plug-in to automatically mark certain fields as required using `field_required_mode`. By default, this feature is disabled, meaning no fields are automatically marked as required.
+
+### 1. Disabled (Default)
+
+Value of `disabled` for `field_required_mode` would enable this mode.
+
+As previously mentioned, this means the OpenAPI plug-in will not automatically determine the requiredness of any field. However, you can manually specify which fields are required.
+
+#### Explicitly Define Required Fields
+
 There are several ways to mark a field as required:
 
 **1. At the message level**:
@@ -175,4 +210,41 @@ This approach sets the requiredness at the field.
                 required: true
     ```
 
-## Optional/Required Annotations
+### 2. Required If Not Optional
+
+Value of `non_optional` for `field_required_mode` would enable this mode.
+
+This mode designates all proto fields as _required_ by default, except for those explicitly marked as optional.
+
+Thus, in the proto message defined above, the fields `id`, `name`, and `phone_number` would be considered required.
+
+### 3. Required If Not Optional & Scalar
+
+Value of `non_optional_scalar` for `field_required_mode` would enable this mode.
+
+This mode designates proto fields as _required_ if all of the following conditions are met:
+
+1. The field is a primitive type or a list of primitive types (e.x. `repeated string`).
+2. The field is not a map.
+3. The field is not a message.
+4. The field is not marked as optional.
+
+Thus, in the proto message defined above, the fields `id` and `name` would be considered required. Since `phone_number` is a message type, it is not considered required in this mode.
+
+## Mix & Match
+
+You have the flexibility to configure requiredness and nullability automatically using the OpenAPI plug-in, allowing you to combine different rules for these attributes. For example, by setting `field_required_mode` to `non_optional` and `field_nullable_mode` to `non_required`, any field that is not explicitly required will be considered nullable. In this configuration, requiredness is automatically determined based on whether your proto fields are marked as optional.
+
+In this mode, proto message `User` as defined below:
+
+```proto
+message User {
+  string id = 1;
+  string name = 2;
+  optional string email_address = 3;
+  optional Address address = 4;
+  PhoneNumber phone_number = 5;
+}
+```
+
+would treat the fields `id`, `name`, and `phone_number` as required and non-nullable by default (unless explicitly configured otherwise). Conversely, the fields `email_address` and `address` would be considered optional and nullable. This can be achieved without any custom annotations or configuration files. If your API follows a consistent pattern like this, adjusting these two modes can help avoid the need to configure these fields individually.
