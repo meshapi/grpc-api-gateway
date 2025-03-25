@@ -48,6 +48,7 @@ nav:
           - reference/openapi/field_optionality.md
           - reference/openapi/go_template.md
           - reference/openapi/operation_id.md
+          - reference/openapi/visibility.md
 
 theme:
   name: material
