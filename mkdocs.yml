@@ -42,6 +42,7 @@ nav:
           - reference/grpc/config.md
           - reference/grpc/query.md
           - reference/grpc/streaming.md
+          - reference/grpc/errors.md
       - OpenAPI:
           - reference/openapi/cli.md
           - reference/openapi/patch.md
@@ -49,6 +50,7 @@ nav:
           - reference/openapi/go_template.md
           - reference/openapi/operation_id.md
           - reference/openapi/visibility.md
+          - reference/openapi/config.md
 
 theme:
   name: material
