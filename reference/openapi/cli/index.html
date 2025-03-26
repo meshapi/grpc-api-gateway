@@ -1,0 +1,1340 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for the gRPC API Gateway (https://github.com/meshapi/grpc-api-gateway).">
+      
+      
+        <meta name="author" content="Peyman Mortazavi">
+      
+      
+        <link rel="canonical" href="https://meshapi.github.com/grpc-api-gateway/reference/openapi/cli/">
+      
+      
+        <link rel="prev" href="../../grpc/errors/">
+      
+      
+        <link rel="next" href="../patch/">
+      
+      
+      <link rel="icon" href="../../../assets/squid.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.17">
+    
+    
+      
+        <title>Plug-in Options - gRPC API Gateway</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.bcfcd587.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#plug-in-options" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="gRPC API Gateway" class="md-header__button md-logo" aria-label="gRPC API Gateway" data-md-component="logo">
+      
+  <img src="../../../assets/squid.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            gRPC API Gateway
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Plug-in Options
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/meshapi/grpc-api-gateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    meshapi/grpc-api-gateway
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../.." class="md-tabs__link">
+          
+  
+    
+  
+  Introduction
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../installation/" class="md-tabs__link">
+        
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../quickstart/intro/" class="md-tabs__link">
+          
+  
+    
+  
+  Quickstart Demo
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../intro/" class="md-tabs__link">
+          
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="gRPC API Gateway" class="md-nav__button md-logo" aria-label="gRPC API Gateway" data-md-component="logo">
+      
+  <img src="../../../assets/squid.png" alt="logo">
+
+    </a>
+    gRPC API Gateway
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/meshapi/grpc-api-gateway" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    meshapi/grpc-api-gateway
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../.." class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+            </a>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Introduction
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Quickstart Demo
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Quickstart Demo
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Intro
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/generation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create a Simple Service
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/http_binding/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Add HTTP Bindings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../quickstart/openapi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    OpenAPI Documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Gateway
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Gateway
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../grpc/cli/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plug-in Options
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../grpc/config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../grpc/query/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Query Parameter Binding
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../grpc/streaming/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Streaming
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../grpc/errors/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Handling Errors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    OpenAPI
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            OpenAPI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Plug-in Options
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../patch/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Patch
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../field_optionality/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Field Optionality & Nullability
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../go_template/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Go Template
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operation_id/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Operation IDs & Service Tags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visibility/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visibility Selectors
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration Reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="plug-in-options">Plug-in Options<a class="headerlink" href="#plug-in-options" title="Permanent link">¶</a></h1>
+<p>The <em>OpenAPI v3</em> protoc plug-in offers a variety of configurable options. The table below provides a comprehensive list of these options along with their descriptions and default values.</p>
+<p>Note that there are some overlaps between gRPC options and OpenAPI options. To ensure the OpenAPI plug-in generates an accurate OpenAPI document that matches your gRPC API Gateway, it is important to use the same options in both the gRPC API Gateway and OpenAPI v3 plug-ins.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>If you use <code>allow_delete_body</code> in the gRPC API Gateway, ensure the same value is set for the OpenAPI v3 plug-in. This alignment guarantees that the generated OpenAPI document accurately reflects the gRPC API's behavior.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>allow_delete_body</td>
+<td>Allows HTTP DELETE methods to include a body if explicitly specified.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>allow_patch_feature</td>
+<td>Enables the use of the PATCH feature with update masks (<code>google.protobuf.FieldMask</code>).</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>disable_default_errors</td>
+<td>When enabled, the default error response is not generated. This is useful if you are using a custom error structure.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>disable_default_responses</td>
+<td>When enabled, the default success response is not generated. This is particularly useful when you need to specify non-200 status codes.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>disable_service_tags</td>
+<td>When enabled, prevents the generation of service tags in operations. This helps to avoid exposing backend gRPC service names.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>field_name_mode</td>
+<td>Controls the naming convention of fields in the OpenAPI schemas. Allowed values are <code>proto</code> for using the original proto field names and <code>json</code> for using camelCase JSON names.</td>
+<td><code>json</code></td>
+</tr>
+<tr>
+<td>field_nullable_mode</td>
+<td>Configures the generation of nullable OpenAPI fields for scalar types using <code>anyOf</code> or type array. Options include: <code>disabled</code> (no nullable fields generated), <code>optional</code> (nullable fields generated when the proto3 optional label is used), and <code>not_required</code> (nullable fields generated when a field is not explicitly marked as required and can be null).</td>
+<td><code>optional</code></td>
+</tr>
+<tr>
+<td>field_required_mode</td>
+<td>Configures the automatic marking of fields as required. Options include: <code>disabled</code> (default) does not automatically mark any field as required, <code>non_optional</code> marks any field that is not labeled as optional as required, and <code>non_optional_scalar</code> marks only scalar types (not message types) that are not labeled as optional as required.</td>
+<td><code>disabled</code></td>
+</tr>
+<tr>
+<td>config_search_path</td>
+<td>Specifies the directory (relative or absolute) from the current working directory that contains the gateway config files. See <a href="/grpc-api-gateway/reference/configuration/#search-path">Search Path</a> for more information.</td>
+<td><code>.</code></td>
+</tr>
+<tr>
+<td>gateway_config</td>
+<td>Path to the global gateway config file that is loaded first. This file can contain bindings for any service.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>gateway_config_pattern</td>
+<td>Pattern (excluding the extension) used to load a gateway config file for each proto file. The extensions <code>.yaml</code>, <code>.yml</code>, and <code>.json</code> will be tried in that order. See <a href="/grpc-api-gateway/reference/configuration/#filename-pattern">Filename Pattern</a> for more details.</td>
+<td><code>{{.Path}}_gateway</code></td>
+</tr>
+<tr>
+<td>openapi_config</td>
+<td>If set, this configuration file is used as a top-level config for all proto files and services. You can use a single config file for both gRPC and OpenAPI configurations. By default, if a gateway config is specified, and unless '-' is used for openapi_config, the same config file will be used for OpenAPI configurations as well.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>openapi_config_pattern</td>
+<td>Specifies the pattern (excluding the extension) used to load an OpenAPI config file for each proto file containing service definitions. The extensions <code>.yaml</code>, <code>.yml</code>, and <code>.json</code> will be tried in that order.</td>
+<td><code>{{ .Path }}_gateway</code></td>
+</tr>
+<tr>
+<td>openapi_seed_file</td>
+<td>If set, this OpenAPI file (YAML or JSON) is used as a template and merged with the generated files. This is useful for setting values not available in the OpenAPI generation configs or for repeating document values across all generated files.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>generate_unbound_methods</td>
+<td>Includes unannotated RPC methods in the proxy. Methods without explicit HTTP bindings will default to POST with the route pattern <code>/&lt;grpc-service&gt;/&lt;method&gt;</code>.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>use_go_templates</td>
+<td>When enabled, allows the use of Go templates for tags, titles, summaries, and links. Refer to the documentation for available template values.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>go_template_args</td>
+<td>Allows the assignment of Go template arguments in a comma-separated format. Example: <code>a=b,c=d</code>.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>ignore_comments</td>
+<td>When enabled, all proto documentation and comments are completely ignored.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>remove_internal_comments</td>
+<td>When enabled, excludes any string wrapped in <code>(--</code> and <code>--)</code> from the generated output.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>include_package_in_tags</td>
+<td>Specifies whether to include the proto package name in the service name used in the operation tags.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>operation_id_mode</td>
+<td>Controls the format of operation IDs in the OpenAPI document. Options are: <code>service+method</code> for <code>&lt;Service&gt;_&lt;Method&gt;</code>, <code>method</code> for just the method name, and <code>fqn</code> for the fully qualified name. The default is <code>service+method</code>.</td>
+<td><code>service+method</code></td>
+</tr>
+<tr>
+<td>include_services_only</td>
+<td>When enabled, generates only the bound service methods and the models required to support them.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>local_package_mode</td>
+<td>When enabled, restricts each configuration file (except the global config) to the local proto package.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>log_file</td>
+<td>If specified, the plug-in writes all logs to this file.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>log_level</td>
+<td>Sets the log level. Available levels: <code>warning</code>, <code>info</code>, <code>trace</code>, and <code>silent</code>.</td>
+<td><code>warning</code></td>
+</tr>
+<tr>
+<td>merge_with_overwrite</td>
+<td>When enabled, this option causes arrays to be overwritten rather than appended.</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>omit_empty_files</td>
+<td>When enabled, skips the generation of OpenAPI documents that do not contain at least one schema or path.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>omit_enum_default_value</td>
+<td>When enabled, omits the default value for all enum fields in the generated OpenAPI document.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>use_enum_numbers</td>
+<td>When enabled, enums in the OpenAPI document will use their numerical values instead of string representations.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>repeated_path_param_separator</td>
+<td>Configures how repeated fields should be split. Allowed values are <code>csv</code>, <code>pipes</code>, <code>ssv</code>, and <code>tsv</code>.</td>
+<td><code>csv</code></td>
+</tr>
+<tr>
+<td>warn_on_unbound_methods</td>
+<td>Emits a warning message if an RPC method has no mapping.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>warn_on_broken_selectors</td>
+<td>When enabled, reduces the severity of unrecognized selectors in configuration files to a warning level in the logs.</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>schema_naming_strategy</td>
+<td>Controls the naming convention for OpenAPI schemas. Options include: <code>fqn</code> for using the fully qualified name, <code>simple</code> for using the shortest unique name, and <code>simple+version</code> for including a version prefix when available (e.g., <code>v1alpha1Message</code>).</td>
+<td><code>simple</code></td>
+</tr>
+<tr>
+<td>visibility_selectors</td>
+<td>A comma-separated list of visibility labels to include. Example: <code>INTERNAL,PARTNERS</code>. When empty, all methods are selected.</td>
+<td>No default</td>
+</tr>
+<tr>
+<td>output_mode</td>
+<td>Determines how the OpenAPI definitions are organized in the output. Options are: <code>merge</code> to combine all definitions into a single file, <code>proto</code> to generate one file per proto file, and <code>service</code> to create a separate document for each gRPC service.</td>
+<td><code>proto</code></td>
+</tr>
+<tr>
+<td>output_filename</td>
+<td>Applicable only when using the <code>merge</code> output mode. This option sets the filename for the generated OpenAPI document.</td>
+<td><code>apidocs</code></td>
+</tr>
+<tr>
+<td>output_format</td>
+<td>Specifies the format of the generated output. Allowed values are <code>yaml</code> and <code>json</code>.</td>
+<td><code>json</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var tab,labels=set.querySelector(".tabbed-labels");for(tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.instant", "navigation.tracking", "navigation.path", "navigation.indexes", "navigation.tabs", "navigation.expand", "navigation.tracking", "content.tabs.link", "content.code.copy", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.1e8ae164.min.js"></script>
+      
+    
+  </body>
+</html>
