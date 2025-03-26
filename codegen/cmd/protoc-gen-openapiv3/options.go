@@ -123,8 +123,8 @@ func prepareOptions() *genopenapi.Options {
 	flag.Var(
 		&generatorOptions.FieldRequiredMode, "field_required_mode",
 		"can be used to automatically mark fields as required. 'disabled' (default) does not automatically"+
-			"mark any field, 'not_optional' marks any field that is not labled as optional as required and"+
-			"'not_optional_scalar' is similar to the previous mode but only for scalar types (not message).")
+			"mark any field, 'non_optional' marks any field that is not labled as optional as required and"+
+			"'non_optional_scalar' is similar to the previous mode but only for scalar types (not message).")
 
 	flag.Var(
 		&generatorOptions.FieldNullableMode, "field_nullable_mode",

@@ -91,7 +91,6 @@ eventSource.onmessage = (event) => {
 #### Important Note for HTTP 1.1
 
 !!! warning
-!!! warning
     When not used over HTTP/2, SSE is limited by the maximum number of open connections, which can be particularly problematic when opening multiple tabs. This limit is set to a very low number (6) per browser.
 
     This issue has been marked as "Won't fix" in both Chrome and Firefox. The limit is per browser and domain, meaning you can open 6 SSE connections across all tabs to www.example1.com and another 6 SSE connections to www.example2.com.

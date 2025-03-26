@@ -23,27 +23,34 @@ markdown_extensions:
   - toc:
       permalink: ¶
   - pymdownx.snippets:
-      base_path: 'docs'
+      base_path: "docs"
 
 nav:
   - Introduction:
-    - index.md
+      - index.md
   - installation.md
   - Quickstart Demo:
-    - quickstart/intro.md
-    - quickstart/generation.md
-    - quickstart/http_binding.md
-    - quickstart/openapi.md
+      - quickstart/intro.md
+      - quickstart/generation.md
+      - quickstart/http_binding.md
+      - quickstart/openapi.md
   - Reference:
-    - reference/intro.md
-    - reference/configuration.md
-    - Gateway:
-      - reference/grpc/cli.md
-      - reference/grpc/config.md
-      - reference/grpc/query.md
-      - reference/grpc/streaming.md
-    - OpenAPI:
-      - reference/openapi/cli.md
+      - reference/intro.md
+      - reference/configuration.md
+      - Gateway:
+          - reference/grpc/cli.md
+          - reference/grpc/config.md
+          - reference/grpc/query.md
+          - reference/grpc/streaming.md
+          - reference/grpc/errors.md
+      - OpenAPI:
+          - reference/openapi/cli.md
+          - reference/openapi/patch.md
+          - reference/openapi/field_optionality.md
+          - reference/openapi/go_template.md
+          - reference/openapi/operation_id.md
+          - reference/openapi/visibility.md
+          - reference/openapi/config.md
 
 theme:
   name: material
@@ -53,13 +60,13 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.path
-    - navigation.indexes 
+    - navigation.indexes
     - navigation.tabs
     - navigation.expand
     - navigation.tracking
     - content.tabs.link
     - content.code.copy
-    - content.code.annotate 
+    - content.code.annotate
 
   palette:
     # Palette toggle for light mode

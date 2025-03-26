@@ -100,10 +100,12 @@ func (g *Generator) loadFromDescriptorRegistry() error {
 
 		var doc *openapiv3.Document
 
-		if configFromFile.OpenAPISpec != nil && configFromFile.Document != nil {
-			doc, err = openapimap.Document(configFromFile.Document)
-			if err != nil {
-				return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
+		if configFromFile.OpenAPISpec != nil {
+			if configFromFile.Document != nil {
+				doc, err = openapimap.Document(configFromFile.Document)
+				if err != nil {
+					return fmt.Errorf("invalid OpenAPI document in %q: %w", configFromFile.Filename, err)
+				}
 			}
 
 			source := internal.SourceInfo{
